@@ -181,29 +181,34 @@ export default function webtauVite(
       });
 
       let building = false;
+      let pendingRebuild = false;
 
       watcher.on("change", (path) => {
         if (!path.endsWith(".rs")) return;
         if (building) {
-          console.log("[webtau-vite] Build already in progress, skipping.");
+          pendingRebuild = true;
           return;
         }
 
-        console.log(`[webtau-vite] Rust file changed: ${path}`);
-        console.log("[webtau-vite] Rebuilding WASM (dev)...");
-
-        building = true;
-        try {
-          runWasmPack(resolvedCratePath, resolvedOutDir, false, false);
-          console.log("[webtau-vite] WASM rebuild complete. Reloading...");
-          server.ws.send({ type: "full-reload" });
-        } catch (err) {
-          const msg = err instanceof Error ? err.message : String(err);
-          console.error(`[webtau-vite] Rebuild failed:\n${msg}`);
-          // Don't crash the dev server on build failure
-        } finally {
-          building = false;
+        function rebuild() {
+          console.log(`[webtau-vite] Rebuilding WASM (dev)...`);
+          building = true;
+          pendingRebuild = false;
+          try {
+            runWasmPack(resolvedCratePath, resolvedOutDir, false, false);
+            console.log("[webtau-vite] WASM rebuild complete. Reloading...");
+            server.ws.send({ type: "full-reload" });
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            console.error(`[webtau-vite] Rebuild failed:\n${msg}`);
+          } finally {
+            building = false;
+            if (pendingRebuild) rebuild();
+          }
         }
+
+        console.log(`[webtau-vite] Rust file changed: ${path}`);
+        rebuild();
       });
     },
 
