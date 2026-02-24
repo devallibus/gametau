@@ -99,8 +99,8 @@ async function getWasmModule(): Promise<WasmModule> {
  * Universal invoke — same API as `@tauri-apps/api/core`'s `invoke()`.
  *
  * In Tauri mode: delegates to Tauri IPC.
- * In web mode: calls the matching WASM export, passing args as
- * positional parameters (via `Object.values()`).
+ * In web mode: calls the matching WASM export, passing the args
+ * object as a single parameter.
  *
  * ```ts
  * const view = await invoke<WorldView>("get_world_view");
@@ -129,7 +129,7 @@ export async function invoke<T = unknown>(
     );
   }
 
-  const result = args ? fn(...Object.values(args)) : fn();
+  const result = args ? fn(args) : fn();
 
   // wasm_bindgen can return plain values or promises
   return result instanceof Promise ? result : (result as T);

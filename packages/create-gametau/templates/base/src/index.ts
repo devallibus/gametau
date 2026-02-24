@@ -27,19 +27,23 @@ async function main() {
 
   // Start game loop
   let tickAccumulator = 0;
+  let tickInFlight = false;
   const TICK_RATE = 1 / 10; // 10 ticks per second
 
   startGameLoop(
     (dt) => {
       tickAccumulator += dt;
-      while (tickAccumulator >= TICK_RATE) {
+      if (!tickInFlight && tickAccumulator >= TICK_RATE) {
         tickAccumulator -= TICK_RATE;
-        tickWorld().then((result) => {
-          getWorldView().then((view) => {
+        tickInFlight = true;
+        tickWorld()
+          .then(() => getWorldView())
+          .then((view) => {
             document.getElementById("score")!.textContent = String(view.score);
             document.getElementById("tick")!.textContent = String(view.tick_count);
-          });
-        });
+          })
+          .catch(console.error)
+          .finally(() => { tickInFlight = false; });
       }
     },
     () => {

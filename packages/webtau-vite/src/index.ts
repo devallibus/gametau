@@ -8,10 +8,10 @@
  */
 
 import { type Plugin, type ResolvedConfig } from "vite";
-import { execSync, type ExecSyncOptions } from "child_process";
+import { execSync, spawnSync } from "child_process";
 import { watch, type FSWatcher } from "chokidar";
 import { resolve, join } from "path";
-import { existsSync } from "fs";
+import { existsSync, readdirSync } from "fs";
 
 export interface WebtauViteOptions {
   /** Path to the wasm crate (relative to project root). Default: "src-tauri/wasm" */
@@ -57,22 +57,23 @@ function runWasmPack(
   verbose: boolean,
 ): void {
   const profile = release ? "--release" : "--dev";
-  const cmd = `wasm-pack build ${cratePath} --target web --out-dir ${outDir} ${profile} --no-typescript`;
+  const args = ["build", cratePath, "--target", "web", "--out-dir", outDir, profile, "--no-typescript"];
 
   if (verbose) {
-    console.log(`[webtau-vite] ${cmd}`);
+    console.log(`[webtau-vite] wasm-pack ${args.join(" ")}`);
   }
 
-  const opts: ExecSyncOptions = {
+  const result = spawnSync("wasm-pack", args, {
     stdio: verbose ? "inherit" : "pipe",
-  };
+  });
 
-  try {
-    execSync(cmd, opts);
-  } catch (err) {
-    const msg =
-      err instanceof Error ? err.message : String(err);
-    throw new Error(`[webtau-vite] wasm-pack build failed:\n${msg}`);
+  if (result.error) {
+    throw new Error(`[webtau-vite] wasm-pack build failed:\n${result.error.message}`);
+  }
+
+  if (result.status !== 0) {
+    const stderr = result.stderr ? result.stderr.toString() : "unknown error";
+    throw new Error(`[webtau-vite] wasm-pack build failed (exit ${result.status}):\n${stderr}`);
   }
 }
 
@@ -137,17 +138,25 @@ export default function webtauVite(
 
       // Optional wasm-opt for release builds
       if (wasmOpt && !isDev) {
-        const wasmFile = join(resolvedOutDir, "*.wasm");
-        try {
-          execSync(`wasm-opt -Oz ${wasmFile} -o ${wasmFile}`, {
-            stdio: "inherit",
-          });
-          console.log("[webtau-vite] wasm-opt optimization complete.");
-        } catch {
-          this.warn(
-            "[webtau-vite] wasm-opt failed. Is it installed? " +
-              "Install with: cargo install wasm-opt",
-          );
+        const wasmName = readdirSync(resolvedOutDir).find((f) => f.endsWith(".wasm"));
+        if (wasmName) {
+          const wasmFile = join(resolvedOutDir, wasmName);
+          try {
+            const optResult = spawnSync("wasm-opt", ["-Oz", wasmFile, "-o", wasmFile], {
+              stdio: "inherit",
+            });
+            if (optResult.error || optResult.status !== 0) {
+              throw optResult.error || new Error(`exit ${optResult.status}`);
+            }
+            console.log("[webtau-vite] wasm-opt optimization complete.");
+          } catch {
+            this.warn(
+              "[webtau-vite] wasm-opt failed. Is it installed? " +
+                "Install with: cargo install wasm-opt",
+            );
+          }
+        } else {
+          this.warn("[webtau-vite] No .wasm file found in output directory — skipping wasm-opt.");
         }
       }
 
@@ -171,12 +180,19 @@ export default function webtauVite(
         awaitWriteFinish: { stabilityThreshold: 200 },
       });
 
+      let building = false;
+
       watcher.on("change", (path) => {
         if (!path.endsWith(".rs")) return;
+        if (building) {
+          console.log("[webtau-vite] Build already in progress, skipping.");
+          return;
+        }
 
         console.log(`[webtau-vite] Rust file changed: ${path}`);
         console.log("[webtau-vite] Rebuilding WASM (dev)...");
 
+        building = true;
         try {
           runWasmPack(resolvedCratePath, resolvedOutDir, false, false);
           console.log("[webtau-vite] WASM rebuild complete. Reloading...");
@@ -185,6 +201,8 @@ export default function webtauVite(
           const msg = err instanceof Error ? err.message : String(err);
           console.error(`[webtau-vite] Rebuild failed:\n${msg}`);
           // Don't crash the dev server on build failure
+        } finally {
+          building = false;
         }
       });
     },

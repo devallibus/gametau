@@ -234,6 +234,10 @@ configure({
 
 Universal IPC — routes to Tauri or WASM automatically.
 
+In web mode, args are passed as a **single object** to the WASM export
+(matching Tauri's named-args semantics). Your `#[wasm_bindgen]` function
+should accept a `JsValue` and deserialize with `serde_wasm_bindgen::from_value()`.
+
 ```typescript
 const view = await invoke<WorldView>("get_world_view");
 const result = await invoke<TickResult>("tick_world", { speed: 2 });
