@@ -1,0 +1,23 @@
+{
+  "name": "create-gametau",
+  "version": "0.1.0",
+  "description": "Scaffold a Tauri game that deploys to web + desktop",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "create-gametau": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "templates"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.0",
+    "typescript": "^5.8.0"
+  }
+}

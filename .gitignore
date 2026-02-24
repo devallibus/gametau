@@ -1,0 +1,26 @@
+# Rust
+target/
+Cargo.lock
+
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+
+# wasm-pack output
+pkg/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Turbo
+.turbo/
+
+# Env
+.env
+.env.*

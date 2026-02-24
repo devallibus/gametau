@@ -1,0 +1,28 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nicholasgasior/tauri/tauri-v2/crates/tauri-config-schema/schema.json",
+  "productName": "{{PROJECT_NAME}}",
+  "version": "0.1.0",
+  "identifier": "com.gametau.{{PROJECT_NAME}}",
+  "build": {
+    "frontendDist": "../../../dist",
+    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "bun run dev",
+    "beforeBuildCommand": "bun run build:web"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "{{PROJECT_NAME}}",
+        "width": 1280,
+        "height": 720,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ]
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": []
+  }
+}

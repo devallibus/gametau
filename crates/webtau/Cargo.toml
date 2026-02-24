@@ -1,0 +1,9 @@
+[package]
+name = "webtau"
+description = "Deploy Tauri games to web + desktop from one codebase"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]

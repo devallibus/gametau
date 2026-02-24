@@ -1,0 +1,45 @@
+{
+  "name": "webtau",
+  "version": "0.1.0",
+  "description": "Deploy Tauri games to web + desktop from one codebase",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/core.d.ts",
+      "import": "./dist/core.js"
+    },
+    "./core": {
+      "types": "./dist/core.d.ts",
+      "import": "./dist/core.js"
+    },
+    "./window": {
+      "types": "./dist/window.d.ts",
+      "import": "./dist/window.js"
+    },
+    "./dpi": {
+      "types": "./dist/dpi.d.ts",
+      "import": "./dist/dpi.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.0",
+    "typescript": "^5.8.0"
+  },
+  "peerDependencies": {
+    "@tauri-apps/api": ">=2.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@tauri-apps/api": {
+      "optional": true
+    }
+  }
+}

@@ -1,0 +1,12 @@
+[package]
+name = "webtau-macros"
+description = "Proc macros for webtau (v2: #[command] dual-target generation)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]

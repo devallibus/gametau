@@ -1,0 +1,32 @@
+{
+  "name": "webtau-vite",
+  "version": "0.1.0",
+  "description": "Vite plugin for webtau — wasm-pack automation + Tauri API aliasing",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "chokidar": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.0",
+    "typescript": "^5.8.0",
+    "vite": "^6.0.0"
+  },
+  "peerDependencies": {
+    "vite": ">=5.0.0"
+  }
+}

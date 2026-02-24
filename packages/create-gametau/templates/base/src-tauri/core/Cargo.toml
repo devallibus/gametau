@@ -1,0 +1,8 @@
+[package]
+name = "{{PROJECT_NAME}}-core"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+rand = { version = "0.8", features = ["std_rng"] }
