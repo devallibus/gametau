@@ -380,6 +380,7 @@ Expected sizes:
 ## Examples
 
 - **[`examples/counter`](./examples/counter)** — Simplest possible example. Counter with increment/decrement/reset that works on both web and desktop.
+- **[`examples/pong`](./examples/pong)** — Two-player Pong with Rust physics + PixiJS rendering. Demonstrates real game loop, collision detection, and keyboard input across both targets.
 
 ## Migrating an Existing Tauri Game
 

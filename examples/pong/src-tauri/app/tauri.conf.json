@@ -1,0 +1,21 @@
+{
+  "productName": "pong",
+  "version": "0.1.0",
+  "identifier": "com.gametau.pong-example",
+  "build": {
+    "frontendDist": "../../../dist",
+    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "bun run dev",
+    "beforeBuildCommand": "bun run build:web"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Pong — gametau example",
+        "width": 800,
+        "height": 600,
+        "resizable": true
+      }
+    ]
+  }
+}

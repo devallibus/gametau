@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pong — gametau example</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        font-family: system-ui, sans-serif;
+        background: #0a0a1a;
+        color: #e0e0e0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+      }
+      canvas {
+        border: 2px solid #00d4aa;
+        border-radius: 4px;
+      }
+      .info {
+        margin-top: 1rem;
+        font-size: 0.85rem;
+        color: #666;
+        text-align: center;
+      }
+      .controls {
+        margin-top: 0.5rem;
+        font-size: 0.8rem;
+        color: #555;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game"></div>
+    <p class="info">
+      Rust logic via <span id="mode">...</span>
+    </p>
+    <p class="controls">
+      Left player: W / S &nbsp;&nbsp; Right player: ↑ / ↓
+    </p>
+    <script type="module" src="/src/index.ts"></script>
+  </body>
+</html>
