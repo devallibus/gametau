@@ -1,5 +1,5 @@
 // webtau-macros: proc macros for dual Tauri/WASM command generation.
-// Planned for v2 — see https://github.com/nicholasgasior/gametau
+// Planned for v2 — see https://github.com/devallibus/gametau
 //
 // Will provide:
 //   #[webtau::command]
