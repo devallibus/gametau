@@ -195,14 +195,19 @@ import { defineConfig } from "vite";
 import webtauVite from "webtau-vite";
 
 export default defineConfig({
-  plugins: [
-    webtauVite({
-      wasmCrate: "src-tauri/wasm",
-      wasmOutDir: "src/wasm",
-      watchPaths: ["src-tauri/core/src"],
-    }),
-  ],
+  plugins: [webtauVite()],
 });
+```
+
+For the standard layout (`src-tauri/wasm`, `src-tauri/core`, etc.), zero config is needed — the plugin auto-detects crate paths and watch directories. Override only for non-standard layouts:
+
+```typescript
+webtauVite({
+  wasmCrate: "custom/path/to/wasm",
+  wasmOutDir: "src/custom-wasm",
+  watchPaths: ["extra/rust/src"],
+  wasmOpt: true, // release builds only
+})
 ```
 
 ## API Reference
@@ -243,6 +248,16 @@ const view = await invoke<WorldView>("get_world_view");
 const result = await invoke<TickResult>("tick_world", { speed: 2 });
 ```
 
+**Error behavior (web mode):**
+
+| Situation | Error message |
+|---|---|
+| `invoke()` before `configure()` | Includes exact `configure()` call pattern to fix it |
+| WASM export not found | Lists all available exported function names |
+| WASM module fails to load | Calls `onLoadError` callback, then rethrows — next `invoke()` retries the load |
+
+Loading is deduplicated: concurrent `invoke()` calls while the WASM module is still loading share the same promise. After a load failure, the promise is cleared so subsequent calls can retry.
+
 #### `isTauri()`
 
 Returns `true` when running inside Tauri (checks `window.__TAURI_INTERNALS__`).
@@ -276,14 +291,14 @@ Vite plugin that handles everything automatically:
 | Import aliasing | `@tauri-apps/api/*` → `webtau/*` | Same | Disabled |
 | wasm-opt | N/A | Optional (`wasmOpt: true`) | Skipped |
 
-**Options:**
+**Options (all optional — zero-config works for standard layouts):**
 
 ```typescript
 webtauVite({
-  wasmCrate: "src-tauri/wasm",      // Path to WASM crate
-  wasmOutDir: "src/wasm",           // wasm-pack output directory
-  watchPaths: ["src-tauri/core/src"], // Extra dirs to watch
-  wasmOpt: false,                    // Run wasm-opt on release
+  wasmCrate: "src-tauri/wasm",      // Path to WASM crate (default)
+  wasmOutDir: "src/wasm",           // wasm-pack output directory (default)
+  watchPaths: [],                    // Extra dirs to watch (sibling crates auto-detected)
+  wasmOpt: false,                    // Run wasm-opt on release (default)
 })
 ```
 

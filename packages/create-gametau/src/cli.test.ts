@@ -81,6 +81,42 @@ describe("create-gametau CLI", () => {
     expect(pkg.dependencies.three).toBeUndefined();
   });
 
+  test("generated vite.config.ts uses zero-config webtauVite()", () => {
+    run("config-check-game");
+    const projectDir = join(TMP_DIR, "config-check-game");
+    const viteConfig = readFileSync(join(projectDir, "vite.config.ts"), "utf-8");
+
+    // Should use webtauVite() with no args — default-first convention
+    expect(viteConfig).toContain("webtauVite()");
+    // Should NOT contain explicit option keys (those are overrides, not defaults)
+    expect(viteConfig).not.toContain("wasmCrate:");
+    expect(viteConfig).not.toContain("wasmOutDir:");
+    expect(viteConfig).not.toContain("watchPaths:");
+  });
+
+  test("no {{PROJECT_NAME}} placeholders remain in any file", () => {
+    run("placeholder-check");
+    const projectDir = join(TMP_DIR, "placeholder-check");
+
+    // Recursively check all text files for leftover placeholders
+    function checkDir(dir: string) {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const full = join(dir, entry.name);
+        if (entry.isDirectory()) {
+          checkDir(full);
+        } else {
+          try {
+            const content = readFileSync(full, "utf-8");
+            expect(content).not.toContain("{{PROJECT_NAME}}");
+          } catch {
+            // Binary file, skip
+          }
+        }
+      }
+    }
+    checkDir(projectDir);
+  });
+
   test("fails on existing non-empty directory", () => {
     // First scaffold
     run("conflict-game");

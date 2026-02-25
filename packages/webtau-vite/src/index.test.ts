@@ -9,7 +9,14 @@ mock.module("child_process", () => ({
 
 mock.module("fs", () => ({
   existsSync: mock(() => true),
-  readdirSync: mock(() => ["foo_bg.wasm", "package.json"]),
+  readdirSync: mock((...args: unknown[]) => {
+    // When called with { withFileTypes: true } (sibling crate discovery),
+    // return an empty array by default. Tests that need siblings override this.
+    const opts = args[1] as { withFileTypes?: boolean } | undefined;
+    if (opts && opts.withFileTypes) return [];
+    // Normal readdirSync for wasm-opt discovery
+    return ["foo_bg.wasm", "package.json"];
+  }),
 }));
 
 mock.module("chokidar", () => {
@@ -49,7 +56,11 @@ function resetMocks() {
   (existsSync as any).mockClear();
   (existsSync as any).mockImplementation(() => true);
   (readdirSync as any).mockClear();
-  (readdirSync as any).mockImplementation(() => ["foo_bg.wasm", "package.json"]);
+  (readdirSync as any).mockImplementation((...args: unknown[]) => {
+    const opts = args[1] as { withFileTypes?: boolean } | undefined;
+    if (opts && opts.withFileTypes) return [];
+    return ["foo_bg.wasm", "package.json"];
+  });
   (watch as any).mockClear();
   _watcher.on.mockClear();
   _watcher.close.mockClear();
@@ -77,6 +88,8 @@ describe("webtauVite plugin", () => {
     const plugin = webtauVite();
     expect(plugin.enforce).toBe("pre");
   });
+
+  // -- resolveId aliasing --
 
   test("resolveId aliases @tauri-apps/api/core in web mode", () => {
     delete process.env.TAURI_ENV_PLATFORM;
@@ -123,6 +136,10 @@ describe("webtauVite plugin", () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// buildStart — wasm-pack invocation
+// ---------------------------------------------------------------------------
+
 describe("buildStart — wasm-pack build", () => {
   const originalEnv = process.env.TAURI_ENV_PLATFORM;
 
@@ -154,6 +171,74 @@ describe("buildStart — wasm-pack build", () => {
     expect(wasmPackCall[1]).toContain("--no-typescript");
   });
 
+  test("uses --dev flag in serve mode", () => {
+    const plugin = createPlugin({}, "serve");
+    const ctx = { error: mock(), warn: mock() };
+    (plugin.buildStart as Function).call(ctx);
+
+    const wasmPackCall = (spawnSync as any).mock.calls.find(
+      (c: any[]) => c[0] === "wasm-pack",
+    );
+    expect(wasmPackCall[1]).toContain("--dev");
+    expect(wasmPackCall[1]).not.toContain("--release");
+  });
+
+  test("uses --release flag in build mode", () => {
+    const plugin = createPlugin({}, "build");
+    const ctx = { error: mock(), warn: mock() };
+    (plugin.buildStart as Function).call(ctx);
+
+    const wasmPackCall = (spawnSync as any).mock.calls.find(
+      (c: any[]) => c[0] === "wasm-pack",
+    );
+    expect(wasmPackCall[1]).toContain("--release");
+    expect(wasmPackCall[1]).not.toContain("--dev");
+  });
+
+  test("skips build in Tauri mode", () => {
+    process.env.TAURI_ENV_PLATFORM = "windows";
+    const plugin = createPlugin({}, "serve");
+    const ctx = { error: mock(), warn: mock() };
+    (plugin.buildStart as Function).call(ctx);
+
+    // wasm-pack should NOT be called in Tauri mode
+    const wasmPackCall = (spawnSync as any).mock.calls.find(
+      (c: any[]) => c[0] === "wasm-pack",
+    );
+    expect(wasmPackCall).toBeUndefined();
+  });
+
+  test("errors when wasm-pack is not installed", () => {
+    (execSync as any).mockImplementation(() => {
+      throw new Error("command not found");
+    });
+    const plugin = createPlugin({}, "serve");
+    const ctx = { error: mock(), warn: mock() };
+    (plugin.buildStart as Function).call(ctx);
+
+    expect(ctx.error).toHaveBeenCalled();
+    const errorMsg = ctx.error.mock.calls[0][0] as string;
+    expect(errorMsg).toContain("wasm-pack is not installed");
+    expect(errorMsg).toContain("cargo install wasm-pack");
+  });
+
+  test("errors when Cargo.toml is missing", () => {
+    (existsSync as any).mockImplementation((p: string) => {
+      if (p.endsWith("Cargo.toml")) return false;
+      return true;
+    });
+    const plugin = createPlugin({}, "serve");
+    const ctx = { error: mock(), warn: mock() };
+    (plugin.buildStart as Function).call(ctx);
+
+    expect(ctx.error).toHaveBeenCalled();
+    const errorMsg = ctx.error.mock.calls[0][0] as string;
+    expect(errorMsg).toContain("No Cargo.toml found");
+    expect(errorMsg).toContain("wasmCrate");
+  });
+
+  // -- wasm-opt --
+
   test("wasm-opt discovers actual .wasm filename", () => {
     const plugin = createPlugin({ wasmOpt: true }, "build");
     const ctx = { error: mock(), warn: mock() };
@@ -168,7 +253,11 @@ describe("buildStart — wasm-pack build", () => {
   });
 
   test("wasm-opt warns when no .wasm file found", () => {
-    (readdirSync as any).mockImplementation(() => []);
+    (readdirSync as any).mockImplementation((...args: unknown[]) => {
+      const opts = args[1] as { withFileTypes?: boolean } | undefined;
+      if (opts && opts.withFileTypes) return [];
+      return []; // No .wasm file in output
+    });
     const plugin = createPlugin({ wasmOpt: true }, "build");
     const ctx = { error: mock(), warn: mock() };
     (plugin.buildStart as Function).call(ctx);
@@ -179,7 +268,22 @@ describe("buildStart — wasm-pack build", () => {
     );
     expect(wasmOptCall).toBeUndefined();
   });
+
+  test("wasm-opt is skipped in dev mode even when enabled", () => {
+    const plugin = createPlugin({ wasmOpt: true }, "serve");
+    const ctx = { error: mock(), warn: mock() };
+    (plugin.buildStart as Function).call(ctx);
+
+    const wasmOptCall = (spawnSync as any).mock.calls.find(
+      (c: any[]) => c[0] === "wasm-opt",
+    );
+    expect(wasmOptCall).toBeUndefined();
+  });
 });
+
+// ---------------------------------------------------------------------------
+// Rebuild guard — coalescing behavior
+// ---------------------------------------------------------------------------
 
 describe("rebuild guard", () => {
   const originalEnv = process.env.TAURI_ENV_PLATFORM;
@@ -230,5 +334,39 @@ describe("rebuild guard", () => {
     );
     expect(wasmPackCalls).toHaveLength(2);
     expect(mockServer.ws.send).toHaveBeenCalledTimes(2);
+  });
+
+  test("ignores non-.rs file changes", () => {
+    const plugin = createPlugin({}, "serve");
+    const mockServer = { ws: { send: mock() } };
+    (plugin.configureServer as Function)(mockServer);
+
+    const changeCall = _watcher.on.mock.calls.find(
+      (c: any[]) => c[0] === "change",
+    );
+    const changeHandler = changeCall[1] as (path: string) => void;
+
+    (spawnSync as any).mockClear();
+
+    // Trigger changes for non-Rust files
+    changeHandler("Cargo.toml");
+    changeHandler("Cargo.lock");
+    changeHandler("README.md");
+
+    // No wasm-pack calls should have been made
+    const wasmPackCalls = (spawnSync as any).mock.calls.filter(
+      (c: any[]) => c[0] === "wasm-pack",
+    );
+    expect(wasmPackCalls).toHaveLength(0);
+  });
+
+  test("skips configureServer in Tauri mode", () => {
+    process.env.TAURI_ENV_PLATFORM = "linux";
+    const plugin = createPlugin({}, "serve");
+    const mockServer = { ws: { send: mock() } };
+    (plugin.configureServer as Function)(mockServer);
+
+    // watch() should NOT have been called in Tauri mode
+    expect(watch).not.toHaveBeenCalled();
   });
 });
