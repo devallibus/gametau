@@ -1,5 +1,5 @@
 import { describe, test, expect, afterEach } from "bun:test";
-import { existsSync, rmSync, readFileSync, readdirSync, mkdtempSync } from "fs";
+import { existsSync, rmSync, readFileSync, readdirSync, mkdirSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
 import { scaffold } from "./cli";
@@ -13,14 +13,16 @@ afterEach(() => {
 });
 
 function freshDir(): string {
-  tmpDir = mkdtempSync(join(tmpdir(), "gametau-test-"));
+  // Avoid mkdtempSync — buggy in bun <1.3 (returns non-empty dirs on Linux CI)
+  const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  tmpDir = join(tmpdir(), `gametau-test-${id}`);
+  mkdirSync(tmpDir, { recursive: true });
   return tmpDir;
 }
 
 describe("create-gametau CLI", () => {
   test("scaffolds a project with default (three) template", () => {
     const dir = freshDir();
-    console.error("[test-debug] dir:", dir, "contents:", readdirSync(dir));
     scaffold({ projectName: "test-game", template: "three" }, dir);
 
     const projectDir = join(dir, "test-game");

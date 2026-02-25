@@ -81,8 +81,6 @@ export function scaffold(options: Options, cwd?: string): void {
   const { projectName, template } = options;
   const targetDir = resolve(cwd || process.cwd(), projectName);
 
-  console.error("[scaffold-debug]", JSON.stringify({ cwd, processCwd: process.cwd(), projectName, targetDir, targetExists: existsSync(targetDir) }));
-
   if (existsSync(targetDir)) {
     const contents = readdirSync(targetDir);
     if (contents.length > 0) {
@@ -131,7 +129,6 @@ function replaceInDir(dir: string, search: string, replace: string): void {
 }
 
 // Main — only runs when executed directly (not when imported by tests)
-console.error("[cli.ts] import.meta.main =", import.meta.main, "argv =", process.argv);
 if (import.meta.main) {
   const args = process.argv.slice(2);
   const options = parseArgs(args);

@@ -24,6 +24,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
       - run: bun install
       - run: bun test --recursive
       - run: bunx tsc --noEmit -p packages/webtau/tsconfig.json
