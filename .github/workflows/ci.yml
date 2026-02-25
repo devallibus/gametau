@@ -27,7 +27,10 @@ jobs:
         with:
           bun-version: latest
       - run: bun install
-      - run: bun test --recursive
+      # Run each package separately to avoid mock.module() leaking between packages
+      - run: cd packages/webtau && bun test
+      - run: cd packages/webtau-vite && bun test
+      - run: cd packages/create-gametau && bun test
       - run: bunx tsc --noEmit -p packages/webtau/tsconfig.json
       - run: bunx tsc --noEmit -p packages/webtau-vite/tsconfig.json
       - run: bunx tsc --noEmit -p packages/create-gametau/tsconfig.json

@@ -3,7 +3,7 @@ import { existsSync, rmSync, readFileSync, readdirSync, mkdirSync } from "fs";
 import { join } from "path";
 import { scaffold } from "./cli";
 
-// Use a project-local directory instead of /tmp/ (CI runners have stale /tmp/ content)
+// Use a project-local scratch directory for test isolation
 const TEST_ROOT = join(import.meta.dir, "..", ".test-scratch");
 
 let testDir: string;
@@ -22,13 +22,6 @@ function freshDir(): string {
 }
 
 describe("create-gametau CLI", () => {
-  test("smoke: freshDir creates empty directory", () => {
-    const dir = freshDir();
-    const contents = readdirSync(dir);
-    console.error("[smoke-test]", JSON.stringify({ dir, contents }));
-    expect(contents).toEqual([]);
-  });
-
   test("scaffolds a project with default (three) template", () => {
     const dir = freshDir();
     scaffold({ projectName: "test-game", template: "three" }, dir);
