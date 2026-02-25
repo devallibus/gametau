@@ -81,6 +81,8 @@ export function scaffold(options: Options, cwd?: string): void {
   const { projectName, template } = options;
   const targetDir = resolve(cwd || process.cwd(), projectName);
 
+  console.error("[scaffold-debug]", JSON.stringify({ cwd, processCwd: process.cwd(), projectName, targetDir, targetExists: existsSync(targetDir) }));
+
   if (existsSync(targetDir)) {
     const contents = readdirSync(targetDir);
     if (contents.length > 0) {
