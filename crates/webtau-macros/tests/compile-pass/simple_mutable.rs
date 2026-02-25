@@ -1,0 +1,24 @@
+use serde::Serialize;
+
+#[derive(Serialize, Clone)]
+struct View { value: i32 }
+
+struct MyState { value: i32 }
+
+impl MyState {
+    fn increment(&mut self) -> View {
+        self.value += 1;
+        View { value: self.value }
+    }
+}
+
+mod commands {
+    use super::*;
+
+    #[webtau_macros::command]
+    fn increment(state: &mut MyState) -> View {
+        state.increment()
+    }
+}
+
+fn main() {}

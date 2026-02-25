@@ -1,0 +1,5 @@
+error: #[command] parameter names starting with `__webtau` are reserved for generated code
+ --> tests/compile-fail/reserved_prefix.rs:9:30
+  |
+9 | fn tick(state: &mut MyState, __webtau_bad: i32) -> View {
+  |                              ^^^^^^^^^^^^

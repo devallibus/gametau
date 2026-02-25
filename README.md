@@ -214,6 +214,43 @@ Expands to:
 - **`with_state(|state| ...)`** — Read-only access (panics if not initialized)
 - **`with_state_mut(|state| ...)`** — Mutable access (panics if not initialized)
 
+### `#[webtau::command]` — Shared Command Definitions (Rust crate)
+
+Write your command once. The macro generates both `#[tauri::command]` (desktop) and `#[wasm_bindgen]` (web) wrappers automatically.
+
+```rust
+// src-tauri/commands/src/commands.rs
+use my_game_core::{GameWorld, WorldView, TickResult};
+
+#[cfg(target_arch = "wasm32")]
+webtau::wasm_state!(GameWorld);
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen::prelude::wasm_bindgen]
+pub fn init() { set_state(GameWorld::new()); }
+
+#[webtau::command]
+pub fn get_world_view(state: &GameWorld) -> WorldView {
+    state.view()
+}
+
+#[webtau::command]
+pub fn tick_world(state: &mut GameWorld) -> TickResult {
+    state.tick()
+}
+```
+
+**Contract:**
+- First parameter must be a reference: `&T` (read-only) or `&mut T` (mutable). Any identifier works (`state`, `world`, `game`, etc.)
+- Additional parameters become named args: `fn tick(state: &mut Game, dt: f64, input: i32)`
+- Return type can be `T` (serialized), `Result<T, E>` (errors surface to JS), or `()` (nothing)
+
+**Generated code (you never write this):**
+- `#[cfg(not(wasm32))]` — `#[tauri::command]` wrapper with `State<Mutex<T>>`
+- `#[cfg(wasm32)]` — `#[wasm_bindgen]` wrapper with args-object deserialize via `serde_wasm_bindgen`
+
+**Important:** Place commands in a submodule (not at crate root) to avoid conflicts with Tauri's internal `#[macro_export]`. The scaffolder does this automatically.
+
 ### Tauri API Shims
 
 When `webtau-vite` aliases `@tauri-apps/api/*` imports to `webtau/*`, these shims provide browser-compatible implementations:
@@ -293,14 +330,17 @@ bunx create-gametau my-game -t vanilla   # Canvas2D
 ```
 my-game/
   src-tauri/
-    Cargo.toml              # Rust workspace: [core, app, wasm]
+    Cargo.toml              # Rust workspace: [core, commands, app, wasm]
     core/                   # Pure game logic (no framework deps)
-      src/lib.rs            # GameWorld struct + commands
+      src/lib.rs            # GameWorld struct + methods
+    commands/               # Shared command definitions (v2)
+      src/lib.rs            # Re-exports from submodule
+      src/commands.rs       # #[webtau::command] functions
     app/                    # Tauri desktop shell
-      src/lib.rs            # #[tauri::command] thin wrappers
+      src/lib.rs            # generate_handler! + state setup
       tauri.conf.json
-    wasm/                   # WASM bindings
-      src/lib.rs            # wasm_state! + #[wasm_bindgen] wrappers
+    wasm/                   # WASM entry point
+      src/lib.rs            # Links commands crate (exports auto-wired)
   src/
     index.ts                # Entry point
     game/scene.ts           # Three.js / PixiJS / Canvas2D scene
@@ -342,56 +382,72 @@ impl GameWorld {
 }
 ```
 
-### 2. Wrap for Tauri (`app/`)
+### 2. Define commands once (`commands/`)
 
-Standard `#[tauri::command]` functions with `State<Mutex<T>>`:
+Use `#[webtau::command]` to write each command once. The macro generates both Tauri and WASM wrappers.
+
+```rust
+// src-tauri/commands/src/commands.rs
+use my_game_core::{GameWorld, WorldView, TickResult};
+
+#[cfg(target_arch = "wasm32")]
+webtau::wasm_state!(GameWorld);
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen::prelude::wasm_bindgen]
+pub fn init() { set_state(GameWorld::new()); }
+
+#[webtau::command]
+pub fn get_world_view(state: &GameWorld) -> WorldView {
+    state.view()
+}
+
+#[webtau::command]
+pub fn tick_world(state: &mut GameWorld) -> TickResult {
+    state.tick()
+}
+```
+
+```rust
+// src-tauri/commands/src/lib.rs — re-export from submodule
+mod commands;
+
+#[cfg(not(target_arch = "wasm32"))]
+pub use commands::{get_world_view, tick_world};
+
+#[cfg(target_arch = "wasm32")]
+pub use commands::{init, get_world_view, tick_world};
+```
+
+### 3. Wire up Tauri (`app/`)
+
+The app crate imports the shared commands and registers them:
 
 ```rust
 // src-tauri/app/src/lib.rs
 use std::sync::Mutex;
-use tauri::State;
 use my_game_core::GameWorld;
+use my_game_commands::{get_world_view, tick_world};
 
-struct AppState(Mutex<GameWorld>);
-
-#[tauri::command]
-fn get_world_view(state: State<AppState>) -> my_game_core::WorldView {
-    state.0.lock().unwrap().view()
-}
-
-#[tauri::command]
-fn tick_world(state: State<AppState>) -> my_game_core::TickResult {
-    state.0.lock().unwrap().tick()
+pub fn run() {
+    tauri::Builder::default()
+        .manage(Mutex::new(GameWorld::new()))
+        .invoke_handler(tauri::generate_handler![get_world_view, tick_world])
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
 }
 ```
 
-### 3. Wrap for WASM (`wasm/`) — uses `webtau` Rust crate
+### 4. Wire up WASM (`wasm/`)
 
-Use `wasm_state!` to replace Tauri's `Mutex<T>` with thread-local storage. (See [`wasm_state!` reference above](#wasm_statetype-rust-crate).)
+The wasm crate just links the commands — exports are auto-wired through `wasm_bindgen`:
 
 ```rust
 // src-tauri/wasm/src/lib.rs
-use wasm_bindgen::prelude::*;
-use serde_wasm_bindgen::to_value;
-use my_game_core::GameWorld;
-
-webtau::wasm_state!(GameWorld);
-
-#[wasm_bindgen]
-pub fn init() { set_state(GameWorld::new()); }
-
-#[wasm_bindgen]
-pub fn get_world_view() -> JsValue {
-    with_state(|w| to_value(&w.view()).unwrap())
-}
-
-#[wasm_bindgen]
-pub fn tick_world() -> JsValue {
-    with_state_mut(|w| to_value(&w.tick()).unwrap())
-}
+use my_game_commands as _;
 ```
 
-### 4. Call from frontend — uses `webtau` npm package
+### 5. Call from frontend — uses `webtau` npm package
 
 ```typescript
 // src/services/backend.ts
@@ -419,7 +475,7 @@ if (!isTauri()) {
 // From here on, getWorldView() and tickWorld() work on both platforms
 ```
 
-### 5. Configure Vite — uses `webtau-vite`
+### 6. Configure Vite — uses `webtau-vite`
 
 ```typescript
 // vite.config.ts
@@ -461,24 +517,37 @@ Install the three packages:
 ```bash
 bun add webtau
 bun add -D webtau-vite
-cargo add webtau          # in your wasm crate
+cargo add webtau          # in your commands crate
 ```
 
 Then:
 
 1. **Extract core logic** into a separate `core/` crate with no Tauri deps
-2. **Create a `wasm/` crate** with `crate-type = ["cdylib"]`
-3. **Use `wasm_state!`** + write `#[wasm_bindgen]` wrappers (typically 10-20 lines)
-4. **Replace** `import { invoke } from "@tauri-apps/api/core"` with `import { invoke } from "webtau"`
-5. **Add `configure()`** call in your entry point for web mode
-6. **Add `webtau-vite`** to your `vite.config.ts`
+2. **Create a `commands/` crate** — define shared commands with `#[webtau::command]`
+3. **Create a `wasm/` crate** with `crate-type = ["cdylib"]` that links `commands`
+4. **Update `app/`** to import commands from `commands/` instead of defining them inline
+5. **Replace** `import { invoke } from "@tauri-apps/api/core"` with `import { invoke } from "webtau"`
+6. **Add `configure()`** call in your entry point for web mode
+7. **Add `webtau-vite`** to your `vite.config.ts`
 
-Total migration: ~30 minutes for a typical game.
+### Migrating from v1 Manual Wrappers to v2 `#[webtau::command]`
+
+If you already use gametau v1 with separate `app/` and `wasm/` wrappers:
+
+1. **Create `commands/` crate** in your workspace
+2. **Move command logic** from `app/src/lib.rs` into `commands/src/commands.rs`
+3. **Replace** `#[tauri::command]` + manual `State<Mutex<T>>` with `#[webtau::command]` + `state: &T` / `state: &mut T`
+4. **Move** `wasm_state!` and `init()` into `commands/src/commands.rs` behind `#[cfg(target_arch = "wasm32")]`
+5. **Re-export** commands from `commands/src/lib.rs` with cfg-gated `pub use`
+6. **Simplify `app/`** to just import + `generate_handler!`
+7. **Simplify `wasm/`** to just `use my_commands as _;`
+
+Manual v1 wrappers remain fully supported — you can migrate command-by-command at your own pace.
 
 ## Roadmap
 
-- **v1 (current)**: `wasm_state!` macro, invoke router, Vite plugin, project scaffolder
-- **v2**: `#[webtau::command]` proc macro — generates both `#[tauri::command]` and `#[wasm_bindgen]` from a single function definition
+- **v1**: `wasm_state!` macro, invoke router, Vite plugin, project scaffolder
+- **v2 (current)**: `#[webtau::command]` proc macro — generates both `#[tauri::command]` and `#[wasm_bindgen]` from a single function definition. Shared command modules eliminate duplicate wrappers.
 - **v2+**: Additional shims (fs → IndexedDB, dialog → `<dialog>`, event → CustomEvent)
 
 ## Support & Commercial Licensing

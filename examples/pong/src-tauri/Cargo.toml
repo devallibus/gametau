@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["core", "app", "wasm"]
+members = ["core", "commands", "app", "wasm"]
 
 [workspace.package]
 version = "0.1.0"

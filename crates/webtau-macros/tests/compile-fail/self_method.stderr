@@ -1,0 +1,5 @@
+error: #[command] does not support methods with `self`; use a free function with `state: &T` or `state: &mut T`
+  --> tests/compile-fail/self_method.rs:10:13
+   |
+10 |     fn tick(&self) -> View {
+   |             ^

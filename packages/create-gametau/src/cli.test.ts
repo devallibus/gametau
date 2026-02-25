@@ -68,6 +68,9 @@ describe("create-gametau CLI", () => {
     expect(existsSync(join(projectDir, "src-tauri", "Cargo.toml"))).toBe(true);
     expect(existsSync(join(projectDir, "src-tauri", "core", "src", "lib.rs"))).toBe(true);
     expect(existsSync(join(projectDir, "src-tauri", "wasm", "src", "lib.rs"))).toBe(true);
+    expect(existsSync(join(projectDir, "src-tauri", "commands", "Cargo.toml"))).toBe(true);
+    expect(existsSync(join(projectDir, "src-tauri", "commands", "src", "lib.rs"))).toBe(true);
+    expect(existsSync(join(projectDir, "src-tauri", "commands", "src", "commands.rs"))).toBe(true);
     expect(existsSync(join(projectDir, "src", "game", "scene.ts"))).toBe(true);
 
     // Check Three.js dependency in package.json

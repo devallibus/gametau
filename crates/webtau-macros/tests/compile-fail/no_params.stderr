@@ -1,0 +1,5 @@
+error: #[command] requires at least one parameter: `state: &T` or `state: &mut T`
+ --> tests/compile-fail/no_params.rs:2:4
+  |
+2 | fn tick() -> i32 {
+  |    ^^^^

@@ -1,3 +1,6 @@
+/// Re-export the `#[command]` proc macro so users write `#[webtau::command]`.
+pub use webtau_macros::command;
+
 /// Generates thread-local state management boilerplate for WASM targets.
 ///
 /// When building a Tauri game for the web, you need to replace

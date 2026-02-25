@@ -11,3 +11,12 @@ publish = false
 proc-macro = true
 
 [dependencies]
+syn = { version = "2", features = ["full"] }
+quote = "1"
+proc-macro2 = "1"
+
+[dev-dependencies]
+trybuild = "1"
+tauri = { version = "2", features = [] }
+webtau = { path = "../webtau" }
+serde = { version = "1", features = ["derive"] }
