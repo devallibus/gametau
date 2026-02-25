@@ -117,11 +117,168 @@ gametau gives it all back:
 
 ## Packages
 
-gametau ships three things. The scaffolder installs them all for you, but you can also add them individually to an existing project.
+gametau ships three packages that work together. The runtime bridge (`webtau`) handles your game's Rust↔JS communication. The Vite plugin (`webtau-vite`) automates builds. The scaffolder (`create-gametau`) wires everything up for new projects.
 
-### `create-gametau` — Project Scaffolder
+You can install them individually or use the scaffolder to get all three at once.
 
-Generates a complete Rust + Tauri + Vite project with everything wired up.
+---
+
+## `webtau` — Runtime Bridge
+
+Two packages with the same name on different registries — they work together.
+
+```bash
+bun add webtau            # npm — invoke() router + Tauri API shims
+cargo add webtau          # Rust — wasm_state! macro
+```
+
+The npm package provides the frontend interface. The Rust crate provides the WASM state management. Together, they let you call the same `invoke("command")` on both platforms.
+
+### `invoke<T>(command, args?)`
+
+Universal IPC — routes to Tauri or WASM automatically.
+
+```typescript
+import { invoke } from "webtau";
+
+const view = await invoke<WorldView>("get_world_view");
+const result = await invoke<TickResult>("tick_world", { speed: 2 });
+```
+
+In web mode, args are passed as a **single object** to the WASM export (matching Tauri's named-args semantics). Your `#[wasm_bindgen]` function should accept a `JsValue` and deserialize with `serde_wasm_bindgen::from_value()`.
+
+**Error behavior (web mode):**
+
+| Situation | Error message |
+|---|---|
+| `invoke()` before `configure()` | Includes exact `configure()` call pattern to fix it |
+| WASM export not found | Lists all available exported function names |
+| WASM module fails to load | Calls `onLoadError` callback, then rethrows — next `invoke()` retries the load |
+
+Loading is deduplicated: concurrent `invoke()` calls while the WASM module is still loading share the same promise. After a load failure, the promise is cleared so subsequent calls can retry.
+
+### `configure(config)`
+
+Configure the WASM module loader for web builds. No-op when running inside Tauri.
+
+```typescript
+import { configure, isTauri } from "webtau";
+
+if (!isTauri()) {
+  configure({
+    loadWasm: async () => {
+      const wasm = await import("./wasm/my_game_wasm");
+      await wasm.default();
+      wasm.init();
+      return wasm;
+    },
+    onLoadError: (err) => console.error(err),  // optional
+  });
+}
+```
+
+### `isTauri()`
+
+Returns `true` when running inside Tauri (checks `window.__TAURI_INTERNALS__`).
+
+### `wasm_state!(Type)` (Rust crate)
+
+Generates thread-local state management for WASM. Replaces Tauri's `State<Mutex<T>>` pattern for the browser target.
+
+```rust
+use wasm_bindgen::prelude::*;
+use serde_wasm_bindgen::to_value;
+use my_game_core::GameWorld;
+
+webtau::wasm_state!(GameWorld);
+
+#[wasm_bindgen]
+pub fn init() { set_state(GameWorld::new()); }
+
+#[wasm_bindgen]
+pub fn get_world_view() -> JsValue {
+    with_state(|w| to_value(&w.view()).unwrap())
+}
+
+#[wasm_bindgen]
+pub fn tick_world() -> JsValue {
+    with_state_mut(|w| to_value(&w.tick()).unwrap())
+}
+```
+
+Expands to:
+
+- **`set_state(val: T)`** — Initialize or replace the state
+- **`with_state(|state| ...)`** — Read-only access (panics if not initialized)
+- **`with_state_mut(|state| ...)`** — Mutable access (panics if not initialized)
+
+### Tauri API Shims
+
+When `webtau-vite` aliases `@tauri-apps/api/*` imports to `webtau/*`, these shims provide browser-compatible implementations:
+
+**`webtau/window`** — Web shim for `@tauri-apps/api/window`. Import `getCurrentWindow()` — same API as Tauri.
+
+| Method | Web Implementation |
+|---|---|
+| `isFullscreen()` | `document.fullscreenElement` |
+| `setFullscreen(bool)` | Fullscreen API |
+| `setTitle(string)` | `document.title` |
+| `setSize(LogicalSize)` | `window.resizeTo()` |
+| `currentMonitor()` | `screen.width/height` |
+| `setDecorations(bool)` | No-op |
+| `center()` | `window.moveTo()` |
+
+**`webtau/dpi`** — Web shim for `@tauri-apps/api/dpi`. Exports `LogicalSize`, `PhysicalSize`, `LogicalPosition`, `PhysicalPosition` with conversion methods.
+
+---
+
+## `webtau-vite` — Vite Plugin
+
+Automates wasm-pack builds, watches Rust files for hot-reload, and aliases `@tauri-apps/api/*` imports to the `webtau` shims above.
+
+```bash
+bun add -D webtau-vite
+```
+
+```typescript
+// vite.config.ts
+import { defineConfig } from "vite";
+import webtauVite from "webtau-vite";
+
+export default defineConfig({
+  plugins: [webtauVite()],
+});
+```
+
+Zero config for the standard layout (`src-tauri/wasm`, `src-tauri/core`, etc.) — the plugin auto-detects crate paths and watch directories.
+
+### What it does per mode
+
+| Feature | `vite dev` (web) | `vite build` (web) | `tauri dev`/`tauri build` |
+|---|---|---|---|
+| wasm-pack | `--dev` | `--release` | Skipped |
+| Rust file watching | Chokidar → full-reload | N/A | Skipped |
+| Import aliasing | `@tauri-apps/api/*` → `webtau/*` | Same | Disabled |
+| wasm-opt | N/A | Optional (`wasmOpt: true`) | Skipped |
+
+### Options
+
+All optional — override only for non-standard layouts:
+
+```typescript
+webtauVite({
+  wasmCrate: "src-tauri/wasm",      // Path to WASM crate (default)
+  wasmOutDir: "src/wasm",           // wasm-pack output directory (default)
+  watchPaths: [],                    // Extra dirs to watch (sibling crates auto-detected)
+  wasmOpt: false,                    // Run wasm-opt on release (default)
+})
+```
+
+---
+
+## `create-gametau` — Project Scaffolder
+
+Generates a complete project with `webtau`, `webtau-vite`, and a Rust workspace already wired up.
 
 ```bash
 bunx create-gametau my-game              # Three.js (default)
@@ -129,36 +286,7 @@ bunx create-gametau my-game -t pixi      # PixiJS
 bunx create-gametau my-game -t vanilla   # Canvas2D
 ```
 
-### `webtau` — Runtime Bridge
-
-Two packages with the same name on different registries — they work together.
-
-```bash
-# Frontend: invoke() router that auto-detects Tauri vs browser
-bun add webtau
-
-# Rust: wasm_state! macro for WASM thread-local state management
-cargo add webtau
-```
-
-The npm package gives you `invoke()`, `configure()`, `isTauri()`, and web shims for `@tauri-apps/api/window` and `@tauri-apps/api/dpi`. The Rust crate gives you `wasm_state!` to manage game state in WASM without Tauri's `Mutex<T>`.
-
-### `webtau-vite` — Vite Plugin
-
-Automates wasm-pack builds, watches Rust files for hot-reload, and aliases `@tauri-apps/api/*` imports to their web shims.
-
-```bash
-bun add -D webtau-vite
-```
-
-Zero config for the standard layout. Add one line to `vite.config.ts`:
-
-```typescript
-import webtauVite from "webtau-vite";
-export default defineConfig({ plugins: [webtauVite()] });
-```
-
-## Project Structure (scaffolded)
+### Scaffolded project structure
 
 ```
 my-game/
@@ -180,7 +308,11 @@ my-game/
   vite.config.ts            # Pre-configured with webtau-vite
 ```
 
-## Usage Guide
+---
+
+## Putting It All Together
+
+Here's how the three packages connect in a typical project. Whether you scaffolded with `create-gametau` or added the packages manually, the code is the same.
 
 ### 1. Write game logic in Rust (`core/`)
 
@@ -231,9 +363,9 @@ fn tick_world(state: State<AppState>) -> my_game_core::TickResult {
 }
 ```
 
-### 3. Wrap for WASM (`wasm/`)
+### 3. Wrap for WASM (`wasm/`) — uses `webtau` Rust crate
 
-Use `wasm_state!` to replace Tauri's `Mutex<T>` with thread-local storage:
+Use `wasm_state!` to replace Tauri's `Mutex<T>` with thread-local storage. (See [`wasm_state!` reference above](#wasm_statetype-rust-crate).)
 
 ```rust
 // src-tauri/wasm/src/lib.rs
@@ -257,7 +389,7 @@ pub fn tick_world() -> JsValue {
 }
 ```
 
-### 4. Call from frontend (identical code for both targets)
+### 4. Call from frontend — uses `webtau` npm package
 
 ```typescript
 // src/services/backend.ts
@@ -268,7 +400,7 @@ export const tickWorld = () => invoke<TickResult>("tick_world");
 ```
 
 ```typescript
-// src/index.ts
+// src/index.ts — configure() for web mode
 import { configure, isTauri } from "webtau";
 
 if (!isTauri()) {
@@ -285,7 +417,7 @@ if (!isTauri()) {
 // From here on, getWorldView() and tickWorld() work on both platforms
 ```
 
-### 5. Configure Vite
+### 5. Configure Vite — uses `webtau-vite`
 
 ```typescript
 // vite.config.ts
@@ -295,109 +427,6 @@ import webtauVite from "webtau-vite";
 export default defineConfig({
   plugins: [webtauVite()],
 });
-```
-
-For the standard layout (`src-tauri/wasm`, `src-tauri/core`, etc.), zero config is needed — the plugin auto-detects crate paths and watch directories. Override only for non-standard layouts:
-
-```typescript
-webtauVite({
-  wasmCrate: "custom/path/to/wasm",
-  wasmOutDir: "src/custom-wasm",
-  watchPaths: ["extra/rust/src"],
-  wasmOpt: true, // release builds only
-})
-```
-
-## API Reference
-
-### Rust: `webtau` crate
-
-#### `wasm_state!(Type)`
-
-Generates thread-local state management for WASM. Expands to:
-
-- **`set_state(val: T)`** — Initialize or replace the state
-- **`with_state(|state| ...)`** — Read-only access (panics if not initialized)
-- **`with_state_mut(|state| ...)`** — Mutable access (panics if not initialized)
-
-### npm: `webtau`
-
-#### `configure(config)`
-
-Configure the WASM module loader for web builds. No-op when running inside Tauri.
-
-```typescript
-configure({
-  loadWasm: () => import("./wasm/my_game_wasm"),
-  onLoadError: (err) => console.error(err),  // optional
-});
-```
-
-#### `invoke<T>(command, args?)`
-
-Universal IPC — routes to Tauri or WASM automatically.
-
-In web mode, args are passed as a **single object** to the WASM export
-(matching Tauri's named-args semantics). Your `#[wasm_bindgen]` function
-should accept a `JsValue` and deserialize with `serde_wasm_bindgen::from_value()`.
-
-```typescript
-const view = await invoke<WorldView>("get_world_view");
-const result = await invoke<TickResult>("tick_world", { speed: 2 });
-```
-
-**Error behavior (web mode):**
-
-| Situation | Error message |
-|---|---|
-| `invoke()` before `configure()` | Includes exact `configure()` call pattern to fix it |
-| WASM export not found | Lists all available exported function names |
-| WASM module fails to load | Calls `onLoadError` callback, then rethrows — next `invoke()` retries the load |
-
-Loading is deduplicated: concurrent `invoke()` calls while the WASM module is still loading share the same promise. After a load failure, the promise is cleared so subsequent calls can retry.
-
-#### `isTauri()`
-
-Returns `true` when running inside Tauri (checks `window.__TAURI_INTERNALS__`).
-
-### npm: `webtau/window`
-
-Web shim for `@tauri-apps/api/window`. Import `getCurrentWindow()` — same API as Tauri, backed by Fullscreen API / `document.title` / `screen.*`.
-
-| Method | Web Implementation |
-|---|---|
-| `isFullscreen()` | `document.fullscreenElement` |
-| `setFullscreen(bool)` | Fullscreen API |
-| `setTitle(string)` | `document.title` |
-| `setSize(LogicalSize)` | `window.resizeTo()` |
-| `currentMonitor()` | `screen.width/height` |
-| `setDecorations(bool)` | No-op |
-| `center()` | `window.moveTo()` |
-
-### npm: `webtau/dpi`
-
-Web shim for `@tauri-apps/api/dpi`. Exports `LogicalSize`, `PhysicalSize`, `LogicalPosition`, `PhysicalPosition` with conversion methods.
-
-### npm: `webtau-vite`
-
-Vite plugin that handles everything automatically:
-
-| Feature | `vite dev` (web) | `vite build` (web) | `tauri dev`/`tauri build` |
-|---|---|---|---|
-| wasm-pack | `--dev` | `--release` | Skipped |
-| Rust file watching | Chokidar → full-reload | N/A | Skipped |
-| Import aliasing | `@tauri-apps/api/*` → `webtau/*` | Same | Disabled |
-| wasm-opt | N/A | Optional (`wasmOpt: true`) | Skipped |
-
-**Options (all optional — zero-config works for standard layouts):**
-
-```typescript
-webtauVite({
-  wasmCrate: "src-tauri/wasm",      // Path to WASM crate (default)
-  wasmOutDir: "src/wasm",           // wasm-pack output directory (default)
-  watchPaths: [],                    // Extra dirs to watch (sibling crates auto-detected)
-  wasmOpt: false,                    // Run wasm-opt on release (default)
-})
 ```
 
 ## WASM Optimization
