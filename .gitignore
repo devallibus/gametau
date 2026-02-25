@@ -21,6 +21,10 @@ Thumbs.db
 # Turbo
 .turbo/
 
+# Test output
+.test-scratch/
+__test_output__/
+
 # Env
 .env
 .env.*

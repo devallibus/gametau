@@ -1,23 +1,24 @@
 import { describe, test, expect, afterEach } from "bun:test";
 import { existsSync, rmSync, readFileSync, readdirSync, mkdirSync } from "fs";
 import { join } from "path";
-import { tmpdir } from "os";
 import { scaffold } from "./cli";
 
-let tmpDir: string;
+// Use a project-local directory instead of /tmp/ (CI runners have stale /tmp/ content)
+const TEST_ROOT = join(import.meta.dir, "..", ".test-scratch");
+
+let testDir: string;
 
 afterEach(() => {
-  if (tmpDir) {
-    rmSync(tmpDir, { recursive: true, force: true });
+  if (testDir) {
+    rmSync(testDir, { recursive: true, force: true });
   }
 });
 
 function freshDir(): string {
-  // Avoid mkdtempSync — buggy in bun <1.3 (returns non-empty dirs on Linux CI)
   const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  tmpDir = join(tmpdir(), `gametau-test-${id}`);
-  mkdirSync(tmpDir, { recursive: true });
-  return tmpDir;
+  testDir = join(TEST_ROOT, id);
+  mkdirSync(testDir, { recursive: true });
+  return testDir;
 }
 
 describe("create-gametau CLI", () => {
