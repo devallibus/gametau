@@ -117,12 +117,46 @@ gametau gives it all back:
 
 ## Packages
 
-| Package | Registry | Purpose |
-|---|---|---|
-| [`webtau`](./crates/webtau) | crates.io | `wasm_state!` macro for WASM state management |
-| [`webtau`](./packages/webtau) | npm | `invoke()` router + Tauri API shims |
-| [`webtau-vite`](./packages/webtau-vite) | npm | Vite plugin: wasm-pack automation + import aliasing |
-| [`create-gametau`](./packages/create-gametau) | npm | Project scaffolder CLI |
+gametau ships three things. The scaffolder installs them all for you, but you can also add them individually to an existing project.
+
+### `create-gametau` — Project Scaffolder
+
+Generates a complete Rust + Tauri + Vite project with everything wired up.
+
+```bash
+bunx create-gametau my-game              # Three.js (default)
+bunx create-gametau my-game -t pixi      # PixiJS
+bunx create-gametau my-game -t vanilla   # Canvas2D
+```
+
+### `webtau` — Runtime Bridge
+
+Two packages with the same name on different registries — they work together.
+
+```bash
+# Frontend: invoke() router that auto-detects Tauri vs browser
+bun add webtau
+
+# Rust: wasm_state! macro for WASM thread-local state management
+cargo add webtau
+```
+
+The npm package gives you `invoke()`, `configure()`, `isTauri()`, and web shims for `@tauri-apps/api/window` and `@tauri-apps/api/dpi`. The Rust crate gives you `wasm_state!` to manage game state in WASM without Tauri's `Mutex<T>`.
+
+### `webtau-vite` — Vite Plugin
+
+Automates wasm-pack builds, watches Rust files for hot-reload, and aliases `@tauri-apps/api/*` imports to their web shims.
+
+```bash
+bun add -D webtau-vite
+```
+
+Zero config for the standard layout. Add one line to `vite.config.ts`:
+
+```typescript
+import webtauVite from "webtau-vite";
+export default defineConfig({ plugins: [webtauVite()] });
+```
 
 ## Project Structure (scaffolded)
 
@@ -390,6 +424,16 @@ Expected sizes:
 - **[`examples/pong`](./examples/pong)** — Two-player Pong with Rust physics + PixiJS rendering. Demonstrates real game loop, collision detection, and keyboard input across both targets.
 
 ## Migrating an Existing Tauri Game
+
+Install the three packages:
+
+```bash
+bun add webtau
+bun add -D webtau-vite
+cargo add webtau          # in your wasm crate
+```
+
+Then:
 
 1. **Extract core logic** into a separate `core/` crate with no Tauri deps
 2. **Create a `wasm/` crate** with `crate-type = ["cdylib"]`
