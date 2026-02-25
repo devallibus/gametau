@@ -357,6 +357,16 @@ Total migration: ~30 minutes for a typical game.
 - **v2**: `#[webtau::command]` proc macro — generates both `#[tauri::command]` and `#[wasm_bindgen]` from a single function definition
 - **v2+**: Additional shims (fs → IndexedDB, dialog → `<dialog>`, event → CustomEvent)
 
-## License
+## Support & Commercial Licensing
 
-MIT OR Apache-2.0
+Gametau is and will always be **100% free** under Apache 2.0 for everyone.
+
+If your commercial game using Gametau reaches more than $100k lifetime revenue, we offer a simple
+optional commercial license with a gentle one-time donation (1%, min $2k, max $15k per game, due
+within one year). It's our way of saying thank you when things go well.
+
+[Read the commercial license →](docs/COMMERCIAL-LICENSE.md)
+
+Contributors also agree to our friendly [CLA](CLA.md).
+
+Already successful? Just open an issue labeled `commercial license` — happy to help!

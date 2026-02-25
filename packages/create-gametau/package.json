@@ -2,7 +2,7 @@
   "name": "create-gametau",
   "version": "0.1.0",
   "description": "Scaffold a Tauri game that deploys to web + desktop",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "type": "module",
   "bin": {
     "create-gametau": "./dist/cli.js"
