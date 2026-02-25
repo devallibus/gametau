@@ -31,8 +31,12 @@ jobs:
 
       - run: bun install
 
-      # Build workspace packages (webtau, webtau-vite) so examples can use them
-      - run: bun run build
+      # Build workspace packages (webtau, webtau-vite) so examples can import them
+      - name: Build packages
+        run: |
+          cd packages/webtau && bun run build
+          cd ../webtau-vite && bun run build
+          cd ../create-gametau && bun run build
 
       # Build counter example
       - name: Build counter
