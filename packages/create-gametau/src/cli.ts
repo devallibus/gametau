@@ -77,9 +77,9 @@ function getTemplatesDir(): string {
   return join(packageRoot, "templates");
 }
 
-export function scaffold(options: Options): void {
+export function scaffold(options: Options, cwd?: string): void {
   const { projectName, template } = options;
-  const targetDir = resolve(process.cwd(), projectName);
+  const targetDir = resolve(cwd || process.cwd(), projectName);
 
   if (existsSync(targetDir)) {
     const contents = readdirSync(targetDir);
