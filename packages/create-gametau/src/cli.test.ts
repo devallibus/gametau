@@ -1,38 +1,33 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
 import { existsSync, rmSync, readFileSync, readdirSync } from "fs";
 import { join } from "path";
-import { execSync } from "child_process";
+import { scaffold } from "./cli";
 
 const TMP_DIR = join(import.meta.dir, "..", "__test_output__");
-const CLI_PATH = join(import.meta.dir, "cli.ts");
 
-function run(args: string): string {
-  return execSync(`bun ${CLI_PATH} ${args}`, {
-    cwd: TMP_DIR,
-    encoding: "utf-8",
-    timeout: 10000,
-  });
+function scaffoldIn(name: string, template: "three" | "pixi" | "vanilla" = "three") {
+  const originalCwd = process.cwd();
+  try {
+    process.chdir(TMP_DIR);
+    scaffold({ projectName: name, template });
+  } finally {
+    process.chdir(originalCwd);
+  }
 }
 
 beforeEach(() => {
-  if (existsSync(TMP_DIR)) {
-    rmSync(TMP_DIR, { recursive: true });
-  }
+  rmSync(TMP_DIR, { recursive: true, force: true });
   const { mkdirSync } = require("fs");
   mkdirSync(TMP_DIR, { recursive: true });
 });
 
 afterEach(() => {
-  if (existsSync(TMP_DIR)) {
-    rmSync(TMP_DIR, { recursive: true });
-  }
+  rmSync(TMP_DIR, { recursive: true, force: true });
 });
 
 describe("create-gametau CLI", () => {
   test("scaffolds a project with default (three) template", () => {
-    const output = run("test-game");
-    expect(output).toContain("Creating test-game with three template");
-    expect(output).toContain("Done!");
+    scaffoldIn("test-game");
 
     const projectDir = join(TMP_DIR, "test-game");
     expect(existsSync(projectDir)).toBe(true);
@@ -51,7 +46,7 @@ describe("create-gametau CLI", () => {
   });
 
   test("replaces {{PROJECT_NAME}} placeholders", () => {
-    run("my-cool-game");
+    scaffoldIn("my-cool-game");
     const projectDir = join(TMP_DIR, "my-cool-game");
 
     const cargoToml = readFileSync(
@@ -63,8 +58,7 @@ describe("create-gametau CLI", () => {
   });
 
   test("scaffolds with pixi template", () => {
-    const output = run("pixi-game --template pixi");
-    expect(output).toContain("Creating pixi-game with pixi template");
+    scaffoldIn("pixi-game", "pixi");
 
     const projectDir = join(TMP_DIR, "pixi-game");
     const pkg = JSON.parse(readFileSync(join(projectDir, "package.json"), "utf-8"));
@@ -72,8 +66,7 @@ describe("create-gametau CLI", () => {
   });
 
   test("scaffolds with vanilla template", () => {
-    const output = run("vanilla-game --template vanilla");
-    expect(output).toContain("Creating vanilla-game with vanilla template");
+    scaffoldIn("vanilla-game", "vanilla");
 
     const projectDir = join(TMP_DIR, "vanilla-game");
     // Vanilla has no extra rendering deps
@@ -82,7 +75,7 @@ describe("create-gametau CLI", () => {
   });
 
   test("generated vite.config.ts uses zero-config webtauVite()", () => {
-    run("config-check-game");
+    scaffoldIn("config-check-game");
     const projectDir = join(TMP_DIR, "config-check-game");
     const viteConfig = readFileSync(join(projectDir, "vite.config.ts"), "utf-8");
 
@@ -95,7 +88,7 @@ describe("create-gametau CLI", () => {
   });
 
   test("no {{PROJECT_NAME}} placeholders remain in any file", () => {
-    run("placeholder-check");
+    scaffoldIn("placeholder-check");
     const projectDir = join(TMP_DIR, "placeholder-check");
 
     // Recursively check all text files for leftover placeholders
@@ -119,13 +112,8 @@ describe("create-gametau CLI", () => {
 
   test("fails on existing non-empty directory", () => {
     // First scaffold
-    run("conflict-game");
+    scaffoldIn("conflict-game");
     // Second scaffold should fail
-    try {
-      run("conflict-game");
-      expect(true).toBe(false); // Should not reach here
-    } catch (err: any) {
-      expect(err.stderr?.toString() || err.message).toContain("already exists");
-    }
+    expect(() => scaffoldIn("conflict-game")).toThrow("already exists");
   });
 });

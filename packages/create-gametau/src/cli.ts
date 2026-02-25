@@ -77,15 +77,14 @@ function getTemplatesDir(): string {
   return join(packageRoot, "templates");
 }
 
-function scaffold(options: Options): void {
+export function scaffold(options: Options): void {
   const { projectName, template } = options;
   const targetDir = resolve(process.cwd(), projectName);
 
   if (existsSync(targetDir)) {
     const contents = readdirSync(targetDir);
     if (contents.length > 0) {
-      console.error(`Error: directory "${projectName}" already exists and is not empty.`);
-      process.exit(1);
+      throw new Error(`directory "${projectName}" already exists and is not empty.`);
     }
   }
 
@@ -94,12 +93,10 @@ function scaffold(options: Options): void {
   const overlayDir = join(templatesDir, template);
 
   if (!existsSync(baseDir)) {
-    console.error(`Error: base template not found at ${baseDir}`);
-    process.exit(1);
+    throw new Error(`base template not found at ${baseDir}`);
   }
 
   // Copy base template
-  console.log(`Creating ${projectName} with ${template} template...`);
   mkdirSync(targetDir, { recursive: true });
   cpSync(baseDir, targetDir, { recursive: true });
 
@@ -110,17 +107,6 @@ function scaffold(options: Options): void {
 
   // Replace {{PROJECT_NAME}} placeholders
   replaceInDir(targetDir, "{{PROJECT_NAME}}", projectName);
-
-  console.log(`
-Done! Your game is ready.
-
-  cd ${projectName}
-  bun install
-  bun run dev          # web dev server
-  bun run dev:tauri    # desktop dev (requires Tauri CLI)
-  bun run build:web    # build for web deployment
-  bun run build:desktop # build desktop app
-`);
 }
 
 function replaceInDir(dir: string, search: string, replace: string): void {
@@ -142,7 +128,25 @@ function replaceInDir(dir: string, search: string, replace: string): void {
   }
 }
 
-// Main
-const args = process.argv.slice(2);
-const options = parseArgs(args);
-scaffold(options);
+// Main — only runs when executed directly (not when imported by tests)
+if (import.meta.main) {
+  const args = process.argv.slice(2);
+  const options = parseArgs(args);
+  try {
+    console.log(`Creating ${options.projectName} with ${options.template} template...`);
+    scaffold(options);
+    console.log(`
+Done! Your game is ready.
+
+  cd ${options.projectName}
+  bun install
+  bun run dev          # web dev server
+  bun run dev:tauri    # desktop dev (requires Tauri CLI)
+  bun run build:web    # build for web deployment
+  bun run build:desktop # build desktop app
+`);
+  } catch (err) {
+    console.error(`Error: ${err instanceof Error ? err.message : err}`);
+    process.exit(1);
+  }
+}
