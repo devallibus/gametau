@@ -6,47 +6,49 @@
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/devallibus/gametau)](https://github.com/devallibus/gametau)
 
-**Web tools to build. Rust to power it. Native to ship. Web to spread it.**
+A toolkit for building games in Rust that run **both** as native desktop apps (via [Tauri](https://v2.tauri.app/)) **and** in the browser (via WASM) — from the same codebase, with zero `if`-statements to switch between them.
 
-Write your game logic once in Rust. Ship native to Steam. Keep the web build for itch.io and GitHub Pages. Develop everything in Chrome with full DevTools and hot-reload.
+You write your game logic once in a plain Rust crate. gametau gives you:
 
-**For Rust game developers** who want to prototype in the browser with hot-reload and ship native to Steam — without rewriting anything.
+- **A runtime bridge** (`webtau`) that lets your frontend call Rust functions identically on both platforms — Tauri IPC on desktop, direct WASM calls in the browser
+- **A Vite plugin** (`webtau-vite`) that compiles your Rust to WASM on save, watches for changes, and hot-reloads
+- **A scaffolder** (`create-gametau`) that generates a ready-to-run project with all of this wired up
 
 **[Play the Pong demo in your browser →](https://devallibus.github.io/gametau/pong/)** — Rust physics, PixiJS rendering, running as WASM. Same code ships as a native desktop app.
-
-| Target | Command | Destination |
-|---|---|---|
-| **Dev** | `bun run dev` | `localhost:1420` — hot-reload, no Tauri needed |
-| **Web** | `bun run build:web` | itch.io, GitHub Pages, any static host |
-| **Desktop** | `bun run build:desktop` | Steam-ready native `.exe` / `.dmg` / `.AppImage` |
-
-```typescript
-import { invoke } from "webtau";
-
-// Identical call on both platforms. Auto-routes at runtime.
-const result = await invoke<TickResult>("tick_world");
-```
 
 ---
 
 ## Quick Start
 
+### New project
+
 ```bash
-# Scaffold a new project
 bunx create-gametau my-game              # Three.js (default)
 bunx create-gametau my-game -t pixi      # PixiJS
 bunx create-gametau my-game -t vanilla   # Canvas2D
 
-# Run it
 cd my-game
 bun install
-bun run dev          # Web dev server (localhost:1420)
-bun run dev:tauri    # Desktop dev (requires Tauri CLI)
-
-# Ship it
-bun run build:web       # → dist/ (deploy to itch.io, GitHub Pages, etc.)
-bun run build:desktop   # → Tauri bundle (exe/dmg/AppImage)
+bun run dev                              # localhost:1420 — hot-reload in Chrome
 ```
+
+### Existing Tauri project
+
+```bash
+bun add webtau                           # runtime bridge (npm)
+bun add -D webtau-vite                   # Vite plugin
+cargo add webtau                         # wasm_state! macro (in your wasm crate)
+```
+
+Then follow [Migrating an Existing Tauri Game](#migrating-an-existing-tauri-game) below.
+
+### Build targets
+
+| Target | Command | Output |
+|---|---|---|
+| **Dev** | `bun run dev` | `localhost:1420` — hot-reload, no Tauri needed |
+| **Web** | `bun run build:web` | Static files for itch.io, GitHub Pages, any host |
+| **Desktop** | `bun run build:desktop` | Steam-ready `.exe` / `.dmg` / `.AppImage` |
 
 ### Prerequisites
 
