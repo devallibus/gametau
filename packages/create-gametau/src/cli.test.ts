@@ -1,10 +1,12 @@
 import { describe, test, expect, afterEach } from "bun:test";
 import { existsSync, rmSync, readFileSync, readdirSync, mkdirSync } from "fs";
+import { spawnSync } from "child_process";
 import { join } from "path";
 import { scaffold } from "./cli";
 
 // Use a project-local scratch directory for test isolation
 const TEST_ROOT = join(import.meta.dir, "..", ".test-scratch");
+const CLI_PATH = join(import.meta.dir, "cli.ts");
 
 let testDir: string;
 
@@ -20,6 +22,37 @@ function freshDir(): string {
   mkdirSync(testDir, { recursive: true });
   return testDir;
 }
+
+function runCli(args: string[]) {
+  return spawnSync("bun", [CLI_PATH, ...args], {
+    cwd: freshDir(),
+    encoding: "utf-8",
+  });
+}
+
+describe("create-gametau CLI entrypoint", () => {
+  test("prints help and exits successfully", () => {
+    const result = runCli(["--help"]);
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Usage:");
+    expect(result.stdout).toContain("create-gametau");
+  });
+
+  test("fails when project name is missing", () => {
+    const result = runCli([]);
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("project name required");
+  });
+
+  test("fails on invalid template value", () => {
+    const result = runCli(["my-game", "--template", "bad-template"]);
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Invalid template: bad-template");
+  });
+});
 
 describe("create-gametau CLI", () => {
   test("scaffolds a project with default (three) template", () => {

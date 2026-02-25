@@ -1,6 +1,6 @@
 {
   "private": true,
-  "packageManager": "bun@1.2.4",
+  "packageManager": "bun@1.3.9",
   "workspaces": [
     "packages/*",
     "examples/*",
