@@ -76,6 +76,25 @@ class WebWindow {
     document.title = title;
   }
 
+  // ── Close / Minimize / Show / Hide ──
+
+  /** Best-effort close — browsers may ignore this for non-script-opened windows. */
+  async close(): Promise<void> {
+    window.close();
+  }
+
+  /** No-op on web — browsers don't expose minimize. */
+  async minimize(): Promise<void> {}
+
+  /** No-op on web — browsers don't expose unminimize. */
+  async unminimize(): Promise<void> {}
+
+  /** No-op on web — window is always visible in a browser tab. */
+  async show(): Promise<void> {}
+
+  /** No-op on web — cannot hide a browser tab programmatically. */
+  async hide(): Promise<void> {}
+
   // ── Decorations (no-op on web) ──
 
   async setDecorations(_decorations: boolean): Promise<void> {

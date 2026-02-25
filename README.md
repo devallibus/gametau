@@ -1,8 +1,81 @@
 # gametau
 
-Deploy Tauri games to **web + desktop** from a single codebase.
+**Web tools to build. Rust to power it. Native to ship. Web to spread it.**
 
-Tauri is perfect for shipping games to Steam, but it has no web target and [won't get one](https://github.com/nicholasgasior/tauri/issues/8248). gametau bridges the gap — write your game logic once in Rust, and ship to both **itch.io / GitHub Pages** (WASM) and **Steam / desktop** (native) without maintaining two codebases.
+---
+
+You want to build games with web tools — Three.js, PixiJS, Canvas2D. The dev experience is unmatched: instant hot-reload, real browser DevTools, and when something works you just send someone the URL and they're playing it in two seconds. No install. No "wait let me build it." That instant shareability is something no native toolchain has ever matched, and it's why vibe-coded web games spread the way they do.
+
+But you also want the game to be *good*. Fast. Native-feeling. Rust-powered logic with no GC pauses tanking your framerate at 200 entities. Real save files. A Steam page. A `.exe` someone can download and run without a browser.
+
+Those two things used to be mutually exclusive. You could have the web dev experience and the distribution superpower — or you could have performance and a native desktop build. Not both.
+
+The usual answer is Tauri, and Tauri is right for the desktop side. But the moment you build your game logic in Rust for Tauri, your web build is gone. Tauri has [no web target](https://github.com/nicholasgasior/tauri/issues/8248) and won't get one. `invoke()` calls route through Tauri IPC — which only exists inside the Tauri process — so opening your game in a real browser tab just breaks. Your dev loop is now locked to `tauri dev`. Your shareable URL is gone. The thing that made web game dev special is gone.
+
+**gametau gives it all back.** Write your game logic once in Rust. Ship it native to Steam. Keep the web build for itch.io and GitHub Pages. And develop the whole thing in Chrome, with full DevTools and hot-reload, exactly the way you would have before.
+
+```typescript
+import { invoke } from "webtau";
+
+// Identical call on both platforms. Auto-routes at runtime.
+const result = await invoke<TickResult>("tick_world");
+```
+
+Your dev loop never leaves the browser. When you're ready to ship, you add a flag:
+
+| Target | Command | Destination |
+|---|---|---|
+| **Dev** | `bun run dev` | `localhost:1420` — hot-reload, no Tauri needed |
+| **Web** | `bun run build:web` | itch.io, GitHub Pages, any static host |
+| **Desktop** | `bun run build:desktop` | Steam-ready native `.exe` / `.dmg` / `.AppImage` |
+
+You get the fast, familiar web dev experience while you build — and a real desktop app ready for Steam when you ship.
+
+---
+
+## Dev in Chrome. Drop into Tauri only when you need to.
+
+This is the part that changes your daily workflow the most.
+
+If you build a Rust-core Tauri game without gametau, you're locked to the Tauri shell during development. The Chrome instance Tauri spins up is just the app window — open `localhost:1420` in your actual browser and nothing works. Every `invoke()` call routes through Tauri IPC, which only exists inside the running Tauri process. So your entire dev loop depends on `tauri dev`: wait for Rust to compile, wait for the Tauri window to start, restart whenever something changes. Your own browser is useless.
+
+With gametau, `bun run dev` gives you a fully working game in any browser tab. The Vite plugin builds WASM automatically and `invoke()` routes to it directly — no Tauri process, no desktop window, no waiting. You get:
+
+- **Full Chrome DevTools** — sources, performance profiler, memory, network, everything
+- **Fast HMR** — Vite hot-reloads your frontend instantly; Rust changes rebuild WASM and trigger a full reload automatically
+- **Shareable dev URLs** — send `localhost:1420` to a teammate and they can play the current build without installing Tauri or Rust
+- **Immediate feedback** — iterate on gameplay feel entirely in the browser, at browser speeds
+
+You drop into `tauri dev` only when you actually need to test desktop-specific behavior: native save files, OS notifications, window management, or doing a final check before your Steam build. Until then, your browser is the dev environment it should have been all along.
+
+---
+
+## Why Rust for game logic?
+
+The obvious question: why not just keep everything in JavaScript?
+
+**Garbage collection pauses at the worst moments.** JS's GC runs whenever it decides to — and for games, a 10ms stall at 60fps is a dropped frame right when your player lands a hit. Rust has no GC. Your simulation ticks at a consistent, predictable cost every frame.
+
+**WASM is measurably faster for heavy game logic.** Physics, pathfinding, large entity counts, world simulation — computation-heavy code runs 2–5× faster in WASM than equivalent JS. That's the difference between a 200-entity simulation running smoothly and stuttering. And in WASM, you're already writing Rust — so the gametau wrappers add essentially zero overhead.
+
+**Desktop gets the full native advantage.** When your game runs through Tauri, there's no JS engine in the loop at all. Your `core/` logic compiles to native code. Combined with Tauri's OS access — real filesystem, native save files, system notifications — your Steam build can do things a browser game simply cannot.
+
+**Your core logic is yours to keep.** The `core/` crate has zero framework dependencies — no Tauri, no WASM, no gametau. It's pure game logic. When you want to add a multiplayer server, it uses the same `core/`. When you add a new target, same `core/`. Your logic isn't locked to any platform or runtime.
+
+Compared to staying pure web with no Rust layer at all:
+
+| | Pure web (JS only) | gametau |
+|---|---|---|
+| Ships to Steam | ✗ no native binary | ✓ |
+| Shareable web build | ✓ | ✓ |
+| Heavy simulation | Hits JS + GC limits | WASM in browser / native on desktop |
+| OS access (saves, files) | Limited to browser APIs | Full native access via Tauri |
+| Game state correctness | Runtime surprises | Rust compile-time guarantees |
+| Reuse logic on a server | Rewrite in Node | Same `core/` crate |
+
+The Rust layer isn't a tax you pay to get to Tauri. It's the reason the game is faster, safer, and worth shipping.
+
+---
 
 ## How It Works
 
@@ -195,14 +268,19 @@ import { defineConfig } from "vite";
 import webtauVite from "webtau-vite";
 
 export default defineConfig({
-  plugins: [
-    webtauVite({
-      wasmCrate: "src-tauri/wasm",
-      wasmOutDir: "src/wasm",
-      watchPaths: ["src-tauri/core/src"],
-    }),
-  ],
+  plugins: [webtauVite()],
 });
+```
+
+For the standard layout (`src-tauri/wasm`, `src-tauri/core`, etc.), zero config is needed — the plugin auto-detects crate paths and watch directories. Override only for non-standard layouts:
+
+```typescript
+webtauVite({
+  wasmCrate: "custom/path/to/wasm",
+  wasmOutDir: "src/custom-wasm",
+  watchPaths: ["extra/rust/src"],
+  wasmOpt: true, // release builds only
+})
 ```
 
 ## API Reference
@@ -243,6 +321,16 @@ const view = await invoke<WorldView>("get_world_view");
 const result = await invoke<TickResult>("tick_world", { speed: 2 });
 ```
 
+**Error behavior (web mode):**
+
+| Situation | Error message |
+|---|---|
+| `invoke()` before `configure()` | Includes exact `configure()` call pattern to fix it |
+| WASM export not found | Lists all available exported function names |
+| WASM module fails to load | Calls `onLoadError` callback, then rethrows — next `invoke()` retries the load |
+
+Loading is deduplicated: concurrent `invoke()` calls while the WASM module is still loading share the same promise. After a load failure, the promise is cleared so subsequent calls can retry.
+
 #### `isTauri()`
 
 Returns `true` when running inside Tauri (checks `window.__TAURI_INTERNALS__`).
@@ -276,14 +364,14 @@ Vite plugin that handles everything automatically:
 | Import aliasing | `@tauri-apps/api/*` → `webtau/*` | Same | Disabled |
 | wasm-opt | N/A | Optional (`wasmOpt: true`) | Skipped |
 
-**Options:**
+**Options (all optional — zero-config works for standard layouts):**
 
 ```typescript
 webtauVite({
-  wasmCrate: "src-tauri/wasm",      // Path to WASM crate
-  wasmOutDir: "src/wasm",           // wasm-pack output directory
-  watchPaths: ["src-tauri/core/src"], // Extra dirs to watch
-  wasmOpt: false,                    // Run wasm-opt on release
+  wasmCrate: "src-tauri/wasm",      // Path to WASM crate (default)
+  wasmOutDir: "src/wasm",           // wasm-pack output directory (default)
+  watchPaths: [],                    // Extra dirs to watch (sibling crates auto-detected)
+  wasmOpt: false,                    // Run wasm-opt on release (default)
 })
 ```
 
@@ -342,6 +430,16 @@ Total migration: ~30 minutes for a typical game.
 - **v2**: `#[webtau::command]` proc macro — generates both `#[tauri::command]` and `#[wasm_bindgen]` from a single function definition
 - **v2+**: Additional shims (fs → IndexedDB, dialog → `<dialog>`, event → CustomEvent)
 
-## License
+## Support & Commercial Licensing
 
-MIT OR Apache-2.0
+Gametau is and will always be **100% free** under Apache 2.0 for everyone.
+
+If your commercial game using Gametau reaches more than $100k lifetime revenue, we offer a simple
+optional commercial license with a gentle one-time donation (1%, min $2k, max $15k per game, due
+within one year). It's our way of saying thank you when things go well.
+
+[Read the commercial license →](docs/COMMERCIAL-LICENSE.md)
+
+Contributors also agree to our friendly [CLA](CLA.md).
+
+Already successful? Just open an issue labeled `commercial license` — happy to help!

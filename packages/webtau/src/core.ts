@@ -67,10 +67,17 @@ export function isTauri(): boolean {
 
 /**
  * Lazily loads and caches the WASM module.
+ *
+ * Loading is deduplicated: concurrent `invoke()` calls while the module is
+ * still loading will share the same promise instead of triggering multiple
+ * loads. On failure the promise is cleared so the next `invoke()` retries
+ * the load (the user may have called `configure()` with a fixed loader).
  */
 async function getWasmModule(): Promise<WasmModule> {
+  // Fast path: module already loaded and cached.
   if (wasmModule) return wasmModule;
 
+  // Deduplicate: if a load is already in flight, piggyback on it.
   if (wasmLoadPromise) return wasmLoadPromise;
 
   if (!wasmLoader) {
@@ -86,7 +93,9 @@ async function getWasmModule(): Promise<WasmModule> {
       return mod;
     },
     (err) => {
-      wasmLoadPromise = null; // Allow retry
+      // Clear promise so subsequent invoke() calls can retry after the
+      // user fixes the issue (e.g. reconfigures with a valid loader).
+      wasmLoadPromise = null;
       onLoadError(err);
       throw err;
     }

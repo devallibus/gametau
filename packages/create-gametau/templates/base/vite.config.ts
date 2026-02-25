@@ -4,13 +4,9 @@ import webtauVite from "webtau-vite";
 const host = process.env.TAURI_DEV_HOST;
 
 export default defineConfig({
-  plugins: [
-    webtauVite({
-      wasmCrate: "src-tauri/wasm",
-      wasmOutDir: "src/wasm",
-      watchPaths: ["src-tauri/core/src"],
-    }),
-  ],
+  // webtauVite() auto-detects the standard layout (src-tauri/wasm,
+  // src-tauri/core, etc.) — no config needed for scaffolded projects.
+  plugins: [webtauVite()],
   clearScreen: false,
   server: {
     port: 1420,

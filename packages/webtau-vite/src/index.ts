@@ -10,7 +10,7 @@
 import { type Plugin, type ResolvedConfig } from "vite";
 import { execSync, spawnSync } from "child_process";
 import { watch, type FSWatcher } from "chokidar";
-import { resolve, join } from "path";
+import { resolve, join, dirname } from "path";
 import { existsSync, readdirSync } from "fs";
 
 export interface WebtauViteOptions {
@@ -37,8 +37,40 @@ const ALIASES: Record<string, string> = {
   "@tauri-apps/api/dpi": "webtau/dpi",
 };
 
+/** Detect Tauri mode via environment variable set by Tauri's build system. */
 function isTauriMode(): boolean {
   return !!process.env.TAURI_ENV_PLATFORM;
+}
+
+/**
+ * Auto-discover sibling crate src/ directories for watching.
+ *
+ * For the standard gametau layout (src-tauri/wasm, src-tauri/core, etc.),
+ * changes in any sibling crate should trigger a WASM rebuild since the
+ * wasm crate typically depends on them. This lets `webtauVite()` work
+ * with zero config for the default layout.
+ */
+function discoverSiblingCrateSrcDirs(wasmCratePath: string): string[] {
+  const parentDir = dirname(wasmCratePath);
+  if (!existsSync(parentDir)) return [];
+
+  try {
+    return readdirSync(parentDir, { withFileTypes: true })
+      .filter((entry) => {
+        if (!entry.isDirectory()) return false;
+        // Skip the wasm crate itself (already watched directly)
+        const entryPath = join(parentDir, entry.name);
+        if (resolve(entryPath) === resolve(wasmCratePath)) return false;
+        // Include if it has a Cargo.toml and a src/ directory
+        return (
+          existsSync(join(entryPath, "Cargo.toml")) &&
+          existsSync(join(entryPath, "src"))
+        );
+      })
+      .map((entry) => join(parentDir, entry.name, "src"));
+  } catch {
+    return [];
+  }
 }
 
 function isWasmPackInstalled(): boolean {
@@ -164,12 +196,16 @@ export default function webtauVite(
     },
 
     configureServer(server) {
-      // In Tauri mode, do nothing
+      // In Tauri mode, Tauri handles file watching and rebuilds.
       if (isTauriMode()) return;
 
-      // Watch Rust source files and rebuild on change
+      // Build the list of directories to watch for .rs file changes.
+      // Always watch the wasm crate's own src/. Auto-discover sibling
+      // crates (e.g. core/) so the default layout works without config.
+      // User-provided watchPaths are appended last for custom layouts.
       const watchDirs = [
         join(resolvedCratePath, "src"),
+        ...discoverSiblingCrateSrcDirs(resolvedCratePath),
         ...watchPaths.map((p) => resolve(root, p)),
       ].filter((d) => existsSync(d));
 
@@ -180,12 +216,18 @@ export default function webtauVite(
         awaitWriteFinish: { stabilityThreshold: 200 },
       });
 
+      // Rebuild guard: coalesces rapid file changes into at most one
+      // queued follow-up build. Two flags prevent overlapping wasm-pack
+      // processes while ensuring no change is silently dropped.
       let building = false;
       let pendingRebuild = false;
 
       watcher.on("change", (path) => {
+        // Only rebuild for Rust source files, not config or lock files.
         if (!path.endsWith(".rs")) return;
+
         if (building) {
+          // A build is in progress — flag that we need one more when it finishes.
           pendingRebuild = true;
           return;
         }
@@ -203,6 +245,7 @@ export default function webtauVite(
             console.error(`[webtau-vite] Rebuild failed:\n${msg}`);
           } finally {
             building = false;
+            // If changes arrived during this build, run exactly one follow-up.
             if (pendingRebuild) rebuild();
           }
         }
