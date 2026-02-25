@@ -26,6 +26,7 @@ beforeAll(() => {
       devicePixelRatio: 1,
       resizeTo: () => {},
       moveTo: () => {},
+      close: () => {},
     };
   }
 });
@@ -130,6 +131,50 @@ describe("window size", () => {
     // Restore
     (globalThis as any).window.devicePixelRatio = 1;
     (globalThis as any).window.resizeTo = () => {};
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Close / Minimize / Show / Hide
+// ---------------------------------------------------------------------------
+
+describe("close", () => {
+  test("close calls window.close", async () => {
+    let closed = false;
+    (globalThis as any).window.close = () => {
+      closed = true;
+    };
+
+    const win = getCurrentWindow();
+    await win.close();
+    expect(closed).toBe(true);
+
+    // Restore
+    (globalThis as any).window.close = () => {};
+  });
+});
+
+describe("minimize / unminimize", () => {
+  test("minimize is a no-op that does not throw", async () => {
+    const win = getCurrentWindow();
+    await win.minimize();
+  });
+
+  test("unminimize is a no-op that does not throw", async () => {
+    const win = getCurrentWindow();
+    await win.unminimize();
+  });
+});
+
+describe("show / hide", () => {
+  test("show is a no-op that does not throw", async () => {
+    const win = getCurrentWindow();
+    await win.show();
+  });
+
+  test("hide is a no-op that does not throw", async () => {
+    const win = getCurrentWindow();
+    await win.hide();
   });
 });
 

@@ -1,6 +1,6 @@
 {
   "name": "webtau-vite",
-  "version": "0.1.0",
+  "version": "0.1.0-alpha.1",
   "description": "Vite plugin for webtau — wasm-pack automation + Tauri API aliasing",
   "license": "MIT",
   "type": "module",
