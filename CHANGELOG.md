@@ -15,5 +15,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - `create-gametau` npm package: project scaffolder CLI with Three.js, PixiJS, and vanilla Canvas2D templates
 - `webtau` Rust crate: `wasm_state!` macro for WASM thread-local state management (`set_state`, `with_state`, `with_state_mut`)
 - `examples/counter`: end-to-end working demo (browser WASM + Tauri desktop)
+- `examples/pong`: two-player Pong with Rust physics, PixiJS rendering, and keyboard input
 - GitHub CI: Rust (clippy + tests) and TypeScript (bun test + tsc) pipelines
 - Apache-2.0 license with optional commercial license for high-revenue games

@@ -4,10 +4,21 @@
 [![crates.io](https://img.shields.io/crates/v/webtau)](https://crates.io/crates/webtau)
 [![CI](https://github.com/devallibus/gametau/actions/workflows/ci.yml/badge.svg)](https://github.com/devallibus/gametau/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/devallibus/gametau)](https://github.com/devallibus/gametau)
 
 **Web tools to build. Rust to power it. Native to ship. Web to spread it.**
 
 Write your game logic once in Rust. Ship native to Steam. Keep the web build for itch.io and GitHub Pages. Develop everything in Chrome with full DevTools and hot-reload.
+
+**For Rust game developers** who want to prototype in the browser with hot-reload and ship native to Steam — without rewriting anything.
+
+**[Play the Pong demo in your browser →](https://devallibus.github.io/gametau/pong/)** — Rust physics, PixiJS rendering, running as WASM. Same code ships as a native desktop app.
+
+| Target | Command | Destination |
+|---|---|---|
+| **Dev** | `bun run dev` | `localhost:1420` — hot-reload, no Tauri needed |
+| **Web** | `bun run build:web` | itch.io, GitHub Pages, any static host |
+| **Desktop** | `bun run build:desktop` | Steam-ready native `.exe` / `.dmg` / `.AppImage` |
 
 ```typescript
 import { invoke } from "webtau";
@@ -15,12 +26,6 @@ import { invoke } from "webtau";
 // Identical call on both platforms. Auto-routes at runtime.
 const result = await invoke<TickResult>("tick_world");
 ```
-
-| Target | Command | Destination |
-|---|---|---|
-| **Dev** | `bun run dev` | `localhost:1420` — hot-reload, no Tauri needed |
-| **Web** | `bun run build:web` | itch.io, GitHub Pages, any static host |
-| **Desktop** | `bun run build:desktop` | Steam-ready native `.exe` / `.dmg` / `.AppImage` |
 
 ---
 
