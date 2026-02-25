@@ -255,9 +255,14 @@ export default function webtauVite(
       });
     },
 
-    resolveId(source) {
+    resolveId(source, importer) {
       // In Tauri mode, let Tauri's own modules resolve normally
       if (isTauriMode()) return null;
+
+      // Don't alias imports from within the webtau package itself —
+      // its dynamic import of @tauri-apps/api/core is a real conditional
+      // import behind isTauri(), not something that should be redirected.
+      if (importer && /[/\\]webtau[/\\]dist[/\\]/.test(importer)) return null;
 
       // Alias @tauri-apps/api/* → webtau/*
       if (source in ALIASES) {
