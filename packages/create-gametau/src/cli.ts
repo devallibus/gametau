@@ -131,6 +131,7 @@ function replaceInDir(dir: string, search: string, replace: string): void {
 }
 
 // Main — only runs when executed directly (not when imported by tests)
+console.error("[cli.ts] import.meta.main =", import.meta.main, "argv =", process.argv);
 if (import.meta.main) {
   const args = process.argv.slice(2);
   const options = parseArgs(args);

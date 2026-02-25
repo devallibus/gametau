@@ -20,6 +20,7 @@ function freshDir(): string {
 describe("create-gametau CLI", () => {
   test("scaffolds a project with default (three) template", () => {
     const dir = freshDir();
+    console.error("[test-debug] dir:", dir, "contents:", readdirSync(dir));
     scaffold({ projectName: "test-game", template: "three" }, dir);
 
     const projectDir = join(dir, "test-game");
