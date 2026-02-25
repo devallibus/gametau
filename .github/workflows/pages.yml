@@ -1,0 +1,67 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install
+
+      # Build workspace packages (webtau, webtau-vite) so examples can use them
+      - run: bun run build
+
+      # Build counter example
+      - name: Build counter
+        working-directory: examples/counter
+        run: bunx vite build --base=/gametau/counter/
+
+      # Build pong example
+      - name: Build pong
+        working-directory: examples/pong
+        run: bunx vite build --base=/gametau/pong/
+
+      # Assemble site
+      - name: Assemble site
+        run: |
+          mkdir -p _site
+          cp site/index.html _site/
+          cp -r examples/counter/dist _site/counter
+          cp -r examples/pong/dist _site/pong
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
