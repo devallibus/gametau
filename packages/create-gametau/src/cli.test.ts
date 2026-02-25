@@ -22,6 +22,13 @@ function freshDir(): string {
 }
 
 describe("create-gametau CLI", () => {
+  test("smoke: freshDir creates empty directory", () => {
+    const dir = freshDir();
+    const contents = readdirSync(dir);
+    console.error("[smoke-test]", JSON.stringify({ dir, contents }));
+    expect(contents).toEqual([]);
+  });
+
   test("scaffolds a project with default (three) template", () => {
     const dir = freshDir();
     scaffold({ projectName: "test-game", template: "three" }, dir);
