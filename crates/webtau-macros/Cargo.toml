@@ -17,6 +17,6 @@ proc-macro2 = "1"
 
 [dev-dependencies]
 trybuild = "1"
-tauri = { version = "2", default-features = false, features = [] }
+tauri = { path = "tests/support/tauri" }
 webtau = { path = "../webtau" }
 serde = { version = "1", features = ["derive"] }
