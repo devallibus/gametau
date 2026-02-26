@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.1.0] - 2026-02-26
+
+First stable release. Deploy Tauri games to web + desktop from one codebase.
+
+### Highlights
+- **`webtau` npm package** — `invoke()` universal router with automatic Tauri/WASM detection, `isTauri()` runtime check, window shims, and DPI utilities
+- **`webtau-vite` npm package** — Vite plugin with wasm-pack automation, Rust file watching, `@tauri-apps/api` import aliasing, and optional wasm-opt
+- **`create-gametau` CLI** — project scaffolder with Three.js, PixiJS, and vanilla Canvas2D templates
+- **`webtau` Rust crate** — `#[webtau::command]` proc macro (generates `#[tauri::command]` + `#[wasm_bindgen]` from one function) and `wasm_state!` macro for WASM thread-local state
+- **`webtau-macros` Rust crate** — proc macro internals for `#[webtau::command]`
+
+### Published Artifacts
+- npm: `webtau`, `webtau-vite`, `create-gametau` (all `0.1.0`)
+- crates.io: `webtau`, `webtau-macros` (both `0.1.0`)
+
+### Changed
+- All template dependency pins switched from prerelease to stable (`^0.1.0` for npm, `0.1` for Cargo)
+
+## [0.1.0-alpha.5] - 2026-02-26
+
+### Fixed
+- `create-gametau` now ships a dotless `gitignore` file so `npm pack` includes it
+- Packaged CLI regressions guarded with smoke tests
+- `dist/` test guard skips tests when dist is not built
+
+### Added
+- Hardened packaged CLI smoke checks in CI
+- README logo
+
+### Removed
+- Unused `minimal-game` test fixture
+
+### Changed
+- Release versions bumped to `0.1.0-alpha.5` across all artifacts
+
+## [0.1.0-alpha.4] - 2026-02-26
+
+### Fixed
+- Retry guard quoting in `webtau` crate publish workflow
+- Already-published crates now treated as success instead of failing the pipeline
+- Retry logic for `webtau` publish on crates.io index propagation lag
+
+### Changed
+- Release versions bumped to `0.1.0-alpha.4` across all artifacts
+
 ## [0.1.0-alpha.3] - 2026-02-26
 
 ### Added
