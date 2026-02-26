@@ -144,3 +144,53 @@ jobs:
           exit 1
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+
+  verify-publish:
+    name: Verify Published Artifacts
+    needs: [publish-npm, publish-crate]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Resolve version from tag
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          echo "VERSION=${version}" >> "$GITHUB_ENV"
+          echo "Verifying published artifacts for v${version}"
+
+      - name: Wait for registry propagation
+        run: sleep 60
+
+      - name: Verify npm — webtau
+        run: |
+          tmp="$(mktemp -d)"
+          cd "$tmp"
+          npm init -y
+          npm install "webtau@${VERSION}"
+          node -e "import('webtau').then(m => console.log('webtau OK:', Object.keys(m)))"
+
+      - name: Verify npm — webtau-vite
+        run: |
+          tmp="$(mktemp -d)"
+          cd "$tmp"
+          npm init -y
+          npm install "webtau-vite@${VERSION}"
+          node -e "import('webtau-vite').then(m => console.log('webtau-vite OK:', Object.keys(m)))"
+
+      - name: Verify npm — create-gametau
+        run: |
+          tmp="$(mktemp -d)"
+          cd "$tmp"
+          npm install "create-gametau@${VERSION}"
+          npx "create-gametau@${VERSION}" --version
+
+      - name: Verify crate — webtau
+        run: |
+          tmp="$(mktemp -d)"
+          cd "$tmp"
+          cargo init --name verify-webtau
+          cargo add "webtau@=${VERSION}"
+          cargo check
