@@ -4,15 +4,18 @@ Thanks for your interest in contributing! This guide will get you oriented quick
 
 ## Architecture Primer
 
-Gametau follows a 3-layer model that enforces clean separation between game logic and platform bindings.
+Gametau follows a 4-crate model (v2) that enforces clean separation between game logic, shared command definitions, and platform bindings.
 
 ```
 core/       Pure game logic. No framework deps, no Tauri, no WASM.
-app/        Tauri desktop shell. #[tauri::command] wrappers, State<Mutex<T>>.
-wasm/       WASM bindings. #[wasm_bindgen] wrappers, wasm_state! macro.
+commands/   Shared command definitions. #[webtau::command] generates both targets.
+app/        Tauri desktop shell. Imports commands, registers with generate_handler!.
+wasm/       WASM entry point. Links commands crate (exports auto-wired).
 ```
 
-The **dual-target constraint** is the key design rule: every command must work through both Tauri IPC (native desktop) and direct WASM call (browser). If your change touches the command surface, make sure it compiles and runs in both targets.
+The **dual-target constraint** is the key design rule: every command must work through both Tauri IPC (native desktop) and direct WASM call (browser). The `#[webtau::command]` proc macro generates both `#[tauri::command]` and `#[wasm_bindgen]` wrappers from a single function definition, so you write each command once in `commands/`.
+
+If your change touches the command surface, make sure it compiles for both native and `wasm32-unknown-unknown` targets.
 
 ## Dev Setup
 
@@ -65,7 +68,7 @@ Please open an issue before submitting a PR for any of the following:
 
 - Breaking API changes to `invoke()` or `configure()`
 - New core dependencies
-- `webtau-macros` implementation (the `#[webtau::command]` proc macro)
+- Changes to the `#[webtau::command]` proc macro in `webtau-macros`
 
 ## PR Process
 

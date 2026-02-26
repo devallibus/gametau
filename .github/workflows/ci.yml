@@ -52,3 +52,29 @@ jobs:
       - run: bunx tsc --noEmit -p packages/webtau/tsconfig.json
       - run: bunx tsc --noEmit -p packages/webtau-vite/tsconfig.json
       - run: bunx tsc --noEmit -p packages/create-gametau/tsconfig.json
+
+  smoke:
+    name: Scaffold & Build Smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo install wasm-pack
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.9
+      - run: bun install
+      - name: Build create-gametau
+        run: cd packages/create-gametau && bun run build
+      - name: Scaffold a project (three template)
+        run: |
+          node packages/create-gametau/dist/cli.js smoke-test-project
+          ls smoke-test-project/
+      - name: Build example web target
+        run: |
+          cd examples/counter
+          bun install
+          bun run build:web

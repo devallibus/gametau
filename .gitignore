@@ -18,6 +18,11 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Local tool artifacts
+.claude/
+.cursor/plans/
+.instance/
+
 # Turbo
 .turbo/
 
