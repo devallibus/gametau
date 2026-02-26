@@ -34,6 +34,8 @@ bun install
 bun run dev                              # localhost:1420 — hot-reload in Chrome
 ```
 
+Need a full first-run walkthrough (including browser + Tauri paths)? See `docs/GETTING-STARTED.md`.
+
 ### Existing Tauri project
 
 ```bash

@@ -11,6 +11,9 @@ bun install
 bun run dev
 ```
 
+For a step-by-step scaffold-to-playable tutorial (browser and Tauri), see:
+[`docs/GETTING-STARTED.md`](../../docs/GETTING-STARTED.md)
+
 ## Templates
 
 - `three` (default) - Three.js rendering starter
@@ -37,4 +40,4 @@ bunx create-gametau my-game --template vanilla
 - `src` - frontend app wired to `webtau` and `webtau-vite`
 
 For full docs and package details, see the main repository:
-https://github.com/devallibus/gametau
+<https://github.com/devallibus/gametau>
