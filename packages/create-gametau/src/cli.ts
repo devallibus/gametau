@@ -136,8 +136,20 @@ export function scaffold(options: Options, cwd?: string): void {
   // Templates store the file as "gitignore" (no dot) and we rename it here.
   renameTemplateGitignore(targetDir);
 
+  // Rust crate references in code use underscore identifiers, while
+  // package names and UI strings should preserve the original project name.
+  replaceInDir(targetDir, "{{PROJECT_NAME}}_", `${toRustIdent(projectName)}_`);
+
   // Replace {{PROJECT_NAME}} placeholders
   replaceInDir(targetDir, "{{PROJECT_NAME}}", projectName);
+}
+
+function toRustIdent(value: string): string {
+  let ident = value.replace(/[^A-Za-z0-9_]/g, "_");
+  if (!/^[A-Za-z_]/.test(ident)) {
+    ident = `_${ident}`;
+  }
+  return ident;
 }
 
 function renameTemplateGitignore(dir: string): void {

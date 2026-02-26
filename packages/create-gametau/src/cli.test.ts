@@ -175,6 +175,28 @@ describe("create-gametau CLI", () => {
     expect(cargoToml).not.toContain("{{PROJECT_NAME}}");
   });
 
+  test("normalizes Rust module identifiers for hyphenated project names", () => {
+    const dir = freshDir();
+    scaffold({ projectName: "my-cool-game", template: "three" }, dir);
+    const projectDir = join(dir, "my-cool-game");
+
+    const commandsRs = readFileSync(
+      join(projectDir, "src-tauri", "commands", "src", "commands.rs"),
+      "utf-8",
+    );
+    expect(commandsRs).toContain("use my_cool_game_core::{");
+
+    const appLibRs = readFileSync(
+      join(projectDir, "src-tauri", "app", "src", "lib.rs"),
+      "utf-8",
+    );
+    expect(appLibRs).toContain("use my_cool_game_core::GameWorld;");
+    expect(appLibRs).toContain("use my_cool_game_commands::{");
+
+    const indexTs = readFileSync(join(projectDir, "src", "index.ts"), "utf-8");
+    expect(indexTs).toContain("./wasm/my_cool_game_wasm");
+  });
+
   test("scaffolds with pixi template", () => {
     const dir = freshDir();
     scaffold({ projectName: "pixi-game", template: "pixi" }, dir);
