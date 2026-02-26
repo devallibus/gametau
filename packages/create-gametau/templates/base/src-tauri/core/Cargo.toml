@@ -5,4 +5,4 @@ edition.workspace = true
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
-rand = { version = "0.8", features = ["std_rng"] }
+rand = { version = "0.8", default-features = false, features = ["std", "std_rng"] }
