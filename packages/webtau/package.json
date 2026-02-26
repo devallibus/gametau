@@ -37,6 +37,18 @@
     "./event": {
       "types": "./dist/event.d.ts",
       "import": "./dist/event.js"
+    },
+    "./input": {
+      "types": "./dist/input.d.ts",
+      "import": "./dist/input.js"
+    },
+    "./audio": {
+      "types": "./dist/audio.d.ts",
+      "import": "./dist/audio.js"
+    },
+    "./assets": {
+      "types": "./dist/assets.d.ts",
+      "import": "./dist/assets.js"
     }
   },
   "files": [

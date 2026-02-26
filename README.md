@@ -308,6 +308,41 @@ When `webtau-vite` aliases `@tauri-apps/api/*` imports to `webtau/*`, these shim
 | `emit(event, payload)` | `window.dispatchEvent(new CustomEvent(...))` |
 | `emitTo(target, event, payload)` | Web-mode alias of `emit` |
 
+### Gameplay foundation modules
+
+These modules provide a lightweight, browser-first baseline for common game subsystems:
+
+**`webtau/input`** — unified input abstraction for keyboard, gamepad, touch, and pointer-lock mouse deltas.
+
+| Method | Purpose |
+|---|---|
+| `keyAxis(negative, positive)` | Digital axis from key bindings |
+| `gamepadAxis(axis, options)` | Analog axis read with deadzone/invert |
+| `touches()` | Active touch positions |
+| `requestPointerLock(element)` | Pointer-lock opt-in for mouse-look style controls |
+| `consumePointerDelta()` | Relative mouse delta since last frame |
+
+**`webtau/audio`** — minimal Web Audio wrapper with mute/volume controls and quick tone playback.
+
+| Method | Purpose |
+|---|---|
+| `resume()` / `suspend()` | Unlock or suspend audio context |
+| `setMuted(bool)` | Global mute toggle |
+| `setMasterVolume(value)` | Master gain control (`0..1`) |
+| `playTone(freq, durationMs, options)` | Lightweight SFX/beep synthesis |
+
+**`webtau/assets`** — cached loader helpers for text/json/binary/image assets.
+
+| Method | Purpose |
+|---|---|
+| `loadText(url)` | Fetch text assets |
+| `loadJson<T>(url)` | Fetch + parse JSON assets |
+| `loadBytes(url)` | Fetch binary payloads |
+| `loadImage(url)` | Load image via `Image` object |
+| `clear()` | Clear loader cache |
+
+Example integration path: `examples/pong` now uses all three modules together (input + audio + theme asset loading).
+
 ---
 
 ## `webtau-vite` — Vite Plugin

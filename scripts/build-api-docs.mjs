@@ -19,7 +19,7 @@ mkdirSync(jsOutDir, { recursive: true });
 
 console.log("[docs:api] Generating TypeDoc for webtau...");
 run(
-  "bunx typedoc --entryPointStrategy resolve --tsconfig packages/webtau/tsconfig.json --entryPoints packages/webtau/src/core.ts packages/webtau/src/window.ts packages/webtau/src/dpi.ts packages/webtau/src/fs.ts packages/webtau/src/dialog.ts packages/webtau/src/event.ts --intentionallyNotExported WebWindow --intentionallyNotExported WasmModule --out .api-docs/js/webtau --name \"webtau API\"",
+  "bunx typedoc --entryPointStrategy resolve --tsconfig packages/webtau/tsconfig.json --entryPoints packages/webtau/src/core.ts packages/webtau/src/window.ts packages/webtau/src/dpi.ts packages/webtau/src/fs.ts packages/webtau/src/dialog.ts packages/webtau/src/event.ts packages/webtau/src/input.ts packages/webtau/src/audio.ts packages/webtau/src/assets.ts --intentionallyNotExported WebWindow --intentionallyNotExported WasmModule --intentionallyNotExported AudioContextLike --out .api-docs/js/webtau --name \"webtau API\"",
 );
 
 console.log("[docs:api] Generating TypeDoc for webtau-vite...");
