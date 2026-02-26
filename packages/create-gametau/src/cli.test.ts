@@ -7,6 +7,7 @@ import { scaffold } from "./cli";
 // Use a project-local scratch directory for test isolation
 const TEST_ROOT = join(import.meta.dir, "..", ".test-scratch");
 const CLI_PATH = join(import.meta.dir, "cli.ts");
+const DIST_CLI_PATH = join(import.meta.dir, "..", "dist", "cli.js");
 
 let testDir: string;
 
@@ -25,6 +26,13 @@ function freshDir(): string {
 
 function runCli(args: string[]) {
   return spawnSync("bun", [CLI_PATH, ...args], {
+    cwd: freshDir(),
+    encoding: "utf-8",
+  });
+}
+
+function runDistCli(args: string[]) {
+  return spawnSync("node", [DIST_CLI_PATH, ...args], {
     cwd: freshDir(),
     encoding: "utf-8",
   });
@@ -71,6 +79,33 @@ describe("create-gametau CLI entrypoint", () => {
     expect(result.error).toBeUndefined();
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("Unknown option: --wat");
+  });
+});
+
+describe("create-gametau dist CLI entrypoint", () => {
+  test("prints version and exits successfully", () => {
+    const result = runDistCli(["--version"]);
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain(getPackageVersion());
+  });
+
+  test("fails on unknown option", () => {
+    const result = runDistCli(["--wat"]);
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Unknown option: --wat");
+  });
+
+  test("normalizes template gitignore names when scaffolding", () => {
+    const result = runDistCli(["dist-smoke"]);
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(0);
+
+    const projectDir = join(testDir, "dist-smoke");
+    expect(existsSync(join(projectDir, ".gitignore"))).toBe(true);
+    expect(existsSync(join(projectDir, ".npmignore"))).toBe(false);
+    expect(existsSync(join(projectDir, "gitignore"))).toBe(false);
   });
 });
 
