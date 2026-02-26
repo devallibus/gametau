@@ -23,8 +23,8 @@ The following areas are in scope for security reports:
 
 | Version | Supported |
 |---|---|
-| 0.1.x (latest alpha) | Yes |
-| < 0.1.0 | No |
+| 0.2.x (current stable) | Yes |
+| < 0.2.0 | No |
 
 ## Disclosure
 

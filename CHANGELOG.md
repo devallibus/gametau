@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] - 2026-02-26
+
+### Added
+- New onboarding and operations docs: scaffold-to-playable tutorial, release incident response checklist, and automated API docs publication path
+- Web parity shims for `@tauri-apps/api` modules: `fs`, `dialog`, and `event`
+- Gameplay foundation modules in `webtau`: `input`, `audio`, and `assets`
+- Pong example integration path that exercises input, audio, and asset loading together
+
+### Changed
+- `create-gametau` templates now target `webtau`/`webtau-vite` `^0.2.0` and Rust `webtau = "0.2"` for scaffolded projects
+- README roadmap now reflects `0.2.x` as the current stable line
+- Release versions bumped to `0.2.0` for `webtau`, `webtau-vite`, `create-gametau`, `webtau`, and `webtau-macros`
+
 ## [0.1.4] - 2026-02-26
 
 ### Fixed
