@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.1.1] - 2026-02-26
+
+### Added
+- CI now enforces MSRV `1.77` with a dedicated `MSRV (1.77)` workflow job
+- Publish workflow now verifies npm/crates.io artifacts after release before declaring success
+- Publish workflow now includes a registry consumer smoke test and manual `workflow_dispatch` verification path
+
+### Changed
+- `webtau` and `webtau-macros` now inherit `rust-version` from workspace metadata for published crate manifests
+- Release versions bumped to `0.1.1` for `webtau`, `webtau-vite`, `create-gametau`, `webtau`, and `webtau-macros`
+
 ## [0.1.0] - 2026-02-26
 
 First stable release. Deploy Tauri games to web + desktop from one codebase.
