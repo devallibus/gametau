@@ -25,6 +25,18 @@
     "./dpi": {
       "types": "./dist/dpi.d.ts",
       "import": "./dist/dpi.js"
+    },
+    "./fs": {
+      "types": "./dist/fs.d.ts",
+      "import": "./dist/fs.js"
+    },
+    "./dialog": {
+      "types": "./dist/dialog.d.ts",
+      "import": "./dist/dialog.js"
+    },
+    "./event": {
+      "types": "./dist/event.d.ts",
+      "import": "./dist/event.js"
     }
   },
   "files": [

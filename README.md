@@ -278,6 +278,36 @@ When `webtau-vite` aliases `@tauri-apps/api/*` imports to `webtau/*`, these shim
 
 **`webtau/dpi`** — Web shim for `@tauri-apps/api/dpi`. Exports `LogicalSize`, `PhysicalSize`, `LogicalPosition`, `PhysicalPosition` with conversion methods.
 
+**`webtau/fs`** — Web shim for `@tauri-apps/api/fs`, backed by IndexedDB (in-memory fallback in non-browser test environments).
+
+| Method | Web Implementation |
+|---|---|
+| `writeTextFile(path, text)` | Stores file entry in IndexedDB |
+| `readTextFile(path)` | Loads text from IndexedDB |
+| `writeFile(path, bytes)` | Stores binary payload (`Uint8Array`) |
+| `readFile(path)` | Reads binary payload |
+| `createDir(path, { recursive })` | Creates directory entries in virtual FS |
+| `readDir(path, { recursive })` | Lists virtual FS entries |
+| `remove(path, { recursive })` | Removes file/dir entries |
+
+**`webtau/dialog`** — Web shim for `@tauri-apps/api/dialog`.
+
+| Method | Web Implementation |
+|---|---|
+| `message()` | HTML `<dialog>` modal (fallback: `alert`) |
+| `ask()` / `confirm()` | HTML `<dialog>` confirm (fallback: `confirm`) |
+| `open()` | Hidden file input picker (`<input type="file">`) |
+| `save()` | HTML `<dialog>` text input (fallback: `prompt`) |
+
+**`webtau/event`** — Web shim for `@tauri-apps/api/event`, using `CustomEvent` dispatch/listen semantics.
+
+| Method | Web Implementation |
+|---|---|
+| `listen(event, cb)` | `window.addEventListener` bridge |
+| `once(event, cb)` | Auto-unlisten after first callback |
+| `emit(event, payload)` | `window.dispatchEvent(new CustomEvent(...))` |
+| `emitTo(target, event, payload)` | Web-mode alias of `emit` |
+
 ---
 
 ## `webtau-vite` — Vite Plugin

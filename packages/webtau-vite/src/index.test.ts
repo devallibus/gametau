@@ -121,6 +121,36 @@ describe("webtauVite plugin", () => {
     });
   });
 
+  test("resolveId aliases @tauri-apps/api/fs in web mode", () => {
+    delete process.env.TAURI_ENV_PLATFORM;
+    const plugin = webtauVite();
+    const resolveId = plugin.resolveId as (source: string) => { id: string } | null;
+    expect(resolveId("@tauri-apps/api/fs")).toEqual({
+      id: "webtau/fs",
+      external: false,
+    });
+  });
+
+  test("resolveId aliases @tauri-apps/api/dialog in web mode", () => {
+    delete process.env.TAURI_ENV_PLATFORM;
+    const plugin = webtauVite();
+    const resolveId = plugin.resolveId as (source: string) => { id: string } | null;
+    expect(resolveId("@tauri-apps/api/dialog")).toEqual({
+      id: "webtau/dialog",
+      external: false,
+    });
+  });
+
+  test("resolveId aliases @tauri-apps/api/event in web mode", () => {
+    delete process.env.TAURI_ENV_PLATFORM;
+    const plugin = webtauVite();
+    const resolveId = plugin.resolveId as (source: string) => { id: string } | null;
+    expect(resolveId("@tauri-apps/api/event")).toEqual({
+      id: "webtau/event",
+      external: false,
+    });
+  });
+
   test("resolveId returns null for unknown imports", () => {
     delete process.env.TAURI_ENV_PLATFORM;
     const plugin = webtauVite();
