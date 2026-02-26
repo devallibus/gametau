@@ -82,7 +82,11 @@ describe("create-gametau CLI entrypoint", () => {
   });
 });
 
-describe("create-gametau dist CLI entrypoint", () => {
+// dist/ tests require a prior `bun run build`. The "Scaffold & Build Smoke"
+// CI job validates the packed artifact; skip here when dist is absent.
+const hasDist = existsSync(DIST_CLI_PATH);
+
+describe.skipIf(!hasDist)("create-gametau dist CLI entrypoint", () => {
   test("prints version and exits successfully", () => {
     const result = runDistCli(["--version"]);
     expect(result.error).toBeUndefined();
