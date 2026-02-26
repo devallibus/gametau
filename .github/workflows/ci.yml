@@ -8,6 +8,18 @@ on:
   workflow_call:
 
 jobs:
+  msrv:
+    name: MSRV (1.77)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.77
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo check --workspace
+      - run: cargo check --target wasm32-unknown-unknown -p webtau
+
   rust:
     name: Rust
     runs-on: ubuntu-latest

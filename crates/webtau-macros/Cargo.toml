@@ -3,6 +3,7 @@ name = "webtau-macros"
 description = "Proc macros for webtau (v2: #[command] dual-target generation)"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 

@@ -17,11 +17,15 @@ The **dual-target constraint** is the key design rule: every command must work t
 
 If your change touches the command surface, make sure it compiles for both native and `wasm32-unknown-unknown` targets.
 
+## Minimum Supported Rust Version (MSRV)
+
+The workspace MSRV is **1.77**. CI enforces this with a dedicated check job. Run `cargo +1.77 check --workspace` before bumping any dependency to verify MSRV compatibility.
+
 ## Dev Setup
 
 ### Prerequisites
 
-- **Rust** (stable) with the `wasm32-unknown-unknown` target:
+- **Rust** (stable, minimum 1.77) with the `wasm32-unknown-unknown` target:
   ```sh
   rustup target add wasm32-unknown-unknown
   ```
