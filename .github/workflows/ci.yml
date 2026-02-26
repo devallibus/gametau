@@ -67,8 +67,10 @@ jobs:
         with:
           bun-version: 1.3.9
       - run: bun install
-      - name: Build create-gametau
+      - name: Build JS workspace packages used by smoke
         run: cd packages/create-gametau && bun run build
+      - run: cd packages/webtau && bun run build
+      - run: cd packages/webtau-vite && bun run build
       - name: Scaffold a project (three template)
         run: |
           node packages/create-gametau/dist/cli.js smoke-test-project
