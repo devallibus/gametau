@@ -1,0 +1,5 @@
+error: #[command] does not support async functions
+ --> tests/compile-fail/async_fn.rs:9:1
+  |
+9 | async fn tick(state: &MyState) -> View {
+  | ^^^^^

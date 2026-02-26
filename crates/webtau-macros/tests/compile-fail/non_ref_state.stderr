@@ -1,0 +1,5 @@
+error: #[command] first parameter must be a reference: `&T` or `&mut T`
+ --> tests/compile-fail/non_ref_state.rs:9:16
+  |
+9 | fn tick(state: MyState) -> View {
+  |                ^^^^^^^

@@ -1,0 +1,5 @@
+error: #[command] parameters must use simple identifiers (no tuple or struct patterns)
+ --> tests/compile-fail/tuple_pattern.rs:9:30
+  |
+9 | fn tick(state: &mut MyState, (dx, dy): (f64, f64)) -> View {
+  |                              ^^^^^^^^

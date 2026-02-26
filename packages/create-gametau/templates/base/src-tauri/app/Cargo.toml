@@ -16,3 +16,4 @@ tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 {{PROJECT_NAME}}-core = { path = "../core" }
+{{PROJECT_NAME}}-commands = { path = "../commands" }

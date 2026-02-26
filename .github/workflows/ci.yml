@@ -14,9 +14,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
       - run: cargo test --workspace
       - run: cargo clippy --workspace -- -D warnings
+      - name: Check WASM codegen (wasm32 target)
+        run: |
+          cargo check --target wasm32-unknown-unknown -p counter-commands --manifest-path examples/counter/src-tauri/Cargo.toml
+          cargo check --target wasm32-unknown-unknown -p pong-commands --manifest-path examples/pong/src-tauri/Cargo.toml
 
   typescript:
     name: TypeScript
