@@ -156,7 +156,11 @@ jobs:
   verify-publish:
     name: Verify Published Artifacts
     needs: [publish-npm, publish-crate]
-    if: always() && !cancelled() && !contains(needs.*.result, 'failure')
+    if: >-
+      always() && !cancelled() && (
+        github.event_name == 'workflow_dispatch' ||
+        (needs.publish-npm.result == 'success' && needs.publish-crate.result == 'success')
+      )
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-node@v4
