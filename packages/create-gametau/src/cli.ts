@@ -17,7 +17,6 @@ import {
   readFileSync,
   cpSync,
   renameSync,
-  unlinkSync,
 } from "fs";
 import { join, resolve, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -64,7 +63,7 @@ function parseArgs(args: string[]): Options {
       console.error(`Unknown option: ${arg}`);
       console.error("Run with --help to see available options.");
       process.exit(1);
-    } else if (!arg.startsWith("-")) {
+    } else {
       positional.push(arg);
     }
   }
@@ -132,30 +131,25 @@ export function scaffold(options: Options, cwd?: string): void {
     cpSync(overlayDir, targetDir, { recursive: true });
   }
 
-  // npm may preserve template ignore files as .npmignore in published tarballs.
-  // Convert those back to .gitignore in generated projects.
-  restoreTemplateGitignoreFiles(targetDir);
+  // npm strips dotfiles named .gitignore / .npmignore from tarballs.
+  // Templates store the file as "gitignore" (no dot) and we rename it here.
+  renameTemplateGitignore(targetDir);
 
   // Replace {{PROJECT_NAME}} placeholders
   replaceInDir(targetDir, "{{PROJECT_NAME}}", projectName);
 }
 
-function restoreTemplateGitignoreFiles(dir: string): void {
+function renameTemplateGitignore(dir: string): void {
   const entries = readdirSync(dir, { withFileTypes: true });
   for (const entry of entries) {
     const fullPath = join(dir, entry.name);
     if (entry.isDirectory()) {
-      restoreTemplateGitignoreFiles(fullPath);
+      renameTemplateGitignore(fullPath);
       continue;
     }
 
-    if (entry.name === ".npmignore") {
-      const gitignorePath = join(dir, ".gitignore");
-      if (!existsSync(gitignorePath)) {
-        renameSync(fullPath, gitignorePath);
-      } else {
-        unlinkSync(fullPath);
-      }
+    if (entry.name === "gitignore") {
+      renameSync(fullPath, join(dir, ".gitignore"));
     }
   }
 }

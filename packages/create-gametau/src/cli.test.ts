@@ -94,6 +94,7 @@ describe("create-gametau CLI", () => {
     expect(existsSync(join(projectDir, "src", "game", "scene.ts"))).toBe(true);
     expect(existsSync(join(projectDir, ".gitignore"))).toBe(true);
     expect(existsSync(join(projectDir, ".npmignore"))).toBe(false);
+    expect(existsSync(join(projectDir, "gitignore"))).toBe(false);
 
     // Check Three.js dependency in package.json
     const pkg = JSON.parse(readFileSync(join(projectDir, "package.json"), "utf-8"));
