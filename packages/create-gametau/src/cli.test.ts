@@ -1,5 +1,5 @@
 import { describe, test, expect, afterEach } from "bun:test";
-import { existsSync, rmSync, readFileSync, readdirSync, mkdirSync } from "fs";
+import { existsSync, rmSync, readFileSync, readdirSync, mkdirSync, symlinkSync } from "fs";
 import { spawnSync } from "child_process";
 import { join } from "path";
 import { scaffold } from "./cli";
@@ -110,6 +110,28 @@ describe.skipIf(!hasDist)("create-gametau dist CLI entrypoint", () => {
     expect(existsSync(join(projectDir, ".gitignore"))).toBe(true);
     expect(existsSync(join(projectDir, ".npmignore"))).toBe(false);
     expect(existsSync(join(projectDir, "gitignore"))).toBe(false);
+  });
+
+  test("runs when invoked via node_modules/.bin symlink path", () => {
+    const dir = freshDir();
+    const binDir = join(dir, "node_modules", ".bin");
+    mkdirSync(binDir, { recursive: true });
+    const shimPath = join(binDir, "create-gametau");
+
+    try {
+      symlinkSync(DIST_CLI_PATH, shimPath);
+    } catch {
+      // Symlink creation may fail on restricted environments (not CI).
+      return;
+    }
+
+    const result = spawnSync("node", [shimPath, "--version"], {
+      cwd: dir,
+      encoding: "utf-8",
+    });
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain(getPackageVersion());
   });
 });
 

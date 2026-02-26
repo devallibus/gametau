@@ -203,7 +203,9 @@ jobs:
           tmp="$(mktemp -d)"
           cd "$tmp"
           npm install "create-gametau@${VERSION}"
-          npx "create-gametau@${VERSION}" --version
+          version_output="$(npx -y "create-gametau@${VERSION}" --version)"
+          echo "$version_output"
+          [[ "$version_output" == "create-gametau ${VERSION}" ]]
 
       - name: Verify crate — webtau
         run: |
@@ -241,7 +243,10 @@ jobs:
           echo "VERSION=${version}" >> "$GITHUB_ENV"
 
       - name: Scaffold project from registry
-        run: npx "create-gametau@${VERSION}" smoke-game
+        run: |
+          npx -y "create-gametau@${VERSION}" smoke-game
+          test -d smoke-game
+          test -f smoke-game/package.json
 
       - name: Install dependencies
         run: cd smoke-game && bun install

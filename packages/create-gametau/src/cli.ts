@@ -17,8 +17,9 @@ import {
   readFileSync,
   cpSync,
   renameSync,
+  realpathSync,
 } from "fs";
-import { join, resolve, dirname } from "path";
+import { join, resolve, dirname, basename } from "path";
 import { fileURLToPath } from "url";
 
 const TEMPLATES = ["three", "pixi", "vanilla"] as const;
@@ -173,19 +174,34 @@ function replaceInDir(dir: string, search: string, replace: string): void {
   }
 }
 
+function normalizeExecPath(path: string): string {
+  try {
+    return resolve(realpathSync(path));
+  } catch {
+    return resolve(path);
+  }
+}
+
 function isDirectExecution(): boolean {
   // Bun exposes import.meta.main directly.
   if (typeof Bun !== "undefined") {
     return import.meta.main;
   }
 
-  // Node 20 does not expose import.meta.main; compare current module to argv[1].
+  // Node 20 does not expose import.meta.main.
+  // For npm/pnpm/yarn shims, argv[1] often points at node_modules/.bin/create-gametau.
   const entry = process.argv[1];
   if (!entry) return false;
 
   try {
     const currentFile = fileURLToPath(import.meta.url);
-    return resolve(entry) === currentFile;
+    const entryPath = normalizeExecPath(entry);
+    const currentPath = normalizeExecPath(currentFile);
+    if (entryPath === currentPath) return true;
+
+    // Fallback for shim launchers where argv[1] is the shim itself.
+    const launcher = basename(entryPath).toLowerCase();
+    return launcher === "create-gametau" || launcher === "create-gametau.cmd" || launcher === "create-gametau.ps1";
   } catch {
     return false;
   }
