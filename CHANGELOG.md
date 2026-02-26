@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.1.4] - 2026-02-26
+
+### Fixed
+- Hyphenated scaffold names now generate valid Rust module identifiers in templates (e.g. `my-game` → `my_game`) for commands/app/wasm imports
+- Consumer smoke builds now work with the existing `smoke-game` scaffold target name
+
+### Changed
+- Scaffolder now applies Rust identifier normalization for `{{PROJECT_NAME}}_` template usages while preserving display/package names
+- Release versions bumped to `0.1.4` for `webtau`, `webtau-vite`, `create-gametau`, `webtau`, and `webtau-macros`
+
 ## [0.1.3] - 2026-02-26
 
 ### Fixed
