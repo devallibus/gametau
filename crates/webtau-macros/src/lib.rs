@@ -54,7 +54,7 @@ struct CommandDef {
     state_ident: syn::Ident,
     state_ty: Box<Type>,
     state_mut: bool,
-    extra_params: Vec<(syn::Ident, Box<Type>)>,
+    extra_params: Vec<(Option<syn::token::Mut>, syn::Ident, Box<Type>)>,
     ret: ReturnShape,
     body: syn::Block,
 }
@@ -134,8 +134,8 @@ fn expand_command(func: ItemFn) -> syn::Result<TokenStream2> {
             FnArg::Typed(pt) => pt,
             _ => unreachable!(),
         };
-        let ident = match &*typed.pat {
-            Pat::Ident(PatIdent { ident, .. }) => ident.clone(),
+        let (mutability, ident) = match &*typed.pat {
+            Pat::Ident(PatIdent { mutability, ident, .. }) => (*mutability, ident.clone()),
             other => {
                 return Err(syn::Error::new(
                     other.span(),
@@ -151,7 +151,7 @@ fn expand_command(func: ItemFn) -> syn::Result<TokenStream2> {
                  for generated code",
             ));
         }
-        extra_params.push((ident, typed.ty.clone()));
+        extra_params.push((mutability, ident, typed.ty.clone()));
     }
 
     // ── Parse return type ──
@@ -225,7 +225,7 @@ fn generate_inner(def: &CommandDef) -> TokenStream2 {
     let extra: Vec<_> = def
         .extra_params
         .iter()
-        .map(|(id, ty)| quote! { #id: #ty })
+        .map(|(mutability, id, ty)| quote! { #mutability #id: #ty })
         .collect();
 
     let ret = ret_tokens(&def.ret);
@@ -246,12 +246,12 @@ fn generate_native(def: &CommandDef) -> TokenStream2 {
     let extra_defs: Vec<_> = def
         .extra_params
         .iter()
-        .map(|(id, ty)| quote! { #id: #ty })
+        .map(|(_, id, ty)| quote! { #id: #ty })
         .collect();
     let extra_names: Vec<_> = def
         .extra_params
         .iter()
-        .map(|(id, _)| quote! { #id })
+        .map(|(_, id, _)| quote! { #id })
         .collect();
 
     // Use `__webtau_` prefix to avoid collisions with user arg names
@@ -301,12 +301,12 @@ fn generate_wasm(def: &CommandDef) -> TokenStream2 {
         let field_defs: Vec<_> = def
             .extra_params
             .iter()
-            .map(|(id, ty)| quote! { #id: #ty })
+            .map(|(_, id, ty)| quote! { #id: #ty })
             .collect();
         let field_refs: Vec<_> = def
             .extra_params
             .iter()
-            .map(|(id, _)| quote! { __args.#id })
+            .map(|(_, id, _)| quote! { __args.#id })
             .collect();
 
         (
