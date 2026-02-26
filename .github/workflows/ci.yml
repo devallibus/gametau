@@ -139,6 +139,10 @@ jobs:
           node package/dist/cli.js smoke-game
           node package/dist/cli.js smokegame
 
+          # Allow smoke builds to compile against the local workspace crate
+          # before the new crates.io version is published.
+          workspace_webtau="$GITHUB_WORKSPACE/crates/webtau"
+
           for project in smoke-game smokegame; do
             test -d "$project"
             test -f "$project/.gitignore"
@@ -147,6 +151,8 @@ jobs:
 
             # Force scaffold builds to consume the freshly packed local artifacts.
             (cd "$project" && npm pkg set dependencies.webtau="file:../webtau.tgz" devDependencies.webtau-vite="file:../webtau-vite.tgz")
+            sed -i "s#^webtau = \".*\"#webtau = { path = \"${workspace_webtau}\" }#" "$project/src-tauri/commands/Cargo.toml"
+            sed -i "s#^webtau = \".*\"#webtau = { path = \"${workspace_webtau}\" }#" "$project/src-tauri/wasm/Cargo.toml"
           done
       - name: Build scaffolded projects (web target)
         run: |
