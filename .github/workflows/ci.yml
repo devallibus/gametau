@@ -105,7 +105,7 @@ jobs:
           tgz="$(npm pack --silent)"
           mv "$tgz" ../create-gametau/.pack-smoke/webtau-vite.tgz
 
-          cd packages/create-gametau
+          cd ../create-gametau
           tgz="$(npm pack --silent)"
           mv "$tgz" .pack-smoke/create-gametau.tgz
           tar -xzf .pack-smoke/create-gametau.tgz -C .pack-smoke
