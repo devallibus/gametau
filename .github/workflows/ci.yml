@@ -98,8 +98,21 @@ jobs:
           cargo publish -p webtau-macros --dry-run
       - name: Cargo publish dry-run (webtau)
         run: |
-          echo "Expected output: packaging + verification logs and exit code 0."
-          cargo publish -p webtau --dry-run
+          echo "Expected output: packaging + verification logs. For unreleased prerelease dependencies, a version-mismatch error is acceptable before the release tag publish sequence."
+          set +e
+          dry_run_output="$(cargo publish -p webtau --dry-run 2>&1)"
+          dry_run_status=$?
+          set -e
+          echo "$dry_run_output"
+          if [ $dry_run_status -eq 0 ]; then
+            exit 0
+          fi
+          if [[ "$dry_run_output" == *"failed to select a version for the requirement"* ]] && [[ "$dry_run_output" == *"webtau-macros"* ]]; then
+            echo "webtau dry-run hit expected prerelease dependency mismatch; validating crate integrity with cargo check instead."
+            cargo check -p webtau
+            exit 0
+          fi
+          exit $dry_run_status
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.9
