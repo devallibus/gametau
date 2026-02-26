@@ -1,3 +1,5 @@
+<img src=".github/assets/logo.png" alt="gametau" width="240" />
+
 # gametau
 
 [![npm](https://img.shields.io/npm/v/webtau)](https://npmjs.com/package/webtau)
