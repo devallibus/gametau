@@ -89,12 +89,19 @@ jobs:
           echo "WEBTAU_VERSION=${workspace_version}" >> "$GITHUB_ENV"
       - name: Publish webtau-macros (must come first)
         run: |
-          result="$(cargo search webtau-macros --limit 1 || true)"
-          if [[ "$result" == "webtau-macros = \"$WEBTAU_MACROS_VERSION\""* ]]; then
+          set +e
+          publish_output="$(cargo publish -p webtau-macros 2>&1)"
+          publish_status=$?
+          set -e
+          echo "$publish_output"
+          if [ $publish_status -eq 0 ]; then
+            exit 0
+          fi
+          if [[ "$publish_output" == *"already exists on crates.io index"* ]]; then
             echo "webtau-macros v${WEBTAU_MACROS_VERSION} already published; skipping."
             exit 0
           fi
-          cargo publish -p webtau-macros
+          exit $publish_status
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
       - name: Wait for crates.io index propagation
@@ -113,11 +120,6 @@ jobs:
           echo "Timed out waiting for webtau-macros v${expected_version} in search results; proceeding with publish retries."
       - name: Publish webtau
         run: |
-          result="$(cargo search webtau --limit 1 || true)"
-          if [[ "$result" == "webtau = \"$WEBTAU_VERSION\""* ]]; then
-            echo "webtau v${WEBTAU_VERSION} already published; skipping."
-            exit 0
-          fi
           for attempt in {1..30}; do
             set +e
             publish_output="$(cargo publish -p webtau 2>&1)"
@@ -125,6 +127,10 @@ jobs:
             set -e
             echo "$publish_output"
             if [ $publish_status -eq 0 ]; then
+              exit 0
+            fi
+            if [[ "$publish_output" == *"already exists on crates.io index"* ]]; then
+              echo "webtau v${WEBTAU_VERSION} already published; skipping."
               exit 0
             fi
             if [[ "$publish_output" == *"failed to select a version for the requirement `webtau-macros"* ]]; then
