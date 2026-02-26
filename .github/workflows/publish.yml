@@ -26,13 +26,26 @@ jobs:
         with:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
-      - run: cd packages/webtau && npm publish --access public
+      - name: Resolve npm dist-tag
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          if [[ "$version" == *-* ]]; then
+            dist_tag="alpha"
+          else
+            dist_tag="latest"
+          fi
+          echo "NPM_DIST_TAG=${dist_tag}" >> "$GITHUB_ENV"
+          echo "Using npm dist-tag '${dist_tag}' for v${version}."
+      - name: Publish webtau
+        run: cd packages/webtau && npm publish --access public --tag "$NPM_DIST_TAG"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - run: cd packages/webtau-vite && npm publish --access public
+      - name: Publish webtau-vite
+        run: cd packages/webtau-vite && npm publish --access public --tag "$NPM_DIST_TAG"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - run: cd packages/create-gametau && npm publish --access public
+      - name: Publish create-gametau
+        run: cd packages/create-gametau && npm publish --access public --tag "$NPM_DIST_TAG"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -43,6 +56,26 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - run: cargo publish -p webtau
+      - name: Publish webtau-macros (must come first)
+        run: cargo publish -p webtau-macros
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      - name: Wait for crates.io index propagation
+        run: |
+          expected_version="$(cargo pkgid -p webtau-macros | sed -E 's/.*#(.*)$/\1/')"
+          echo "Waiting for webtau-macros v${expected_version} to appear on crates.io..."
+          for attempt in {1..15}; do
+            result="$(cargo search webtau-macros --limit 1 || true)"
+            if [[ "$result" == "webtau-macros = \"$expected_version\""* ]]; then
+              echo "webtau-macros v${expected_version} is visible on crates.io."
+              exit 0
+            fi
+            echo "webtau-macros v${expected_version} not indexed yet (attempt ${attempt}/15). Waiting 10s..."
+            sleep 10
+          done
+          echo "Timed out waiting for webtau-macros v${expected_version} index propagation."
+          exit 1
+      - name: Publish webtau
+        run: cargo publish -p webtau
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}

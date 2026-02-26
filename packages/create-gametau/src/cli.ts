@@ -128,8 +128,26 @@ function replaceInDir(dir: string, search: string, replace: string): void {
   }
 }
 
+function isDirectExecution(): boolean {
+  // Bun exposes import.meta.main directly.
+  if (typeof Bun !== "undefined") {
+    return import.meta.main;
+  }
+
+  // Node 20 does not expose import.meta.main; compare current module to argv[1].
+  const entry = process.argv[1];
+  if (!entry) return false;
+
+  try {
+    const currentFile = fileURLToPath(import.meta.url);
+    return resolve(entry) === currentFile;
+  } catch {
+    return false;
+  }
+}
+
 // Main — only runs when executed directly (not when imported by tests)
-if (import.meta.main) {
+if (isDirectExecution()) {
   const args = process.argv.slice(2);
   const options = parseArgs(args);
   try {

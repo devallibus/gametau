@@ -10,7 +10,7 @@ crate-type = ["cdylib"]
 wasm-bindgen = "0.2"
 serde = { version = "1", features = ["derive"] }
 serde-wasm-bindgen = "0.6"
-webtau = "0.1"
+webtau = "0.1.0-alpha.2"
 {{PROJECT_NAME}}-core = { path = "../core" }
 {{PROJECT_NAME}}-commands = { path = "../commands" }
 

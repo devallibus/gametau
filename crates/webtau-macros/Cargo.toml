@@ -5,7 +5,6 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
-publish = false
 
 [lib]
 proc-macro = true
@@ -15,8 +14,14 @@ syn = { version = "2", features = ["full"] }
 quote = "1"
 proc-macro2 = "1"
 
+# dev-dependencies excluded from published crate (path-only deps)
+# Run tests locally with: cargo test -p webtau-macros
 [dev-dependencies]
 trybuild = "1"
 tauri = { path = "tests/support/tauri" }
 webtau = { path = "../webtau" }
 serde = { version = "1", features = ["derive"] }
+
+[package.metadata]
+# path-only dev-deps above are excluded by cargo publish automatically
+# since they have no version field — this is intentional
