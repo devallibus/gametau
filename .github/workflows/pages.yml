@@ -35,6 +35,9 @@ jobs:
 
       - run: bun install
 
+      - name: Generate API docs (TypeDoc + rustdoc)
+        run: bun run docs:api
+
       # Build workspace packages (webtau, webtau-vite) so examples can import them
       - name: Build packages
         run: |
@@ -57,6 +60,7 @@ jobs:
         run: |
           mkdir -p _site
           cp site/index.html _site/
+          cp -r .api-docs _site/api
           cp -r examples/counter/dist _site/counter
           cp -r examples/pong/dist _site/pong
 

@@ -70,6 +70,24 @@ jobs:
       - run: bunx tsc --noEmit -p packages/webtau-vite/tsconfig.json
       - run: bunx tsc --noEmit -p packages/create-gametau/tsconfig.json
 
+  api-docs:
+    name: API Docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.9
+      - run: bun install
+      - name: Generate API docs (TypeDoc + rustdoc)
+        run: bun run docs:api
+      - uses: actions/upload-artifact@v4
+        with:
+          name: api-docs
+          path: .api-docs
+
   smoke:
     name: Scaffold & Build Smoke
     runs-on: ubuntu-latest

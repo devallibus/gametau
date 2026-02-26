@@ -36,6 +36,11 @@ bun run dev                              # localhost:1420 — hot-reload in Chro
 
 Need a full first-run walkthrough (including browser + Tauri paths)? See `docs/GETTING-STARTED.md`.
 
+### API docs
+
+- Live API docs: <https://devallibus.github.io/gametau/api/>
+- Generated automatically from TypeDoc + rustdoc in CI and published via GitHub Pages.
+
 ### Existing Tauri project
 
 ```bash

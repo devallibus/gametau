@@ -29,6 +29,7 @@ Thumbs.db
 # Test output
 .test-scratch/
 __test_output__/
+.api-docs/
 
 # Env
 .env
