@@ -98,6 +98,12 @@ The CI workflow includes a **Publish Preflight** job to catch release regression
 
 Any non-zero exit or missing package/tarball metadata should be treated as a release blocker.
 
+## Release Incident Response
+
+If a tag-triggered release fails (or partially publishes), follow the canonical checklist:
+
+- `docs/RELEASE-INCIDENT-RESPONSE.md`
+
 ## Template Dependency Versioning Policy
 
 During prerelease (`alpha`, `beta`, `rc`) cycles, scaffold templates stay pinned to the current prerelease line.
