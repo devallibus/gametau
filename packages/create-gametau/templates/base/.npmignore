@@ -1,0 +1,13 @@
+# Rust
+target/
+
+# Node
+node_modules/
+dist/
+
+# WASM output (generated)
+src/wasm/
+
+# OS
+.DS_Store
+Thumbs.db

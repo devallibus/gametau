@@ -30,6 +30,12 @@ function runCli(args: string[]) {
   });
 }
 
+function getPackageVersion(): string {
+  const packageJsonPath = join(import.meta.dir, "..", "package.json");
+  const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8")) as { version: string };
+  return packageJson.version;
+}
+
 describe("create-gametau CLI entrypoint", () => {
   test("prints help and exits successfully", () => {
     const result = runCli(["--help"]);
@@ -46,11 +52,25 @@ describe("create-gametau CLI entrypoint", () => {
     expect(result.stderr).toContain("project name required");
   });
 
+  test("prints version and exits successfully", () => {
+    const result = runCli(["--version"]);
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain(getPackageVersion());
+  });
+
   test("fails on invalid template value", () => {
     const result = runCli(["my-game", "--template", "bad-template"]);
     expect(result.error).toBeUndefined();
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("Invalid template: bad-template");
+  });
+
+  test("fails on unknown option", () => {
+    const result = runCli(["--wat"]);
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Unknown option: --wat");
   });
 });
 
@@ -72,6 +92,8 @@ describe("create-gametau CLI", () => {
     expect(existsSync(join(projectDir, "src-tauri", "commands", "src", "lib.rs"))).toBe(true);
     expect(existsSync(join(projectDir, "src-tauri", "commands", "src", "commands.rs"))).toBe(true);
     expect(existsSync(join(projectDir, "src", "game", "scene.ts"))).toBe(true);
+    expect(existsSync(join(projectDir, ".gitignore"))).toBe(true);
+    expect(existsSync(join(projectDir, ".npmignore"))).toBe(false);
 
     // Check Three.js dependency in package.json
     const pkg = JSON.parse(readFileSync(join(projectDir, "package.json"), "utf-8"));
