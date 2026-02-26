@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.1.3] - 2026-02-26
+
+### Fixed
+- Scaffolded template Rust builds no longer fail on `wasm32-unknown-unknown` due to `getrandom` feature gating from `rand` defaults
+- Consumer smoke now progresses through scaffold/install/build for newly published `create-gametau` templates
+
+### Changed
+- Template `rand` dependency now disables default features and enables only `std` + `std_rng`
+- Release versions bumped to `0.1.3` for `webtau`, `webtau-vite`, `create-gametau`, `webtau`, and `webtau-macros`
+
 ## [0.1.2] - 2026-02-26
 
 ### Fixed
