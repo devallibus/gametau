@@ -548,9 +548,9 @@ Manual v1 wrappers remain fully supported — you can migrate command-by-command
 
 ## Roadmap
 
-- **v1**: `wasm_state!` macro, invoke router, Vite plugin, project scaffolder
-- **v2 (current)**: `#[webtau::command]` proc macro — generates both `#[tauri::command]` and `#[wasm_bindgen]` from a single function definition. Shared command modules eliminate duplicate wrappers.
-- **v2+**: Additional shims (fs → IndexedDB, dialog → `<dialog>`, event → CustomEvent)
+- **`0.1.x` (shipped, current stable line)**: dual-target core is live (`webtau`, `webtau-vite`, `create-gametau`, `#[webtau::command]`, and release hardening). See [CHANGELOG `0.1.0`](./CHANGELOG.md#010---2026-02-26) and [CHANGELOG `0.1.4`](./CHANGELOG.md#014---2026-02-26).
+- **`0.2.0` (planned)**: post-`0.1` docs/adoption and parity backlog (README normalization, tutorial/docs pipeline, web parity shims). Tracking: [roadmap issue #6](https://github.com/devallibus/gametau/issues/6).
+- **`0.3.0+` (future)**: broader platform foundations such as input/audio/assets modules and additional runtime surface expansion.
 
 ## Support & Commercial Licensing
 
