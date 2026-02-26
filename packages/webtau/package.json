@@ -3,6 +3,11 @@
   "version": "0.1.0-alpha.2",
   "description": "Deploy Tauri games to web + desktop from one codebase",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/devallibus/gametau.git",
+    "directory": "packages/webtau"
+  },
   "type": "module",
   "exports": {
     ".": {

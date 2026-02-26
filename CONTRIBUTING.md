@@ -77,6 +77,38 @@ Please open an issue before submitting a PR for any of the following:
 3. **Use conventional commits**: `feat:`, `fix:`, `chore:`, `docs:`, etc.
 4. **Keep PRs focused** — one concern per PR.
 
+## CI Publish Preflight Expectations
+
+The CI workflow includes a **Publish Preflight** job to catch release regressions before tags are pushed.
+
+- Rust checks:
+  - `cargo publish -p webtau-macros --dry-run`
+  - `cargo publish -p webtau --dry-run`
+  - Expected signal: packaging + verification logs and exit code `0`.
+- npm checks:
+  - `npm pack --dry-run` in:
+    - `packages/webtau`
+    - `packages/webtau-vite`
+    - `packages/create-gametau`
+  - Expected signal: tarball metadata/file-list output and exit code `0`.
+
+Any non-zero exit or missing package/tarball metadata should be treated as a release blocker.
+
+## Template Dependency Versioning Policy
+
+During prerelease (`alpha`, `beta`, `rc`) cycles, scaffold templates stay pinned to the current prerelease line.
+
+- JS template pins: `packages/create-gametau/templates/base/package.json`
+- Rust template pins: `packages/create-gametau/templates/base/src-tauri/commands/Cargo.toml`
+
+Scheduled stable switch:
+
+- Trigger: immediately before tagging the first stable release (`v0.1.0`).
+- Action:
+  - Switch JS template dependencies from prerelease pins to stable range syntax (for example `^0.1.0`).
+  - Switch Rust template dependency from prerelease pin to stable range syntax (for example `^0.1.0`).
+- Tracking: complete and close this work under Issue #3 (`Post-PR2 CI/Publish hardening follow-ups`).
+
 ## CLA
 
 By submitting a PR, you agree to the terms in [CLA.md](CLA.md).

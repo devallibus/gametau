@@ -3,6 +3,11 @@
   "version": "0.1.0-alpha.2",
   "description": "Vite plugin for webtau — wasm-pack automation + Tauri API aliasing",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/devallibus/gametau.git",
+    "directory": "packages/webtau-vite"
+  },
   "type": "module",
   "exports": {
     ".": {

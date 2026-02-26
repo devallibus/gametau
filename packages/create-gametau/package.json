@@ -3,9 +3,14 @@
   "version": "0.1.0-alpha.2",
   "description": "Scaffold a Tauri game that deploys to web + desktop",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/devallibus/gametau.git",
+    "directory": "packages/create-gametau"
+  },
   "type": "module",
   "bin": {
-    "create-gametau": "./dist/cli.js"
+    "create-gametau": "dist/cli.js"
   },
   "files": [
     "dist",
