@@ -133,7 +133,7 @@ jobs:
               echo "webtau v${WEBTAU_VERSION} already published; skipping."
               exit 0
             fi
-            if [[ "$publish_output" == *"failed to select a version for the requirement `webtau-macros"* ]]; then
+            if [[ "$publish_output" == *"failed to select a version for the requirement"* ]] && [[ "$publish_output" == *"webtau-macros"* ]]; then
               echo "webtau-macros v${WEBTAU_MACROS_VERSION} likely still propagating (attempt ${attempt}/30). Waiting 10s..."
               sleep 10
               continue
