@@ -93,31 +93,57 @@ jobs:
         run: cd packages/webtau && bun run build
       - name: Build smoke dependency package (webtau-vite)
         run: cd packages/webtau-vite && bun run build
-      - name: Scaffold smoke project from packed create-gametau artifact
+      - name: Pack smoke artifacts
         run: |
+          mkdir -p packages/create-gametau/.pack-smoke
+
+          cd packages/webtau
+          tgz="$(npm pack --silent)"
+          mv "$tgz" ../create-gametau/.pack-smoke/webtau.tgz
+
+          cd ../webtau-vite
+          tgz="$(npm pack --silent)"
+          mv "$tgz" ../create-gametau/.pack-smoke/webtau-vite.tgz
+
           cd packages/create-gametau
           tgz="$(npm pack --silent)"
-          mkdir -p .pack-smoke
-          mv "$tgz" ".pack-smoke/$tgz"
-          tar -xzf ".pack-smoke/$tgz" -C .pack-smoke
+          mv "$tgz" .pack-smoke/create-gametau.tgz
+          tar -xzf .pack-smoke/create-gametau.tgz -C .pack-smoke
 
-          cd .pack-smoke
+      - name: Scaffold smoke projects from packed create-gametau artifact
+        run: |
+          cd packages/create-gametau/.pack-smoke
           node package/dist/cli.js --version
           if node package/dist/cli.js smoke-bad --wat; then
             echo "Expected unknown option to fail"
             exit 1
           fi
-          node package/dist/cli.js smoke-test-project
+          node package/dist/cli.js smoke-game
+          node package/dist/cli.js smokegame
 
-          test -f smoke-test-project/.gitignore
-          test ! -f smoke-test-project/gitignore
-          test ! -f smoke-test-project/.npmignore
-          ls smoke-test-project/
-      - name: Build scaffolded project (web target)
+          for project in smoke-game smokegame; do
+            test -d "$project"
+            test -f "$project/.gitignore"
+            test ! -f "$project/gitignore"
+            test ! -f "$project/.npmignore"
+
+            # Force scaffold builds to consume the freshly packed local artifacts.
+            (cd "$project" && npm pkg set dependencies.webtau="file:../webtau.tgz" devDependencies.webtau-vite="file:../webtau-vite.tgz")
+          done
+      - name: Build scaffolded projects (web target)
         run: |
-          cd examples/counter
-          bun install
-          bun run build:web
+          cd packages/create-gametau/.pack-smoke
+          for project in smoke-game smokegame; do
+            echo "::group::${project}"
+            (
+              cd "$project"
+              bun install
+              bun run build:web
+              test -d dist
+              test -f dist/index.html
+            )
+            echo "::endgroup::"
+          done
 
   publish-preflight:
     name: Publish Preflight
