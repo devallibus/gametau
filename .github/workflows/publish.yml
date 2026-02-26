@@ -11,6 +11,9 @@ jobs:
   publish-npm:
     needs: ci
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -37,29 +40,24 @@ jobs:
           echo "NPM_DIST_TAG=${dist_tag}" >> "$GITHUB_ENV"
           echo "Using npm dist-tag '${dist_tag}' for v${version}."
       - name: Publish webtau
-        run: cd packages/webtau && npm publish --access public --tag "$NPM_DIST_TAG"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: cd packages/webtau && npm publish --access public --tag "$NPM_DIST_TAG" --provenance
       - name: Publish webtau-vite
-        run: cd packages/webtau-vite && npm publish --access public --tag "$NPM_DIST_TAG"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: cd packages/webtau-vite && npm publish --access public --tag "$NPM_DIST_TAG" --provenance
       - name: Publish create-gametau
-        run: cd packages/create-gametau && npm publish --access public --tag "$NPM_DIST_TAG"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: cd packages/create-gametau && npm publish --access public --tag "$NPM_DIST_TAG" --provenance
 
   publish-crate:
     needs: ci
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Publish webtau-macros (must come first)
         run: cargo publish -p webtau-macros
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
       - name: Wait for crates.io index propagation
         run: |
           expected_version="$(cargo pkgid -p webtau-macros | sed -E 's/.*#(.*)$/\1/')"
@@ -77,5 +75,3 @@ jobs:
           exit 1
       - name: Publish webtau
         run: cargo publish -p webtau
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
