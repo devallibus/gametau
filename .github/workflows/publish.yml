@@ -84,8 +84,9 @@ jobs:
         uses: rust-lang/crates-io-auth-action@v1
       - name: Resolve crate versions
         run: |
-          echo "WEBTAU_MACROS_VERSION=$(cargo pkgid -p webtau-macros | sed -E 's/.*#(.*)$/\1/')" >> "$GITHUB_ENV"
-          echo "WEBTAU_VERSION=$(cargo pkgid -p webtau | sed -E 's/.*#(.*)$/\1/')" >> "$GITHUB_ENV"
+          workspace_version="$(awk -F'\"' '/^version = / {print $2; exit}' Cargo.toml)"
+          echo "WEBTAU_MACROS_VERSION=${workspace_version}" >> "$GITHUB_ENV"
+          echo "WEBTAU_VERSION=${workspace_version}" >> "$GITHUB_ENV"
       - name: Publish webtau-macros (must come first)
         run: |
           result="$(cargo search webtau-macros --limit 1 || true)"

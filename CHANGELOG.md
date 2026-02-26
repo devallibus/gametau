@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.1.0-alpha.3] - 2026-02-26
+
+### Added
+- CI publish preflight job with Rust/npm dry-run checks (`cargo publish --dry-run`, `npm pack --dry-run`)
+- Contributor guidance for prerelease template pinning and stable-switch policy
+
+### Changed
+- Release versions bumped to `0.1.0-alpha.3` across workspace crates, npm packages, and scaffolder templates
+- Smoke CI step names were clarified for faster diagnostics
+- Web crate preflight logic now handles prerelease dependency checks safely during CI
+
+### Release Proof
+- Tag: `v0.1.0-alpha.3`
+- Publish workflow run: https://github.com/devallibus/gametau/actions/runs/22446985795
+- Published npm packages:
+  - `webtau@0.1.0-alpha.3`
+  - `webtau-vite@0.1.0-alpha.3`
+  - `create-gametau@0.1.0-alpha.3`
+- Published crates:
+  - `webtau-macros 0.1.0-alpha.3`
+  - `webtau 0.1.0-alpha.3`
+- Note: workflow publish partially failed due registry-side trusted publisher auth mismatch for `webtau-vite` and `webtau-macros`; missing artifacts were published manually and verified.
+
 ## [0.1.0-alpha.2] - 2026-02-26
 
 ### Added
