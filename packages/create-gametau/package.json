@@ -18,6 +18,7 @@
   ],
   "scripts": {
     "build": "tsc",
+    "prepack": "npm run build",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
   },

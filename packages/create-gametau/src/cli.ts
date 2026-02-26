@@ -9,7 +9,15 @@
  *   bunx create-gametau my-game --template vanilla
  */
 
-import { mkdirSync, writeFileSync, existsSync, readdirSync, readFileSync, cpSync } from "fs";
+import {
+  mkdirSync,
+  writeFileSync,
+  existsSync,
+  readdirSync,
+  readFileSync,
+  cpSync,
+  renameSync,
+} from "fs";
 import { join, resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 
@@ -19,6 +27,16 @@ type Template = (typeof TEMPLATES)[number];
 interface Options {
   projectName: string;
   template: Template;
+}
+
+function getPackageVersion(): string {
+  try {
+    const packageJsonPath = new URL("../package.json", import.meta.url);
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8")) as { version?: string };
+    return packageJson.version ?? "unknown";
+  } catch {
+    return "unknown";
+  }
 }
 
 function parseArgs(args: string[]): Options {
@@ -38,7 +56,14 @@ function parseArgs(args: string[]): Options {
     } else if (arg === "--help" || arg === "-h") {
       printHelp();
       process.exit(0);
-    } else if (!arg.startsWith("-")) {
+    } else if (arg === "--version" || arg === "-v") {
+      console.log(`create-gametau ${getPackageVersion()}`);
+      process.exit(0);
+    } else if (arg.startsWith("-")) {
+      console.error(`Unknown option: ${arg}`);
+      console.error("Run with --help to see available options.");
+      process.exit(1);
+    } else {
       positional.push(arg);
     }
   }
@@ -62,6 +87,7 @@ Usage:
 Options:
   --template, -t   Template to use: three (default), pixi, vanilla
   --help, -h       Show this help message
+  --version, -v    Show CLI version
 
 Examples:
   bunx create-gametau my-game
@@ -105,8 +131,27 @@ export function scaffold(options: Options, cwd?: string): void {
     cpSync(overlayDir, targetDir, { recursive: true });
   }
 
+  // npm strips dotfiles named .gitignore / .npmignore from tarballs.
+  // Templates store the file as "gitignore" (no dot) and we rename it here.
+  renameTemplateGitignore(targetDir);
+
   // Replace {{PROJECT_NAME}} placeholders
   replaceInDir(targetDir, "{{PROJECT_NAME}}", projectName);
+}
+
+function renameTemplateGitignore(dir: string): void {
+  const entries = readdirSync(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    const fullPath = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      renameTemplateGitignore(fullPath);
+      continue;
+    }
+
+    if (entry.name === "gitignore") {
+      renameSync(fullPath, join(dir, ".gitignore"));
+    }
+  }
 }
 
 function replaceInDir(dir: string, search: string, replace: string): void {

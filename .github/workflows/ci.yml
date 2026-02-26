@@ -49,6 +49,11 @@ jobs:
             (cd "$package_dir" && bun run test)
             echo "::endgroup::"
           done
+      - name: Run create-gametau tests against built dist
+        run: |
+          cd packages/create-gametau
+          bun run build
+          bun run test
       - run: bunx tsc --noEmit -p packages/webtau/tsconfig.json
       - run: bunx tsc --noEmit -p packages/webtau-vite/tsconfig.json
       - run: bunx tsc --noEmit -p packages/create-gametau/tsconfig.json
@@ -67,17 +72,34 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
       - name: Install workspace dependencies
         run: bun install
-      - name: Build smoke dependency package (create-gametau)
-        run: cd packages/create-gametau && bun run build
       - name: Build smoke dependency package (webtau)
         run: cd packages/webtau && bun run build
       - name: Build smoke dependency package (webtau-vite)
         run: cd packages/webtau-vite && bun run build
-      - name: Scaffold smoke project (three template)
+      - name: Scaffold smoke project from packed create-gametau artifact
         run: |
-          node packages/create-gametau/dist/cli.js smoke-test-project
+          cd packages/create-gametau
+          tgz="$(npm pack --silent)"
+          mkdir -p .pack-smoke
+          mv "$tgz" ".pack-smoke/$tgz"
+          tar -xzf ".pack-smoke/$tgz" -C .pack-smoke
+
+          cd .pack-smoke
+          node package/dist/cli.js --version
+          if node package/dist/cli.js smoke-bad --wat; then
+            echo "Expected unknown option to fail"
+            exit 1
+          fi
+          node package/dist/cli.js smoke-test-project
+
+          test -f smoke-test-project/.gitignore
+          test ! -f smoke-test-project/gitignore
+          test ! -f smoke-test-project/.npmignore
           ls smoke-test-project/
       - name: Build scaffolded project (web target)
         run: |

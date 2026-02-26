@@ -7,6 +7,7 @@ import { scaffold } from "./cli";
 // Use a project-local scratch directory for test isolation
 const TEST_ROOT = join(import.meta.dir, "..", ".test-scratch");
 const CLI_PATH = join(import.meta.dir, "cli.ts");
+const DIST_CLI_PATH = join(import.meta.dir, "..", "dist", "cli.js");
 
 let testDir: string;
 
@@ -30,6 +31,19 @@ function runCli(args: string[]) {
   });
 }
 
+function runDistCli(args: string[]) {
+  return spawnSync("node", [DIST_CLI_PATH, ...args], {
+    cwd: freshDir(),
+    encoding: "utf-8",
+  });
+}
+
+function getPackageVersion(): string {
+  const packageJsonPath = join(import.meta.dir, "..", "package.json");
+  const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8")) as { version: string };
+  return packageJson.version;
+}
+
 describe("create-gametau CLI entrypoint", () => {
   test("prints help and exits successfully", () => {
     const result = runCli(["--help"]);
@@ -46,11 +60,56 @@ describe("create-gametau CLI entrypoint", () => {
     expect(result.stderr).toContain("project name required");
   });
 
+  test("prints version and exits successfully", () => {
+    const result = runCli(["--version"]);
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain(getPackageVersion());
+  });
+
   test("fails on invalid template value", () => {
     const result = runCli(["my-game", "--template", "bad-template"]);
     expect(result.error).toBeUndefined();
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("Invalid template: bad-template");
+  });
+
+  test("fails on unknown option", () => {
+    const result = runCli(["--wat"]);
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Unknown option: --wat");
+  });
+});
+
+// dist/ tests require a prior `bun run build`. The "Scaffold & Build Smoke"
+// CI job validates the packed artifact; skip here when dist is absent.
+const hasDist = existsSync(DIST_CLI_PATH);
+
+describe.skipIf(!hasDist)("create-gametau dist CLI entrypoint", () => {
+  test("prints version and exits successfully", () => {
+    const result = runDistCli(["--version"]);
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain(getPackageVersion());
+  });
+
+  test("fails on unknown option", () => {
+    const result = runDistCli(["--wat"]);
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Unknown option: --wat");
+  });
+
+  test("normalizes template gitignore names when scaffolding", () => {
+    const result = runDistCli(["dist-smoke"]);
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(0);
+
+    const projectDir = join(testDir, "dist-smoke");
+    expect(existsSync(join(projectDir, ".gitignore"))).toBe(true);
+    expect(existsSync(join(projectDir, ".npmignore"))).toBe(false);
+    expect(existsSync(join(projectDir, "gitignore"))).toBe(false);
   });
 });
 
@@ -72,6 +131,9 @@ describe("create-gametau CLI", () => {
     expect(existsSync(join(projectDir, "src-tauri", "commands", "src", "lib.rs"))).toBe(true);
     expect(existsSync(join(projectDir, "src-tauri", "commands", "src", "commands.rs"))).toBe(true);
     expect(existsSync(join(projectDir, "src", "game", "scene.ts"))).toBe(true);
+    expect(existsSync(join(projectDir, ".gitignore"))).toBe(true);
+    expect(existsSync(join(projectDir, ".npmignore"))).toBe(false);
+    expect(existsSync(join(projectDir, "gitignore"))).toBe(false);
 
     // Check Three.js dependency in package.json
     const pkg = JSON.parse(readFileSync(join(projectDir, "package.json"), "utf-8"));
