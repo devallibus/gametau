@@ -70,6 +70,10 @@ jobs:
           cd packages/create-gametau
           bun run build
           bun run test
+      - name: Build webtau types for example typecheck
+        run: |
+          cd packages/webtau
+          bun run build
       - run: bunx tsc --noEmit -p packages/webtau/tsconfig.json
       - run: bunx tsc --noEmit -p packages/webtau-vite/tsconfig.json
       - run: bunx tsc --noEmit -p packages/create-gametau/tsconfig.json
