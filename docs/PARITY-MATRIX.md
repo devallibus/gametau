@@ -13,7 +13,7 @@ Scope:
 - `Partial`: API name exists, but semantics differ from native Tauri behavior.
 - `Not implemented`: available in Tauri but not provided by current `webtau` shim.
 
-## Coverage Summary (v0.3.0-alpha.2)
+## Coverage Summary (v0.3.0)
 
 Coverage is an approximate function-level view of each aliased namespace.
 
