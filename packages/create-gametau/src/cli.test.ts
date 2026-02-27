@@ -153,6 +153,11 @@ describe("create-gametau CLI", () => {
     expect(existsSync(join(projectDir, "src-tauri", "commands", "src", "lib.rs"))).toBe(true);
     expect(existsSync(join(projectDir, "src-tauri", "commands", "src", "commands.rs"))).toBe(true);
     expect(existsSync(join(projectDir, "src", "game", "scene.ts"))).toBe(true);
+    expect(existsSync(join(projectDir, "src", "services", "index.ts"))).toBe(true);
+    expect(existsSync(join(projectDir, "src", "services", "contracts.ts"))).toBe(true);
+    expect(existsSync(join(projectDir, "src", "services", "settings.ts"))).toBe(true);
+    expect(existsSync(join(projectDir, "src", "services", "session.ts"))).toBe(true);
+    expect(existsSync(join(projectDir, "src", "services", "comms.ts"))).toBe(true);
     expect(existsSync(join(projectDir, ".gitignore"))).toBe(true);
     expect(existsSync(join(projectDir, ".npmignore"))).toBe(false);
     expect(existsSync(join(projectDir, "gitignore"))).toBe(false);
@@ -228,6 +233,31 @@ describe("create-gametau CLI", () => {
     expect(viteConfig).not.toContain("wasmCrate:");
     expect(viteConfig).not.toContain("wasmOutDir:");
     expect(viteConfig).not.toContain("watchPaths:");
+  });
+
+  test("service seam modules align to fs/path/event parity shims", () => {
+    const dir = freshDir();
+    scaffold({ projectName: "service-seams", template: "three" }, dir);
+    const projectDir = join(dir, "service-seams");
+
+    const settingsService = readFileSync(
+      join(projectDir, "src", "services", "settings.ts"),
+      "utf-8",
+    );
+    const sessionService = readFileSync(
+      join(projectDir, "src", "services", "session.ts"),
+      "utf-8",
+    );
+    const commsService = readFileSync(
+      join(projectDir, "src", "services", "comms.ts"),
+      "utf-8",
+    );
+
+    expect(settingsService).toContain("webtau/fs");
+    expect(settingsService).toContain("webtau/path");
+    expect(sessionService).toContain("webtau/fs");
+    expect(sessionService).toContain("webtau/path");
+    expect(commsService).toContain("webtau/event");
   });
 
   test("no {{PROJECT_NAME}} placeholders remain in any file", () => {

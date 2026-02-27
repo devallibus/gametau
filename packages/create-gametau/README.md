@@ -38,6 +38,19 @@ bunx create-gametau my-game --template vanilla
 - `src-tauri/app` - Tauri desktop shell
 - `src-tauri/wasm` - WASM entry crate
 - `src` - frontend app wired to `webtau` and `webtau-vite`
+- `src/services` - production-ready service seams for backend invoke calls, persistence/settings, mission session snapshots, and event-driven comms
+
+## Service Layer Contract
+
+The scaffolded base template now ships a small service architecture instead of a single command wrapper:
+
+- `src/services/backend.ts` - typed `invoke()` wrappers for gameplay commands
+- `src/services/settings.ts` - runtime settings persistence via `webtau/path` + `webtau/fs`
+- `src/services/session.ts` - mission/session snapshot persistence via `webtau/path` + `webtau/fs`
+- `src/services/comms.ts` - typed alert/comms channel over `webtau/event`
+- `src/services/contracts.ts` - interfaces/types for settings, session snapshots, and alerts
+
+This keeps the generated project lightweight while giving contributors clear extension points for production features.
 
 For full docs and package details, see the main repository:
 <https://github.com/devallibus/gametau>

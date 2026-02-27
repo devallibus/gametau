@@ -225,3 +225,13 @@ jobs:
           echo "Expected output: tarball metadata + file list and exit code 0."
           cd packages/create-gametau
           npm pack --dry-run
+
+  release-gate-contract:
+    name: Release Gate Contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify canonical gate docs exist
+        run: |
+          test -f docs/RELEASE-GATE-CHECKLIST.md
+          test -f docs/RELEASE-INCIDENT-RESPONSE.md
