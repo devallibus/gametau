@@ -100,6 +100,10 @@ Before expanding your game, check current runtime parity and API surface:
 - Function-level parity matrix: `docs/PARITY-MATRIX.md`
 - Live API docs: `https://devallibus.github.io/gametau/api/`
 
+### Linting
+
+Run `bun run lint` from the repository root to check all packages. CI enforces lint as a merge gate.
+
 ## 9) Next Steps
 
 - Read architecture details in `README.md`

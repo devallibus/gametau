@@ -7,11 +7,11 @@
  * - Detects Tauri mode (TAURI_ENV_PLATFORM) and becomes a no-op
  */
 
-import { type Plugin, type ResolvedConfig } from "vite";
-import { execSync, spawnSync } from "child_process";
-import { watch, type FSWatcher } from "chokidar";
-import { resolve, join, dirname } from "path";
-import { existsSync, readdirSync } from "fs";
+import { execSync, spawnSync } from "node:child_process";
+import { existsSync, readdirSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { type FSWatcher, watch } from "chokidar";
+import type { Plugin, ResolvedConfig } from "vite";
 
 export interface WebtauViteOptions {
   /** Path to the wasm crate (relative to project root). Default: "src-tauri/wasm" */

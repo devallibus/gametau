@@ -10,17 +10,17 @@
  */
 
 import {
-  mkdirSync,
-  writeFileSync,
+  cpSync,
   existsSync,
+  mkdirSync,
   readdirSync,
   readFileSync,
-  cpSync,
-  renameSync,
   realpathSync,
-} from "fs";
-import { join, resolve, dirname, basename } from "path";
-import { fileURLToPath } from "url";
+  renameSync,
+  writeFileSync,
+} from "node:fs";
+import { basename, dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const TEMPLATES = ["three", "pixi", "vanilla"] as const;
 type Template = (typeof TEMPLATES)[number];

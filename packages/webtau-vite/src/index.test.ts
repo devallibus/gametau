@@ -1,19 +1,19 @@
-import { describe, test, expect, beforeEach, afterEach, mock } from "bun:test";
+import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 
 // --- Module mocks (hoisted by Bun before imports) ---
 
-mock.module("child_process", () => ({
+mock.module("node:child_process", () => ({
   execSync: mock(() => "wasm-pack 0.12.0"),
   spawnSync: mock(() => ({ status: 0, error: null, stderr: null, stdout: null })),
 }));
 
-mock.module("fs", () => ({
+mock.module("node:fs", () => ({
   existsSync: mock(() => true),
   readdirSync: mock((...args: unknown[]) => {
     // When called with { withFileTypes: true } (sibling crate discovery),
     // return an empty array by default. Tests that need siblings override this.
     const opts = args[1] as { withFileTypes?: boolean } | undefined;
-    if (opts && opts.withFileTypes) return [];
+    if (opts?.withFileTypes) return [];
     // Normal readdirSync for wasm-opt discovery
     return ["foo_bg.wasm", "package.json"];
   }),
@@ -29,10 +29,10 @@ mock.module("chokidar", () => {
 
 // --- Imports (receive mocked versions) ---
 
-import webtauVite from "./index";
-import { spawnSync, execSync } from "child_process";
-import { existsSync, readdirSync } from "fs";
+import { execSync, spawnSync } from "node:child_process";
+import { existsSync, readdirSync } from "node:fs";
 import { watch } from "chokidar";
+import webtauVite from "./index";
 
 // Grab shared watcher reference for cleanup between tests
 const _watcher = (watch as any)();
@@ -58,7 +58,7 @@ function resetMocks() {
   (readdirSync as any).mockClear();
   (readdirSync as any).mockImplementation((...args: unknown[]) => {
     const opts = args[1] as { withFileTypes?: boolean } | undefined;
-    if (opts && opts.withFileTypes) return [];
+    if (opts?.withFileTypes) return [];
     return ["foo_bg.wasm", "package.json"];
   });
   (watch as any).mockClear();
@@ -278,7 +278,7 @@ describe("buildStart — wasm-pack build", () => {
     });
     (readdirSync as any).mockImplementation((...args: unknown[]) => {
       const opts = args[1] as { withFileTypes?: boolean } | undefined;
-      if (opts && opts.withFileTypes) return [];
+      if (opts?.withFileTypes) return [];
       return ["foo_bg.wasm", "foo.js", "package.json"];
     });
 
@@ -303,7 +303,7 @@ describe("buildStart — wasm-pack build", () => {
     });
     (readdirSync as any).mockImplementation((...args: unknown[]) => {
       const opts = args[1] as { withFileTypes?: boolean } | undefined;
-      if (opts && opts.withFileTypes) return [];
+      if (opts?.withFileTypes) return [];
       return ["foo_bg.wasm", "package.json"];
     });
 
@@ -323,7 +323,7 @@ describe("buildStart — wasm-pack build", () => {
     });
     (readdirSync as any).mockImplementation((...args: unknown[]) => {
       const opts = args[1] as { withFileTypes?: boolean } | undefined;
-      if (opts && opts.withFileTypes) return [];
+      if (opts?.withFileTypes) return [];
       return ["foo.js", "package.json"];
     });
 
@@ -370,7 +370,7 @@ describe("buildStart — wasm-pack build", () => {
   test("wasm-opt warns when no .wasm file found", () => {
     (readdirSync as any).mockImplementation((...args: unknown[]) => {
       const opts = args[1] as { withFileTypes?: boolean } | undefined;
-      if (opts && opts.withFileTypes) return [];
+      if (opts?.withFileTypes) return [];
       return []; // No .wasm file in output
     });
     const plugin = createPlugin({ wasmOpt: true }, "build");
@@ -502,7 +502,7 @@ describe("rebuild guard", () => {
     });
     (readdirSync as any).mockImplementation((...args: unknown[]) => {
       const opts = args[1] as { withFileTypes?: boolean } | undefined;
-      if (opts && opts.withFileTypes) return [];
+      if (opts?.withFileTypes) return [];
       return ["foo_bg.wasm", "foo.js", "package.json"];
     });
 
@@ -527,7 +527,7 @@ describe("rebuild guard", () => {
     });
     (readdirSync as any).mockImplementation((...args: unknown[]) => {
       const opts = args[1] as { withFileTypes?: boolean } | undefined;
-      if (opts && opts.withFileTypes) return [];
+      if (opts?.withFileTypes) return [];
       return ["foo_bg.wasm", "foo.js", "package.json"];
     });
 

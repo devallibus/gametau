@@ -6,7 +6,7 @@
  * backed by the Fullscreen API, document.title, and screen.*.
  */
 
-import { LogicalSize, PhysicalSize, PhysicalPosition } from "./dpi";
+import { type LogicalSize, PhysicalPosition, PhysicalSize } from "./dpi";
 
 interface Monitor {
   name: string | null;
