@@ -134,24 +134,25 @@ export function createRadarScene(canvas: HTMLCanvasElement, theme: Partial<Radar
   renderer.setClearColor(new Color(colors.background), 1);
 
   // --- Camera ---
-  // OrthographicCamera(left, right, top, bottom, near, far)
-  // top=0 / bottom=h flips Y to match Canvas2D coordinates.
-  const camera = new OrthographicCamera(0, w, 0, h, 0.1, 200);
+  // Keep a centered orthographic frustum so tilt pivots around scene center
+  // without clipping content near the lower radar edge.
+  // top=-centerY / bottom=centerY flips Y to match Canvas2D coordinates.
+  const camera = new OrthographicCamera(-centerX, centerX, -centerY, centerY, 0.1, 200);
 
   const tiltRad = MathUtils.degToRad(polish.cameraTiltDeg);
+  const camDist = 100;
   if (tiltRad > 0) {
     // Position camera tilted from vertical — objects at different z-depths
     // shift vertically, creating a parallax effect under orthographic projection.
-    const camDist = 100;
     camera.position.set(
-      0,
-      -camDist * Math.sin(tiltRad),
+      centerX,
+      centerY - camDist * Math.sin(tiltRad),
       camDist * Math.cos(tiltRad),
     );
-    camera.lookAt(0, 0, 0);
   } else {
-    camera.position.set(0, 0, 100);
+    camera.position.set(centerX, centerY, camDist);
   }
+  camera.lookAt(centerX, centerY, 0);
 
   // --- Scene ---
   const scene = new Scene();
