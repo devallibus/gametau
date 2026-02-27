@@ -1,5 +1,6 @@
 import { configure, isTauri } from "webtau";
 import { startGameLoop } from "./game/loop";
+import { createSnapshotQueue } from "./game/snapshot-queue";
 import { initScene, updateScene } from "./game/scene";
 import {
   createServiceLayer,
@@ -69,6 +70,13 @@ async function main() {
   let tickInFlight = false;
   const tickRate = 1 / settings.tickRateHz;
 
+  const snapshotQueue = createSnapshotQueue<WorldView>(
+    async (snapshot) => {
+      await services.session.saveSnapshot(snapshot);
+      document.getElementById("session")!.textContent = `saved at tick ${snapshot.tick_count}`;
+    },
+  );
+
   startGameLoop(
     (dt) => {
       tickAccumulator += dt;
@@ -81,15 +89,16 @@ async function main() {
             updateHud(nextView, settings);
 
             if (nextView.tick_count % settings.autoSaveEveryTicks === 0) {
-              await services.session.saveSnapshot(nextView);
-              document.getElementById("session")!.textContent = `saved at tick ${nextView.tick_count}`;
+              snapshotQueue.enqueue(nextView);
             }
 
-            await services.comms.publish({
+            // Intentional fire-and-forget: comms events are non-critical side effects
+            // and must not block the tick cadence. void suppresses the floating-promise lint.
+            void services.comms.publish({
               level: resolveAlertLevel(tickResult.score_delta),
               source: "engine",
               message: `score delta ${tickResult.score_delta}`,
-            });
+            }).catch(console.error);
           })
           .catch(console.error)
           .finally(() => { tickInFlight = false; });

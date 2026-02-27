@@ -16,7 +16,7 @@ You write your game logic once in a plain Rust crate. gametau gives you:
 - **A Vite plugin** (`webtau-vite`) that compiles your Rust to WASM on save, watches for changes, and hot-reloads
 - **A scaffolder** (`create-gametau`) that generates a ready-to-run project with all of this wired up
 
-**[Play the Pong demo in your browser →](https://devallibus.github.io/gametau/pong/)** — Rust physics, PixiJS rendering, running as WASM. Same code ships as a native desktop app.
+**[Play the Battlestation demo in your browser →](https://devallibus.github.io/gametau/battlestation/)** — Flagship tactical radar loop running as WASM in-browser from the same Rust command surface used on desktop.
 
 ---
 
@@ -636,7 +636,7 @@ Expected sizes:
 
 - **[`examples/counter`](./examples/counter)** — Simplest possible example. Counter with increment/decrement/reset that works on both web and desktop.
 - **[`examples/pong`](./examples/pong)** — Two-player Pong with Rust physics + PixiJS rendering. Demonstrates real game loop, collision detection, and keyboard input across both targets.
-- **[`examples/battlestation`](./examples/battlestation)** — Flagship tactical radar command loop demonstrating full module coverage (`input`, `audio`, `assets`, `fs/path`, `event`, `app`) with persistent profile + comms narrative. See `docs/BATTLESTATION-SHOWCASE.md`.
+- **[`examples/battlestation`](./examples/battlestation)** — Flagship tactical radar command loop demonstrating full module coverage (`input`, `audio`, `assets`, `fs/path`, `event`, `app`) with persistent profile + comms narrative. Live demo: <https://devallibus.github.io/gametau/battlestation/>. See `docs/BATTLESTATION-SHOWCASE.md`.
 
 ## Migrating an Existing Tauri Game
 

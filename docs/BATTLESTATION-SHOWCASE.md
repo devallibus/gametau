@@ -4,6 +4,8 @@
 radar-command gameplay loop while intentionally exercising the full `webtau`
 runtime/module story.
 
+Live web demo: <https://devallibus.github.io/gametau/battlestation/>
+
 Design intent source: `docs/BATTLESTATION-DESIGN-BRIEF.md`.
 
 ## Module Coverage Map
