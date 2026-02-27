@@ -7,11 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-02-27
+
 ### Added
 - `convertFileSrc()` web shim in `webtau/core` for asset URL passthrough
 - `delimiter()`, `cacheDir()`, `configDir()`, `dataDir()`, `localDataDir()` web shims in `webtau/path`
 - `getIdentifier()` / `setAppIdentifier()` web shim in `webtau/app`
 - `copyFile()` and `rename()` virtual filesystem operations in `webtau/fs`
+- Workspace lint baseline with Biome plus CI lint enforcement
+- Expanded contract and edge-case test coverage across `webtau`, `webtau-vite`, and `webtau-macros`
+- Battlestation scenario smoke coverage in CI for gameplay success/failure assertions
+
+### Changed
+- Workspace, crate, npm package, and template dependency versions bumped to `0.4.0`
+- Generated artifact hygiene policy now enforced for local logs and Tauri schema outputs
+- Battlestation A130 design/showcase docs aligned with shipped command contract and combat semantics
+
+### Fixed
+- API docs and release evidence artifact uploads now validate outputs and include hidden directories, preventing false-green publish runs
 
 ## [0.3.1] - 2026-02-27
 

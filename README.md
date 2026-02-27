@@ -682,8 +682,8 @@ Manual v1 wrappers remain fully supported — you can migrate command-by-command
 ## Roadmap
 
 - **`0.2.x` (historical stable line)**: docs/adoption + parity/foundation backlog delivered (`fs/dialog/event` shims and `input/audio/assets` modules). See [CHANGELOG `0.2.1`](./CHANGELOG.md#021---2026-02-26) and [roadmap issue #6](https://github.com/devallibus/gametau/issues/6).
-- **`0.3.1` (current stable line)**: `0.3.0` scope plus fallback hardening in `webtau-vite` (deterministic missing-`wasm-pack` behavior, stricter reusable artifact validation, and CI regression coverage).
-- **`0.4.0+` (future)**: broader platform capabilities and ecosystem expansion.
+- **`0.4.0` (current stable line)**: quality baseline uplift (CI lint gate + broader contract tests), battlestation scenario smoke coverage, release artifact integrity hardening, and parity tranche 1 (`core/app/path/fs`) expansion.
+- **`0.5.0+` (future)**: broader platform capabilities and ecosystem expansion.
 
 ## Support & Commercial Licensing
 
