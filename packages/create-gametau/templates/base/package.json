@@ -11,12 +11,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "webtau": "^0.3.0"
+    "webtau": "^0.3.1"
   },
   "devDependencies": {
     "typescript": "^5.8.0",
     "vite": "^6.0.0",
-    "webtau-vite": "^0.3.0",
+    "webtau-vite": "^0.3.1",
     "@tauri-apps/cli": "^2.0.0",
     "@tauri-apps/api": "^2.0.0"
   }

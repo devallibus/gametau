@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-02-27
+
 ### Added
 - Site stack now includes Tailwind CSS v4 with Vite pipeline wiring
 - Battlestation radar renderer migrated from Canvas2D to Three.js with phase-2 visual polish
 
 ### Changed
 - Battlestation now uses responsive layout and DPR-aware canvas sizing for sharper rendering across viewport sizes
+- Workspace, crate, npm package, and template dependency versions bumped to `0.3.1`
 
 ### Fixed
 - `webtau-vite` now supports graceful fallback: when `wasm-pack` is unavailable and valid prebuilt artifacts exist, web builds/dev startup reuse them instead of hard-failing
