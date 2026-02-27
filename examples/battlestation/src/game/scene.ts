@@ -118,10 +118,11 @@ export function createRadarScene(canvas: HTMLCanvasElement, theme: Partial<Radar
     enableDepthLayers: theme.enableDepthLayers ?? PHASE2_DEFAULTS.enableDepthLayers,
   };
 
-  const w = canvas.width;
-  const h = canvas.height;
-  const centerX = w / 2;
-  const centerY = h / 2;
+  // Logical coordinate space matches Rust backend (640x640).
+  const LOGICAL_W = 640;
+  const LOGICAL_H = 640;
+  const centerX = LOGICAL_W / 2;
+  const centerY = LOGICAL_H / 2;
   const radius = Math.min(centerX, centerY) - 24;
 
   // --- Z-depths (flat when disabled) ---
@@ -130,12 +131,27 @@ export function createRadarScene(canvas: HTMLCanvasElement, theme: Partial<Radar
 
   // --- Renderer ---
   const renderer = new WebGLRenderer({ canvas, antialias: true });
-  renderer.setSize(w, h, false);
   renderer.setClearColor(new Color(colors.background), 1);
+
+  // --- DPR-aware resize ---
+  function syncRendererSize(): void {
+    const rect = canvas.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const bufferW = Math.round(rect.width * dpr);
+    const bufferH = Math.round(rect.height * dpr);
+    if (bufferW === 0 || bufferH === 0) return;
+    if (canvas.width !== bufferW || canvas.height !== bufferH) {
+      renderer.setSize(bufferW, bufferH, false);
+    }
+  }
+
+  syncRendererSize();
+  const resizeObserver = new ResizeObserver(() => syncRendererSize());
+  resizeObserver.observe(canvas);
 
   // --- Camera ---
   // Keep a centered orthographic frustum so tilt pivots around scene center
-  // without clipping content near the lower radar edge.
+  // without clipping logical-space content near the lower radar edge.
   // top=-centerY / bottom=centerY flips Y to match Canvas2D coordinates.
   const camera = new OrthographicCamera(-centerX, centerX, -centerY, centerY, 0.1, 200);
 
@@ -258,6 +274,7 @@ export function createRadarScene(canvas: HTMLCanvasElement, theme: Partial<Radar
   }
 
   function dispose(): void {
+    resizeObserver.disconnect();
     scene.traverse((obj) => {
       const o = obj as Mesh | Line;
       if (o.geometry) o.geometry.dispose();
