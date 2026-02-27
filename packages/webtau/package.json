@@ -49,6 +49,14 @@
     "./assets": {
       "types": "./dist/assets.d.ts",
       "import": "./dist/assets.js"
+    },
+    "./app": {
+      "types": "./dist/app.d.ts",
+      "import": "./dist/app.js"
+    },
+    "./path": {
+      "types": "./dist/path.d.ts",
+      "import": "./dist/path.js"
     }
   },
   "files": [
