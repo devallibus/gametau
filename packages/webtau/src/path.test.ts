@@ -7,6 +7,10 @@ import {
   appLogDir,
   audioDir,
   basename,
+  cacheDir,
+  configDir,
+  dataDir,
+  delimiter,
   desktopDir,
   dirname,
   documentDir,
@@ -15,6 +19,7 @@ import {
   homeDir,
   isAbsolute,
   join,
+  localDataDir,
   normalize,
   pictureDir,
   publicDir,
@@ -30,6 +35,12 @@ describe("webtau/path", () => {
 
   test("sep returns forward slash on web", () => {
     expect(sep()).toBe("/");
+  });
+
+  // -- delimiter --
+
+  test("delimiter returns colon (PATH-list separator) on web", () => {
+    expect(delimiter()).toBe(":");
   });
 
   // -- directory resolvers --
@@ -92,6 +103,22 @@ describe("webtau/path", () => {
 
   test("tempDir returns virtual path", async () => {
     expect(await tempDir()).toBe("/app/temp");
+  });
+
+  test("cacheDir returns virtual path", async () => {
+    expect(await cacheDir()).toBe("/app/cache");
+  });
+
+  test("configDir returns virtual path", async () => {
+    expect(await configDir()).toBe("/app/config");
+  });
+
+  test("dataDir returns virtual path", async () => {
+    expect(await dataDir()).toBe("/app/data");
+  });
+
+  test("localDataDir returns virtual path", async () => {
+    expect(await localDataDir()).toBe("/app/local-data");
   });
 
   // -- basename --

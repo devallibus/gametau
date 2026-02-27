@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- `convertFileSrc()` web shim in `webtau/core` for asset URL passthrough
+- `delimiter()`, `cacheDir()`, `configDir()`, `dataDir()`, `localDataDir()` web shims in `webtau/path`
+- `getIdentifier()` / `setAppIdentifier()` web shim in `webtau/app`
+- `copyFile()` and `rename()` virtual filesystem operations in `webtau/fs`
+
 ## [0.3.1] - 2026-02-27
 
 ### Added

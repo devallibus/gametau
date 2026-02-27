@@ -14,6 +14,11 @@ export function sep(): string {
   return "/";
 }
 
+/** PATH-list separator for the current platform. Always `":"` on web (POSIX). */
+export function delimiter(): string {
+  return ":";
+}
+
 // ── Directory resolvers ──
 // Virtual paths that map to logical locations. Consumers can use these
 // with webtau/fs (IndexedDB-backed) for persistent storage on the web.
@@ -91,6 +96,26 @@ export async function resourceDir(): Promise<string> {
 /** Temporary directory. */
 export async function tempDir(): Promise<string> {
   return "/app/temp";
+}
+
+/** System cache directory. Unsupported on web — returns virtual path. */
+export async function cacheDir(): Promise<string> {
+  return "/app/cache";
+}
+
+/** System config directory. Unsupported on web — returns virtual path. */
+export async function configDir(): Promise<string> {
+  return "/app/config";
+}
+
+/** System data directory. Unsupported on web — returns virtual path. */
+export async function dataDir(): Promise<string> {
+  return "/app/data";
+}
+
+/** System local data directory. Unsupported on web — returns virtual path. */
+export async function localDataDir(): Promise<string> {
+  return "/app/local-data";
 }
 
 // ── Path utilities ──

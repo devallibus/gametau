@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import {
+  getIdentifier,
   getName,
   getTauriVersion,
   getVersion,
   hide,
+  setAppIdentifier,
   setAppName,
   setAppVersion,
   show,
@@ -14,6 +16,7 @@ const originalDocument = (globalThis as { document?: unknown }).document;
 afterEach(() => {
   setAppName(null);
   setAppVersion(null);
+  setAppIdentifier(null);
   (globalThis as { document?: unknown }).document = originalDocument;
 });
 
@@ -89,6 +92,27 @@ describe("webtau/app", () => {
     expect(await getVersion()).toBe("1.0.0");
     setAppVersion("2.0.0");
     expect(await getVersion()).toBe("2.0.0");
+  });
+
+  // -- getIdentifier --
+
+  test("getIdentifier returns fallback when not set", async () => {
+    setAppIdentifier(null);
+    (globalThis as { document?: unknown }).document = undefined;
+    expect(await getIdentifier()).toBe("dev.gametau.app");
+  });
+
+  test("setAppIdentifier sets custom identifier", async () => {
+    setAppIdentifier("com.example.mygame");
+    expect(await getIdentifier()).toBe("com.example.mygame");
+  });
+
+  test("setAppIdentifier(null) resets to fallback", async () => {
+    setAppIdentifier("com.example.mygame");
+    expect(await getIdentifier()).toBe("com.example.mygame");
+    setAppIdentifier(null);
+    (globalThis as { document?: unknown }).document = undefined;
+    expect(await getIdentifier()).toBe("dev.gametau.app");
   });
 
   // -- edge cases --
