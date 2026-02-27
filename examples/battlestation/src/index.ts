@@ -323,6 +323,7 @@ async function main() {
     clearInterval(timer);
     unlistenAlerts();
     input.destroy();
+    radar.dispose();
   });
 }
 
