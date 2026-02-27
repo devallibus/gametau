@@ -3,7 +3,8 @@
   "packageManager": "bun@1.3.9",
   "workspaces": [
     "packages/*",
-    "examples/*"
+    "examples/*",
+    "site"
   ],
   "scripts": {
     "build": "turbo run build",

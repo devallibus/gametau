@@ -60,11 +60,16 @@ jobs:
         working-directory: examples/battlestation
         run: bunx vite build --base=/gametau/battlestation/
 
+      # Build site
+      - name: Build site
+        working-directory: site
+        run: bunx vite build
+
       # Assemble site
       - name: Assemble site
         run: |
           mkdir -p _site
-          cp site/index.html _site/
+          cp -r site/dist/* _site/
           cp -r .api-docs _site/api
           cp -r examples/counter/dist _site/counter
           cp -r examples/pong/dist _site/pong
