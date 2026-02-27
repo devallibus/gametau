@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- Site stack now includes Tailwind CSS v4 with Vite pipeline wiring
+- Battlestation radar renderer migrated from Canvas2D to Three.js with phase-2 visual polish
+
+### Changed
+- Battlestation now uses responsive layout and DPR-aware canvas sizing for sharper rendering across viewport sizes
+
+### Fixed
+- `webtau-vite` now supports graceful fallback: when `wasm-pack` is unavailable and valid prebuilt artifacts exist, web builds/dev startup reuse them instead of hard-failing
+- `webtau-vite` fallback validation is stricter (paired `*_bg.wasm` + loader `.js` output) and fails fast when reusable artifacts are missing or incomplete
+- `webtau-vite` dev Rust watch rebuilds now clearly disable in fallback mode; `wasm-pack` remains required for fresh Rust/WASM builds and rebuild loops
+
 ## [0.3.0] - 2026-02-27
 
 ### Added

@@ -87,17 +87,133 @@ function isWasmPackInstalled(): boolean {
   }
 }
 
-function hasUsableWasmOutput(outDir: string): boolean {
-  if (!existsSync(outDir)) return false;
+interface ReusableWasmOutputCheck {
+  reusable: boolean;
+  reason: string;
+}
+
+function validateReusableWasmOutput(outDir: string): ReusableWasmOutputCheck {
+  if (!existsSync(outDir)) {
+    return {
+      reusable: false,
+      reason: `output directory does not exist at ${outDir}`,
+    };
+  }
 
   try {
     const files = readdirSync(outDir);
-    const hasWasm = files.some((f) => f.endsWith(".wasm"));
-    const hasJsLoader = files.some((f) => f.endsWith(".js"));
-    return hasWasm && hasJsLoader;
+    const wasmFiles = files.filter((f) => f.endsWith("_bg.wasm"));
+    const jsFiles = new Set(files.filter((f) => f.endsWith(".js")));
+
+    if (wasmFiles.length === 0) {
+      return {
+        reusable: false,
+        reason: "no wasm-pack `*_bg.wasm` artifacts found",
+      };
+    }
+
+    const missingLoaders = wasmFiles
+      .map((wasm) => ({
+        wasm,
+        loader: wasm.replace(/_bg\.wasm$/, ".js"),
+      }))
+      .filter(({ loader }) => !jsFiles.has(loader));
+
+    if (missingLoaders.length > 0) {
+      return {
+        reusable: false,
+        reason: `missing paired JS loader(s): ${missingLoaders.map((m) => m.loader).join(", ")}`,
+      };
+    }
+
+    return {
+      reusable: true,
+      reason: `found ${wasmFiles.length} wasm/js pair(s) in ${outDir}`,
+    };
   } catch {
+    return {
+      reusable: false,
+      reason: "failed to read output directory",
+    };
+  }
+}
+
+type WasmPackDecision =
+  | { kind: "available" }
+  | { kind: "reuse-prebuilt"; buildWarning: string; devWarning: string }
+  | { kind: "missing"; error: string };
+
+function resolveWasmPackDecision(outDir: string): WasmPackDecision {
+  if (isWasmPackInstalled()) {
+    return { kind: "available" };
+  }
+
+  const reusableOutput = validateReusableWasmOutput(outDir);
+  const installHint =
+    "Install it with: cargo install wasm-pack\n" +
+    "Or: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh";
+
+  if (reusableOutput.reusable) {
+    return {
+      kind: "reuse-prebuilt",
+      buildWarning:
+        "[webtau-vite] wasm-pack is not installed. Reusing existing WASM output.\n" +
+        `Validation details: ${reusableOutput.reason}\n` +
+        "Rust source changes will not trigger WASM rebuilds until wasm-pack is installed.\n" +
+        installHint,
+      devWarning:
+        "[webtau-vite] wasm-pack is not installed; Rust watch rebuilds are disabled while reusing prebuilt WASM output.\n" +
+        `Validation details: ${reusableOutput.reason}\n` +
+        installHint,
+    };
+  }
+
+  return {
+    kind: "missing",
+    error:
+      "[webtau-vite] wasm-pack is not installed and reusable prebuilt WASM output was not found.\n" +
+      `Validation details: ${reusableOutput.reason}\n` +
+      installHint,
+  };
+}
+
+function applyWasmPackDecision(
+  decision: WasmPackDecision,
+  reporter: { warn: (message: string) => void; error: (message: string) => void },
+  isDevServer: boolean,
+): boolean {
+  if (decision.kind === "available") return true;
+
+  if (decision.kind === "reuse-prebuilt") {
+    reporter.warn(isDevServer ? decision.devWarning : decision.buildWarning);
     return false;
   }
+
+  reporter.error(decision.error);
+  return false;
+}
+
+function decisionShouldFail(decision: WasmPackDecision): boolean {
+  return decision.kind === "missing";
+}
+
+function noopReporter(): { warn: (message: string) => void; error: (message: string) => void } {
+  return {
+    warn: (message: string) => console.warn(message),
+    error: (message: string) => console.error(message),
+  };
+}
+
+function assertWasmPackDecision(
+  decision: WasmPackDecision,
+  reporter: { warn: (message: string) => void; error: (message: string) => void },
+  isDevServer: boolean,
+): boolean {
+  const canRun = applyWasmPackDecision(decision, reporter, isDevServer);
+  if (decisionShouldFail(decision)) {
+    return false;
+  }
+  return canRun;
 }
 
 function runWasmPack(
@@ -141,7 +257,7 @@ export default function webtauVite(
   let resolvedCratePath: string;
   let resolvedOutDir: string;
   let isDev: boolean;
-  let canRunWasmPack = true;
+  let wasmPackDecision: WasmPackDecision | null = null;
   let watcher: FSWatcher | null = null;
 
   return {
@@ -153,6 +269,7 @@ export default function webtauVite(
       resolvedCratePath = resolve(root, wasmCrate);
       resolvedOutDir = resolve(root, wasmOutDir);
       isDev = config.command === "serve";
+      wasmPackDecision = null;
     },
 
     buildStart() {
@@ -161,28 +278,12 @@ export default function webtauVite(
         return;
       }
 
-      canRunWasmPack = true;
-
-      // Check wasm-pack is installed
-      if (!isWasmPackInstalled()) {
-        if (hasUsableWasmOutput(resolvedOutDir)) {
-          canRunWasmPack = false;
-          this.warn(
-            "[webtau-vite] wasm-pack is not installed. Reusing existing WASM output.\n" +
-              "Rust source changes will not trigger WASM rebuilds until wasm-pack is installed.\n" +
-              "Install it with: cargo install wasm-pack\n" +
-              "Or: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh",
-          );
-        } else {
-          this.error(
-            "[webtau-vite] wasm-pack is not installed and no prebuilt WASM output was found.\n" +
-              "Install it with: cargo install wasm-pack\n" +
-              "Or: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh",
-          );
-          return;
-        }
-      }
-
+      wasmPackDecision = resolveWasmPackDecision(resolvedOutDir);
+      const canRunWasmPack = assertWasmPackDecision(
+        wasmPackDecision,
+        this,
+        false,
+      );
       if (!canRunWasmPack) {
         return;
       }
@@ -234,10 +335,17 @@ export default function webtauVite(
       // In Tauri mode, Tauri handles file watching and rebuilds.
       if (isTauriMode()) return;
 
-      if (!isWasmPackInstalled()) {
-        if (hasUsableWasmOutput(resolvedOutDir)) {
-          console.warn(
-            "[webtau-vite] wasm-pack is not installed; Rust watch rebuilds are disabled.",
+      // Reuse the same decision path as buildStart() so dev/build semantics stay aligned.
+      wasmPackDecision = wasmPackDecision ?? resolveWasmPackDecision(resolvedOutDir);
+      const canRunWasmPack = assertWasmPackDecision(
+        wasmPackDecision,
+        noopReporter(),
+        true,
+      );
+      if (!canRunWasmPack) {
+        if (wasmPackDecision.kind === "missing") {
+          throw new Error(
+            wasmPackDecision.error,
           );
         }
         return;

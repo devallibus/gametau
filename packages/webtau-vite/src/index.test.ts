@@ -258,7 +258,7 @@ describe("buildStart — wasm-pack build", () => {
     expect(wasmPackCall).toBeUndefined();
   });
 
-  test("errors when wasm-pack is not installed", () => {
+  test("errors when wasm-pack is not installed and reusable output is unavailable", () => {
     (execSync as any).mockImplementation(() => {
       throw new Error("command not found");
     });
@@ -295,6 +295,46 @@ describe("buildStart — wasm-pack build", () => {
       (c: any[]) => c[0] === "wasm-pack",
     );
     expect(wasmPackCall).toBeUndefined();
+  });
+
+  test("errors when wasm-pack is missing and output has only .wasm artifact", () => {
+    (execSync as any).mockImplementation(() => {
+      throw new Error("command not found");
+    });
+    (readdirSync as any).mockImplementation((...args: unknown[]) => {
+      const opts = args[1] as { withFileTypes?: boolean } | undefined;
+      if (opts && opts.withFileTypes) return [];
+      return ["foo_bg.wasm", "package.json"];
+    });
+
+    const plugin = createPlugin({}, "serve");
+    const ctx = { error: mock(), warn: mock() };
+    (plugin.buildStart as Function).call(ctx);
+
+    expect(ctx.warn).not.toHaveBeenCalled();
+    expect(ctx.error).toHaveBeenCalled();
+    const errorMsg = ctx.error.mock.calls[0][0] as string;
+    expect(errorMsg).toContain("missing paired JS loader");
+  });
+
+  test("errors when wasm-pack is missing and output has only .js artifact", () => {
+    (execSync as any).mockImplementation(() => {
+      throw new Error("command not found");
+    });
+    (readdirSync as any).mockImplementation((...args: unknown[]) => {
+      const opts = args[1] as { withFileTypes?: boolean } | undefined;
+      if (opts && opts.withFileTypes) return [];
+      return ["foo.js", "package.json"];
+    });
+
+    const plugin = createPlugin({}, "serve");
+    const ctx = { error: mock(), warn: mock() };
+    (plugin.buildStart as Function).call(ctx);
+
+    expect(ctx.warn).not.toHaveBeenCalled();
+    expect(ctx.error).toHaveBeenCalled();
+    const errorMsg = ctx.error.mock.calls[0][0] as string;
+    expect(errorMsg).toContain("no wasm-pack `*_bg.wasm` artifacts found");
   });
 
   test("errors when Cargo.toml is missing", () => {
@@ -451,8 +491,57 @@ describe("rebuild guard", () => {
     });
     const plugin = createPlugin({}, "serve");
     const mockServer = { ws: { send: mock() } };
+    expect(() => (plugin.configureServer as Function)(mockServer)).toThrow();
+
+    expect(watch).not.toHaveBeenCalled();
+  });
+
+  test("warns and skips Rust watch rebuilds when reusing valid prebuilt output", () => {
+    (execSync as any).mockImplementation(() => {
+      throw new Error("command not found");
+    });
+    (readdirSync as any).mockImplementation((...args: unknown[]) => {
+      const opts = args[1] as { withFileTypes?: boolean } | undefined;
+      if (opts && opts.withFileTypes) return [];
+      return ["foo_bg.wasm", "foo.js", "package.json"];
+    });
+
+    const originalWarn = console.warn;
+    const warnSpy = mock(() => {});
+    (console as any).warn = warnSpy;
+    try {
+      const plugin = createPlugin({}, "serve");
+      const mockServer = { ws: { send: mock() } };
+      expect(() => (plugin.configureServer as Function)(mockServer)).not.toThrow();
+      expect(watch).not.toHaveBeenCalled();
+      expect(warnSpy).toHaveBeenCalled();
+      expect((warnSpy as any).mock.calls[0][0]).toContain("Rust watch rebuilds are disabled");
+    } finally {
+      (console as any).warn = originalWarn;
+    }
+  });
+
+  test("reuses buildStart decision in configureServer when wasm-pack is missing", () => {
+    (execSync as any).mockImplementation(() => {
+      throw new Error("command not found");
+    });
+    (readdirSync as any).mockImplementation((...args: unknown[]) => {
+      const opts = args[1] as { withFileTypes?: boolean } | undefined;
+      if (opts && opts.withFileTypes) return [];
+      return ["foo_bg.wasm", "foo.js", "package.json"];
+    });
+
+    const plugin = createPlugin({}, "serve");
+    const ctx = { error: mock(), warn: mock() };
+    (plugin.buildStart as Function).call(ctx);
+    expect(ctx.warn).toHaveBeenCalled();
+    expect((execSync as any).mock.calls).toHaveLength(1);
+
+    const mockServer = { ws: { send: mock() } };
     (plugin.configureServer as Function)(mockServer);
 
+    // configureServer should use cached decision from buildStart
+    expect((execSync as any).mock.calls).toHaveLength(1);
     expect(watch).not.toHaveBeenCalled();
   });
 });
