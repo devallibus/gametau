@@ -184,6 +184,21 @@ describe("webtauVite plugin", () => {
     const resolveId = plugin.resolveId as (source: string) => { id: string } | null;
     expect(resolveId("@tauri-apps/api/core")).toBeNull();
   });
+
+  test("resolveId returns null for @tauri-apps/api with query string", () => {
+    delete process.env.TAURI_ENV_PLATFORM;
+    const plugin = webtauVite();
+    const resolveId = plugin.resolveId as (source: string) => { id: string } | null;
+    // Query strings should not match the alias map
+    expect(resolveId("@tauri-apps/api/core?foo=bar")).toBeNull();
+  });
+
+  test("resolveId returns null for partial match", () => {
+    delete process.env.TAURI_ENV_PLATFORM;
+    const plugin = webtauVite();
+    const resolveId = plugin.resolveId as (source: string) => { id: string } | null;
+    expect(resolveId("@tauri-apps/api")).toBeNull();
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -394,6 +409,30 @@ describe("buildStart — wasm-pack build", () => {
     );
     expect(wasmOptCall).toBeUndefined();
   });
+
+  test("errors when wasm-pack exits with non-zero status", () => {
+    (spawnSync as any).mockImplementation(() => ({
+      status: 1,
+      error: null,
+      stderr: Buffer.from("compilation error"),
+      stdout: null,
+    }));
+    const plugin = createPlugin({}, "serve");
+    const ctx = { error: mock(), warn: mock() };
+    expect(() => (plugin.buildStart as Function).call(ctx)).toThrow("wasm-pack build failed");
+  });
+
+  test("errors when wasm-pack exits with signal error", () => {
+    (spawnSync as any).mockImplementation(() => ({
+      status: null,
+      error: new Error("SIGKILL"),
+      stderr: null,
+      stdout: null,
+    }));
+    const plugin = createPlugin({}, "serve");
+    const ctx = { error: mock(), warn: mock() };
+    expect(() => (plugin.buildStart as Function).call(ctx)).toThrow("SIGKILL");
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -519,6 +558,39 @@ describe("rebuild guard", () => {
     } finally {
       (console as any).warn = originalWarn;
     }
+  });
+
+  test("watcher triggers during already-coalesced rebuild are absorbed", () => {
+    const plugin = createPlugin({}, "serve");
+    const mockServer = { ws: { send: mock() } };
+    (plugin.configureServer as Function)(mockServer);
+
+    const changeCall = _watcher.on.mock.calls.find(
+      (c: any[]) => c[0] === "change",
+    );
+    const changeHandler = changeCall[1] as (path: string) => void;
+
+    let buildCount = 0;
+    (spawnSync as any).mockClear();
+    (spawnSync as any).mockImplementation(() => {
+      buildCount++;
+      if (buildCount === 1) {
+        // Simulate multiple file changes arriving during a single build;
+        // they should all coalesce into one follow-up, not two.
+        changeHandler("src/extra1.rs");
+        changeHandler("src/extra2.rs");
+      }
+      return { status: 0, error: null, stderr: null, stdout: null };
+    });
+
+    changeHandler("src/initial.rs");
+
+    // Should have built exactly 2 times (initial + one coalesced follow-up),
+    // even though two changes arrived during the first build.
+    const wasmPackCalls = (spawnSync as any).mock.calls.filter(
+      (c: any[]) => c[0] === "wasm-pack",
+    );
+    expect(wasmPackCalls).toHaveLength(2);
   });
 
   test("reuses buildStart decision in configureServer when wasm-pack is missing", () => {
