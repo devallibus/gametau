@@ -1,7 +1,7 @@
-import { describe, test, expect, afterEach } from "bun:test";
-import { existsSync, rmSync, readFileSync, readdirSync, mkdirSync, symlinkSync } from "fs";
-import { spawnSync } from "child_process";
-import { join } from "path";
+import { afterEach, describe, expect, test } from "bun:test";
+import { spawnSync } from "node:child_process";
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, symlinkSync } from "node:fs";
+import { join } from "node:path";
 import { scaffold } from "./cli";
 
 // Use a project-local scratch directory for test isolation

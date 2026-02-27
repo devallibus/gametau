@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeAll } from "bun:test";
+import { beforeAll, describe, expect, test } from "bun:test";
 
 // Provide minimal browser globals for testing.
 // Must be set before importing the window module since it
@@ -224,22 +224,22 @@ describe("monitor", () => {
     const win = getCurrentWindow();
     const monitor = await win.currentMonitor();
     expect(monitor).not.toBeNull();
-    expect(monitor!.size.width).toBe(1920);
-    expect(monitor!.size.height).toBe(1080);
-    expect(monitor!.scaleFactor).toBe(1);
+    expect(monitor?.size.width).toBe(1920);
+    expect(monitor?.size.height).toBe(1080);
+    expect(monitor?.scaleFactor).toBe(1);
   });
 
   test("currentMonitor name is null (unknown on web)", async () => {
     const win = getCurrentWindow();
     const monitor = await win.currentMonitor();
-    expect(monitor!.name).toBeNull();
+    expect(monitor?.name).toBeNull();
   });
 
   test("currentMonitor position is origin (0,0)", async () => {
     const win = getCurrentWindow();
     const monitor = await win.currentMonitor();
-    expect(monitor!.position.x).toBe(0);
-    expect(monitor!.position.y).toBe(0);
+    expect(monitor?.position.x).toBe(0);
+    expect(monitor?.position.y).toBe(0);
   });
 
   test("scaleFactor returns devicePixelRatio", async () => {

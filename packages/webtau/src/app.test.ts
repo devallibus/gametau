@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import {
   getName,
-  getVersion,
   getTauriVersion,
-  show,
+  getVersion,
   hide,
   setAppName,
   setAppVersion,
+  show,
 } from "./app";
 
 const originalDocument = (globalThis as { document?: unknown }).document;
