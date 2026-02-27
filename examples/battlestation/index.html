@@ -5,59 +5,130 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Battlestation Radar — gametau example</title>
     <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      body {
-        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-        background: radial-gradient(circle at center, #112234 0%, #070a12 70%);
-        color: #9de2ff;
-        min-height: 100vh;
-        display: grid;
-        place-items: center;
+      :root {
+        /* Surfaces */
+        --bs-bg-deep: #070a12;
+        --bs-bg-mid: #112234;
+        --bs-bg-surface: rgba(5, 8, 17, 0.8);
+        --bs-bg-radar: #050811;
+        /* Borders */
+        --bs-border: #2a5a7d;
+        --bs-border-dim: #1a3a55;
+        /* Text */
+        --bs-text: #9de2ff;
+        --bs-text-label: #4f9ccc;
+        --bs-text-value: #d8f4ff;
+        --bs-text-hint: #7db7d9;
+        --bs-text-alert: #ffd88a;
+        --bs-text-log: #9dd7f5;
+        /* Font / spacing */
+        --bs-font: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --bs-fs-xs: 0.78rem;
+        --bs-fs-sm: 0.85rem;
+        --bs-fs-md: 1rem;
+        --bs-fs-lg: 1.15rem;
+        --bs-gap: 1rem;
+        --bs-pad: 0.75rem;
+        --bs-radius: 10px;
       }
+
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
+      body {
+        font-family: var(--bs-font);
+        background: radial-gradient(circle at center, var(--bs-bg-mid) 0%, var(--bs-bg-deep) 70%);
+        color: var(--bs-text);
+        height: 100dvh;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
       .layout {
         width: min(980px, 96vw);
+        height: 100%;
         display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 1rem;
+        grid-template-columns: 1fr minmax(220px, 340px);
+        gap: var(--bs-gap);
+        padding: var(--bs-gap);
       }
+
       #radar {
+        aspect-ratio: 1 / 1;
         width: 100%;
-        height: auto;
-        border: 1px solid #2a5a7d;
-        border-radius: 10px;
-        background: #050811;
+        height: 100%;
+        max-height: 100%;
+        justify-self: center;
+        align-self: center;
+        object-fit: contain;
+        border: 1px solid var(--bs-border);
+        border-radius: var(--bs-radius);
+        background: var(--bs-bg-radar);
       }
+
       .panel {
-        border: 1px solid #2a5a7d;
-        border-radius: 10px;
-        background: rgba(5, 8, 17, 0.8);
-        padding: 0.75rem;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        min-height: 0;
+        border: 1px solid var(--bs-border);
+        border-radius: var(--bs-radius);
+        background: var(--bs-bg-surface);
+        padding: var(--bs-pad);
         line-height: 1.5;
       }
-      .label { color: #4f9ccc; }
-      .value { color: #d8f4ff; }
+
+      .label { color: var(--bs-text-label); }
+      .value { color: var(--bs-text-value); }
+
       .hint {
         margin-top: 0.5rem;
-        font-size: 0.85rem;
-        color: #7db7d9;
+        font-size: var(--bs-fs-sm);
+        color: var(--bs-text-hint);
       }
+
       .alert {
-        margin-top: 0.75rem;
+        margin-top: auto;
         min-height: 2.4rem;
-        color: #ffd88a;
+        color: var(--bs-text-alert);
       }
+
       #alert-log {
         margin-top: 0.5rem;
         max-height: 8rem;
         overflow: auto;
-        font-size: 0.78rem;
-        color: #9dd7f5;
+        font-size: var(--bs-fs-xs);
+        color: var(--bs-text-log);
+      }
+
+      /* Mobile: single-column stack */
+      @media (max-width: 767px) {
+        .layout {
+          grid-template-columns: 1fr;
+          grid-template-rows: minmax(0, 55dvh) minmax(0, 40dvh);
+          width: 100%;
+        }
+        #radar {
+          max-height: 55dvh;
+        }
+      }
+
+      /* Short viewport: compact two-column */
+      @media (max-height: 500px) {
+        :root {
+          --bs-fs-sm: 0.75rem;
+          --bs-fs-xs: 0.7rem;
+          --bs-pad: 0.5rem;
+          --bs-gap: 0.5rem;
+        }
+        .hint:last-of-type { display: none; }
       }
     </style>
   </head>
   <body>
     <div class="layout">
-      <canvas id="radar" width="640" height="640"></canvas>
+      <canvas id="radar"></canvas>
       <div class="panel">
         <div><span class="label">App:</span> <span class="value" id="app-meta">...</span></div>
         <div><span class="label">Runtime:</span> <span class="value" id="mode">...</span></div>
