@@ -151,7 +151,7 @@ export function createRadarScene(canvas: HTMLCanvasElement, theme: Partial<Radar
 
   // --- Camera ---
   // Keep a centered orthographic frustum so tilt pivots around scene center
-  // without clipping logical-space content.
+  // without clipping logical-space content near the lower radar edge.
   // top=-centerY / bottom=centerY flips Y to match Canvas2D coordinates.
   const camera = new OrthographicCamera(-centerX, centerX, -centerY, centerY, 0.1, 200);
 
