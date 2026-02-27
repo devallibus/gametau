@@ -1,7 +1,7 @@
-# Battlestation Showcase Walkthrough
+# A130 Defense Showcase Walkthrough
 
 `examples/battlestation` is the flagship `v0.3.0` showcase. It demonstrates a
-radar-command gameplay loop while intentionally exercising the full `webtau`
+space-defense gameplay loop while intentionally exercising the full `webtau`
 runtime/module story.
 
 Live web demo: <https://devallibus.github.io/gametau/battlestation/>
@@ -13,8 +13,8 @@ Design intent source: `docs/BATTLESTATION-DESIGN-BRIEF.md`.
 | Module | Where Used | Purpose in Showcase |
 |---|---|---|
 | `webtau` (`invoke`, `configure`, `isTauri`) | `examples/battlestation/src/index.ts`, `src/services/backend.ts` | Unified Rust command calls across web (WASM) and desktop (Tauri IPC) |
-| `webtau/input` | `examples/battlestation/src/index.ts` | Keyboard + touch + gamepad target selection and dispatch intents |
-| `webtau/audio` | `examples/battlestation/src/index.ts` | Tactical tones for dispatch, integrity loss, and critical alerts |
+| `webtau/input` | `examples/battlestation/src/index.ts` | Keyboard + touch + gamepad target selection and fire intents |
+| `webtau/audio` | `examples/battlestation/src/index.ts` | Tactical tones for hit, kill confirm, miss, integrity loss, and critical alerts |
 | `webtau/assets` | `examples/battlestation/src/index.ts` | Runtime loading of mission and theme JSON assets |
 | `webtau/path` + `webtau/fs` | `examples/battlestation/src/services/profile.ts` | Persistent operator profile and mission outcome storage |
 | `webtau/event` | `examples/battlestation/src/services/comms.ts` + `src/index.ts` | Alert/comms event pipeline and in-UI event log |
@@ -22,21 +22,11 @@ Design intent source: `docs/BATTLESTATION-DESIGN-BRIEF.md`.
 
 ## Gameplay Loop
 
-1. Scan moving contacts on radar.
+1. Enemies approach from arena edges toward the center defense cluster.
 2. Select target via keyboard/touch/gamepad axis.
-3. Dispatch support action.
-4. Read comms + audio feedback.
-5. Preserve mission integrity as pressure escalates.
-
-## Phase 1 Carryover Gaps (Resolved in Phase 2)
-
-Phase 1 intentionally deferred:
-
-- persistent profile/settings
-- richer comms orchestration
-- full module-coverage storytelling
-
-Phase 2 resolves those gaps in this final showcase implementation.
+3. Fire kinetic shot (instant hit, visual projectile trail).
+4. Read comms + audio feedback (hit/kill/miss differentiation).
+5. Preserve defense integrity as waves escalate in speed and enemy composition.
 
 ## Local Run
 

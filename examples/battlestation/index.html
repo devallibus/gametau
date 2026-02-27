@@ -3,14 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Battlestation Radar — gametau example</title>
+    <title>A130 Defense — gametau example</title>
     <style>
       :root {
         /* Surfaces */
         --bs-bg-deep: #070a12;
         --bs-bg-mid: #112234;
-        --bs-bg-surface: rgba(5, 8, 17, 0.8);
-        --bs-bg-radar: #050811;
+        --bs-bg-surface: rgba(5, 8, 17, 0.7);
         /* Borders */
         --bs-border: #2a5a7d;
         --bs-border-dim: #1a3a55;
@@ -27,127 +26,136 @@
         --bs-fs-sm: 0.85rem;
         --bs-fs-md: 1rem;
         --bs-fs-lg: 1.15rem;
-        --bs-gap: 1rem;
-        --bs-pad: 0.75rem;
-        --bs-radius: 10px;
+        --bs-pad: 0.5rem;
       }
 
       * { margin: 0; padding: 0; box-sizing: border-box; }
 
       body {
         font-family: var(--bs-font);
-        background: radial-gradient(circle at center, var(--bs-bg-mid) 0%, var(--bs-bg-deep) 70%);
+        background: var(--bs-bg-deep);
         color: var(--bs-text);
         height: 100dvh;
+        width: 100vw;
         overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
       }
 
-      .layout {
-        width: min(980px, 96vw);
-        height: 100%;
-        display: grid;
-        grid-template-columns: 1fr minmax(220px, 340px);
-        gap: var(--bs-gap);
-        padding: var(--bs-gap);
-      }
-
+      /* Canvas fills entire viewport */
       #radar {
-        aspect-ratio: 1 / 1;
-        width: 100%;
-        height: 100%;
-        max-height: 100%;
-        justify-self: center;
-        align-self: center;
-        object-fit: contain;
-        border: 1px solid var(--bs-border);
-        border-radius: var(--bs-radius);
-        background: var(--bs-bg-radar);
+        display: block;
+        width: 100vw;
+        height: 100dvh;
+        background: #030608;
       }
 
+      /* HUD overlay: compact strip at top-right */
       .panel {
+        position: fixed;
+        top: 0.5rem;
+        right: 0.5rem;
         display: flex;
-        flex-direction: column;
-        overflow-y: auto;
-        min-height: 0;
-        border: 1px solid var(--bs-border);
-        border-radius: var(--bs-radius);
+        flex-wrap: wrap;
+        gap: 0.25rem 0.75rem;
+        max-width: 420px;
         background: var(--bs-bg-surface);
-        padding: var(--bs-pad);
-        line-height: 1.5;
+        backdrop-filter: blur(6px);
+        border: 1px solid var(--bs-border-dim);
+        border-radius: 6px;
+        padding: var(--bs-pad) 0.75rem;
+        font-size: var(--bs-fs-sm);
+        line-height: 1.4;
+        z-index: 10;
+        pointer-events: none;
       }
+
+      .panel > div { white-space: nowrap; }
 
       .label { color: var(--bs-text-label); }
       .value { color: var(--bs-text-value); }
 
       .hint {
-        margin-top: 0.5rem;
-        font-size: var(--bs-fs-sm);
+        width: 100%;
+        font-size: var(--bs-fs-xs);
         color: var(--bs-text-hint);
       }
 
+      /* Alert log: overlay at bottom-left */
+      .alert-overlay {
+        position: fixed;
+        bottom: 0.5rem;
+        left: 0.5rem;
+        max-width: 460px;
+        background: var(--bs-bg-surface);
+        backdrop-filter: blur(6px);
+        border: 1px solid var(--bs-border-dim);
+        border-radius: 6px;
+        padding: var(--bs-pad) 0.75rem;
+        font-size: var(--bs-fs-xs);
+        z-index: 10;
+        pointer-events: none;
+      }
+
       .alert {
-        margin-top: auto;
-        min-height: 2.4rem;
         color: var(--bs-text-alert);
+        min-height: 1.2rem;
       }
 
       #alert-log {
-        margin-top: 0.5rem;
-        max-height: 8rem;
-        overflow: auto;
-        font-size: var(--bs-fs-xs);
+        margin-top: 0.25rem;
+        max-height: 6rem;
+        overflow: hidden;
         color: var(--bs-text-log);
       }
 
-      /* Mobile: single-column stack */
+      /* Mobile: slightly wider panels */
       @media (max-width: 767px) {
-        .layout {
-          grid-template-columns: 1fr;
-          grid-template-rows: minmax(0, 55dvh) minmax(0, 40dvh);
-          width: 100%;
+        .panel {
+          max-width: 90vw;
+          font-size: var(--bs-fs-xs);
         }
-        #radar {
-          max-height: 55dvh;
+        .alert-overlay {
+          max-width: 90vw;
         }
+        .hint:last-of-type { display: none; }
       }
 
-      /* Short viewport: compact two-column */
+      /* Short viewport: hide hints */
       @media (max-height: 500px) {
         :root {
           --bs-fs-sm: 0.75rem;
           --bs-fs-xs: 0.7rem;
-          --bs-pad: 0.5rem;
-          --bs-gap: 0.5rem;
+          --bs-pad: 0.35rem;
         }
-        .hint:last-of-type { display: none; }
+        .hint { display: none; }
       }
     </style>
   </head>
   <body>
-    <div class="layout">
-      <canvas id="radar"></canvas>
-      <div class="panel">
-        <div><span class="label">App:</span> <span class="value" id="app-meta">...</span></div>
-        <div><span class="label">Runtime:</span> <span class="value" id="mode">...</span></div>
-        <div><span class="label">Mission:</span> <span class="value" id="mission">ACTIVE</span></div>
-        <div><span class="label">Integrity:</span> <span class="value" id="integrity">100</span></div>
-        <div><span class="label">Score:</span> <span class="value" id="score">0</span></div>
-        <div><span class="label">Tick:</span> <span class="value" id="tick">0</span></div>
-        <div><span class="label">Alerts:</span> <span class="value" id="alerts">0</span></div>
-        <div><span class="label">Target:</span> <span class="value" id="target">NONE</span></div>
-        <div><span class="label">Profile:</span> <span class="value" id="profile">loading...</span></div>
-        <div><span class="label">Audio:</span> <span class="value" id="audio-state">ACTIVE</span></div>
-        <div class="hint" id="objective"></div>
-        <div class="hint">
-          Controls: <b>Left / Right</b> select target, <b>Space</b> dispatch, <b>M</b> mute. Also supports touch and gamepad horizontal axis.
-        </div>
-        <div class="alert" id="alert">Stand by.</div>
-        <div id="alert-log"></div>
+    <canvas id="radar"></canvas>
+
+    <div class="panel">
+      <div><span class="label">App:</span> <span class="value" id="app-meta">...</span></div>
+      <div><span class="label">Runtime:</span> <span class="value" id="mode">...</span></div>
+      <div><span class="label">Mission:</span> <span class="value" id="mission">ACTIVE</span></div>
+      <div><span class="label">Integrity:</span> <span class="value" id="integrity">100</span></div>
+      <div><span class="label">Score:</span> <span class="value" id="score">0</span></div>
+      <div><span class="label">Wave:</span> <span class="value" id="wave">1</span></div>
+      <div><span class="label">Tick:</span> <span class="value" id="tick">0</span></div>
+      <div><span class="label">Alerts:</span> <span class="value" id="alerts">0</span></div>
+      <div><span class="label">Target:</span> <span class="value" id="target">NONE</span></div>
+      <div><span class="label">Profile:</span> <span class="value" id="profile">loading...</span></div>
+      <div><span class="label">Audio:</span> <span class="value" id="audio-state">ACTIVE</span></div>
+      <div class="hint" id="objective"></div>
+      <div class="hint">
+        Controls: <b>Click</b> to fire · <b>M</b> mute · Keyboard: arrows + space
       </div>
     </div>
+
+    <div class="alert-overlay">
+      <div class="alert" id="alert">Stand by.</div>
+      <div id="alert-log"></div>
+    </div>
+
     <script type="module" src="/src/index.ts"></script>
   </body>
 </html>

@@ -1,4 +1,4 @@
-use battlestation_core::{BattlestationSim, DispatchResult, MissionView};
+use battlestation_core::{BattlestationSim, FireResult, MissionView};
 
 #[cfg(target_arch = "wasm32")]
 webtau::wasm_state!(BattlestationSim);
@@ -25,6 +25,11 @@ pub fn cycle_target(state: &mut BattlestationSim, direction: i32) -> MissionView
 }
 
 #[webtau::command]
-pub fn dispatch_support(state: &mut BattlestationSim) -> DispatchResult {
-    state.dispatch_support()
+pub fn fire_at(state: &mut BattlestationSim, x: f64, y: f64) -> FireResult {
+    state.fire_at(x, y)
+}
+
+#[webtau::command]
+pub fn fire_shot(state: &mut BattlestationSim) -> FireResult {
+    state.fire_shot()
 }
