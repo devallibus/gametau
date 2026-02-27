@@ -1,0 +1,11 @@
+{
+  "callsign": "WATCHTOWER-7",
+  "sector": "Rim Expanse",
+  "objective": "Protect orbital relay chain for 180 tactical cycles.",
+  "intel": "Hostile probes are testing response latency. Prioritize high-threat contacts.",
+  "dispatchProtocol": [
+    "Stabilize CRITICAL contacts before cumulative integrity loss cascades.",
+    "Use quick dispatch cadence on HIGH contacts approaching terminal progress.",
+    "Cycle targets proactively when radar sweep reveals clustered pressure."
+  ]
+}

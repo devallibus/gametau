@@ -1,0 +1,21 @@
+{
+  "productName": "battlestation",
+  "version": "0.1.0",
+  "identifier": "com.gametau.battlestation-example",
+  "build": {
+    "frontendDist": "../../../dist",
+    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "bun run dev",
+    "beforeBuildCommand": "bun run build:web"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Battlestation Radar — gametau example",
+        "width": 1040,
+        "height": 760,
+        "resizable": true
+      }
+    ]
+  }
+}

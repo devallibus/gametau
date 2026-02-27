@@ -1,0 +1,16 @@
+[package]
+name = "battlestation-commands"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+battlestation-core = { path = "../core" }
+webtau = { path = "../../../../crates/webtau" }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tauri = { version = "2", features = [] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2"
+serde = { version = "1", features = ["derive"] }
+serde-wasm-bindgen = "0.6"

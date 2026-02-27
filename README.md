@@ -76,24 +76,29 @@ bun add -g @tauri-apps/cli    # optional, only for desktop builds
 
 ## How It Works
 
-```
-Developer writes Rust game logic in core/ crate
-                    |
-    +---------------+---------------+
-    |                               |
-  Tauri build                    Web build
-  (cargo, native)             (wasm-pack → WASM)
-    |                               |
-  #[tauri::command]           #[wasm_bindgen]
-  State<Mutex<T>>             thread_local!{RefCell<T>}
-    |                               |
-  Tauri IPC                     Direct WASM call
-    |                               |
-    +---------------+---------------+
-                    |
-       invoke("tick_world") ← same frontend code
-       (webtau auto-routes based on
-        __TAURI_INTERNALS__ detection)
+```mermaid
+flowchart TD
+    classDef rust fill:#dea584,stroke:#000,stroke-width:2px,color:#000
+    classDef tauri fill:#ffc131,stroke:#000,stroke-width:2px,color:#000
+    classDef web fill:#264de4,stroke:#000,stroke-width:2px,color:#fff
+    classDef bridge fill:#8a2be2,stroke:#000,stroke-width:2px,color:#fff
+    classDef frontend fill:#f7df1e,stroke:#000,stroke-width:2px,color:#000
+
+    RustCore["🦀 Rust Game Logic<br><code>core/</code> crate"]:::rust
+
+    RustCore -->|cargo build| Native["Tauri Build<br>Native OS"]:::tauri
+    RustCore -->|wasm-pack| Wasm["Web Build<br>WASM"]:::web
+
+    Native --> NativeState["#[tauri::command]<br>State&lt;Mutex&lt;T&gt;&gt;"]:::tauri
+    Wasm --> WasmState["#[wasm_bindgen]<br>thread_local!{RefCell&lt;T&gt;}"]:::web
+
+    NativeState --> IPC["Tauri IPC"]:::tauri
+    WasmState --> Direct["Direct WASM Call"]:::web
+
+    IPC --> Bridge{"webtau Bridge<br>(Auto-routes based on env)"}:::bridge
+    Direct --> Bridge
+
+    Bridge --> JS["invoke('tick_world')<br>Unified Frontend JS/TS"]:::frontend
 ```
 
 Your frontend calls `invoke("command_name")` everywhere. At runtime:
@@ -115,14 +120,14 @@ gametau gives it all back:
 - **2-5x faster for heavy logic** — Physics, pathfinding, large entity counts run measurably faster in WASM than equivalent JS. On desktop, it's full native code with no JS engine in the loop.
 - **Portable core** — The `core/` crate has zero framework dependencies. Reuse it for a multiplayer server, a new target, or anywhere else.
 
-| | Pure web (JS only) | gametau |
-|---|---|---|
-| Ships to Steam | No | Yes |
-| Shareable web build | Yes | Yes |
-| Heavy simulation | JS + GC limits | WASM / native |
-| OS access (saves, files) | Browser APIs only | Full native via Tauri |
-| Game state correctness | Runtime surprises | Rust compile-time guarantees |
-| Reuse logic on a server | Rewrite in Node | Same `core/` crate |
+| Feature | 🌐 Pure Web (JS) | 🦀 gametau (Rust + WASM/Tauri) |
+| :--- | :---: | :---: |
+| **Ships to Steam/Native** | ❌ No | ✅ Yes |
+| **Shareable web build** | ✅ Yes | ✅ Yes |
+| **Heavy simulation** | ⚠️ JS + GC limits | ⚡ WASM / Native |
+| **OS access (saves, files)** | 🔒 Browser APIs only | 🔓 Full native via Tauri |
+| **Game state correctness** | 🐛 Runtime surprises | 🛡️ Rust compile-time guarantees |
+| **Reuse logic on a server** | 🔄 Rewrite in Node | 📦 Same `core/` crate |
 
 ---
 
@@ -131,6 +136,26 @@ gametau gives it all back:
 gametau ships three packages that work together. The runtime bridge (`webtau`) handles your game's Rust↔JS communication. The Vite plugin (`webtau-vite`) automates builds. The scaffolder (`create-gametau`) wires everything up for new projects.
 
 You can install them individually or use the scaffolder to get all three at once.
+
+```mermaid
+mindmap
+  root((gametau))
+    webtau
+      Runtime Bridge
+      Seamless Rust ↔ JS
+      Tauri IPC router
+      WASM state shims
+    webtau-vite
+      Build Automation
+      Compiles Rust to WASM
+      Hot-reloads on save
+      Zero-config paths
+    create-gametau
+      Scaffolder
+      Generates Workspace
+      Three.js / PixiJS / Canvas
+      Ready-to-run setup
+```
 
 ---
 
@@ -362,7 +387,10 @@ These modules provide a lightweight, browser-first baseline for common game subs
 | `loadImage(url)` | Load image via `Image` object |
 | `clear()` | Clear loader cache |
 
-Example integration path: `examples/pong` now uses all three modules together (input + audio + theme asset loading).
+Example integration paths:
+
+- `examples/pong` uses the three foundation modules together (input + audio + theme asset loading).
+- `examples/battlestation` is the flagship full-stack showcase (runtime bridge + `app`, `event`, `fs/path`, and foundation modules).
 
 ---
 
@@ -608,6 +636,7 @@ Expected sizes:
 
 - **[`examples/counter`](./examples/counter)** — Simplest possible example. Counter with increment/decrement/reset that works on both web and desktop.
 - **[`examples/pong`](./examples/pong)** — Two-player Pong with Rust physics + PixiJS rendering. Demonstrates real game loop, collision detection, and keyboard input across both targets.
+- **[`examples/battlestation`](./examples/battlestation)** — Flagship tactical radar command loop demonstrating full module coverage (`input`, `audio`, `assets`, `fs/path`, `event`, `app`) with persistent profile + comms narrative. See `docs/BATTLESTATION-SHOWCASE.md`.
 
 ## Migrating an Existing Tauri Game
 

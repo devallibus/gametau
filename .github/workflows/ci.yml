@@ -35,6 +35,7 @@ jobs:
         run: |
           cargo check --target wasm32-unknown-unknown -p counter-commands --manifest-path examples/counter/src-tauri/Cargo.toml
           cargo check --target wasm32-unknown-unknown -p pong-commands --manifest-path examples/pong/src-tauri/Cargo.toml
+          cargo check --target wasm32-unknown-unknown -p battlestation-commands --manifest-path examples/battlestation/src-tauri/Cargo.toml
 
   typescript:
     name: TypeScript
