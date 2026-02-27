@@ -143,3 +143,23 @@ export async function invoke<T = unknown>(
   // wasm_bindgen can return plain values or promises
   return result instanceof Promise ? result : (result as T);
 }
+
+/**
+ * Converts a file path to a URL that can be used to load assets.
+ *
+ * In Tauri mode: delegates to `@tauri-apps/api/core`'s `convertFileSrc()`,
+ * which returns an `asset://` protocol URL.
+ * In web mode: returns the path as-is — no protocol conversion is needed
+ * since web apps load assets via standard HTTP URLs.
+ *
+ * ```ts
+ * const url = convertFileSrc("/app/data/sprite.png");
+ * // web: "/app/data/sprite.png"
+ * // Tauri: "asset://localhost/app/data/sprite.png"
+ * ```
+ */
+export function convertFileSrc(filePath: string, protocol?: string): string {
+  // On web, just return the path as-is — no protocol conversion needed
+  void protocol;
+  return filePath;
+}

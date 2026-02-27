@@ -329,3 +329,47 @@ export async function remove(path: string, options: RemoveOptions = {}): Promise
 export async function removeDir(path: string, options: RemoveOptions = {}): Promise<void> {
   await remove(path, options);
 }
+
+/**
+ * Copies a file from one path to another.
+ *
+ * Reads the source file and writes its contents to the destination path.
+ * If the source is a text file, text content is preserved; otherwise
+ * the binary representation is used.
+ *
+ * ```ts
+ * await copyFile("/app/data/save.json", "/app/data/save-backup.json");
+ * ```
+ */
+export async function copyFile(fromPath: string, toPath: string): Promise<void> {
+  const normalizedFrom = requirePath(fromPath);
+  const normalizedTo = requirePath(toPath);
+  const entry = await getEntry(normalizedFrom);
+  if (!entry || entry.kind !== "file") {
+    throw new Error(`[webtau/fs] File not found: ${normalizedFrom}`);
+  }
+  await ensureDirChain(parentPath(normalizedTo));
+  await putEntry({ ...entry, path: normalizedTo });
+}
+
+/**
+ * Renames (moves) a file or directory from one path to another.
+ *
+ * Implemented as a copy-then-remove operation. If the source is a file,
+ * its contents are copied to the new path and the original is deleted.
+ *
+ * ```ts
+ * await rename("/app/data/old.json", "/app/data/new.json");
+ * ```
+ */
+export async function rename(oldPath: string, newPath: string): Promise<void> {
+  const normalizedOld = requirePath(oldPath);
+  const normalizedNew = requirePath(newPath);
+  const entry = await getEntry(normalizedOld);
+  if (!entry || entry.kind !== "file") {
+    throw new Error(`[webtau/fs] File not found: ${normalizedOld}`);
+  }
+  await ensureDirChain(parentPath(normalizedNew));
+  await putEntry({ ...entry, path: normalizedNew });
+  await deleteEntry(normalizedOld);
+}

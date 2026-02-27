@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from "bun:test";
-import { configure, invoke, isTauri } from "./core";
+import { configure, invoke, isTauri, convertFileSrc } from "./core";
 
 // ---------------------------------------------------------------------------
 // isTauri — environment detection
@@ -142,5 +142,21 @@ describe("configure", () => {
     await expect(invoke("anything")).rejects.toThrow("boom");
     expect(capturedError).toBeInstanceOf(Error);
     expect((capturedError as Error).message).toBe("boom");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// convertFileSrc — asset URL passthrough
+// ---------------------------------------------------------------------------
+
+describe("convertFileSrc", () => {
+  test("returns path as-is when no protocol given", () => {
+    expect(convertFileSrc("/app/data/sprite.png")).toBe("/app/data/sprite.png");
+  });
+
+  test("returns path as-is when protocol given (web ignores protocol)", () => {
+    expect(convertFileSrc("/app/data/sprite.png", "asset")).toBe(
+      "/app/data/sprite.png",
+    );
   });
 });

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import {
+  copyFile,
   createDir,
   exists,
   mkdir,
@@ -7,6 +8,7 @@ import {
   readFile,
   readTextFile,
   remove,
+  rename,
   writeFile,
   writeTextFile,
 } from "./fs";
@@ -67,5 +69,55 @@ describe("webtau/fs", () => {
     await expect(remove(root)).rejects.toThrow("recursive");
     await remove(root, { recursive: true });
     expect(await exists(root)).toBe(false);
+  });
+
+  // -- copyFile --
+
+  test("copyFile copies content from one path to another", async () => {
+    const src = testPath("copy-src");
+    const dst = testPath("copy-dst");
+    await writeTextFile(src, "hello copy");
+
+    await copyFile(src, dst);
+
+    expect(await readTextFile(dst)).toBe("hello copy");
+    // Source should still exist after copy
+    expect(await exists(src)).toBe(true);
+  });
+
+  test("copyFile copies binary content", async () => {
+    const src = testPath("copy-bin-src");
+    const dst = testPath("copy-bin-dst");
+    await writeFile(src, [10, 20, 30]);
+
+    await copyFile(src, dst);
+
+    const bytes = await readFile(dst);
+    expect(Array.from(bytes)).toEqual([10, 20, 30]);
+  });
+
+  test("copyFile throws for nonexistent source", async () => {
+    const src = testPath("copy-missing");
+    const dst = testPath("copy-dst2");
+    await expect(copyFile(src, dst)).rejects.toThrow("File not found");
+  });
+
+  // -- rename --
+
+  test("rename moves content and removes original", async () => {
+    const oldP = testPath("rename-old");
+    const newP = testPath("rename-new");
+    await writeTextFile(oldP, "moved content");
+
+    await rename(oldP, newP);
+
+    expect(await readTextFile(newP)).toBe("moved content");
+    expect(await exists(oldP)).toBe(false);
+  });
+
+  test("rename throws for nonexistent source", async () => {
+    const oldP = testPath("rename-missing");
+    const newP = testPath("rename-dst");
+    await expect(rename(oldP, newP)).rejects.toThrow("File not found");
   });
 });

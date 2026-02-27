@@ -1,7 +1,8 @@
 /**
  * webtau/app — Web shim for @tauri-apps/api/app.
  *
- * Provides getName(), getVersion(), getTauriVersion(), show(), and hide().
+ * Provides getName(), getVersion(), getTauriVersion(), getIdentifier(),
+ * show(), and hide().
  * In web mode, name and version are read from a configurable source
  * (defaults to document.title / "0.0.0"). show() and hide() are no-ops
  * since browser tabs cannot be hidden programmatically.
@@ -9,6 +10,7 @@
 
 let appName: string | null = null;
 let appVersion: string | null = null;
+let appIdentifier: string | null = null;
 
 /**
  * Override the app name returned by `getName()`.
@@ -37,6 +39,34 @@ export function setAppName(name: string | null): void {
  */
 export function setAppVersion(version: string | null): void {
   appVersion = version;
+}
+
+/**
+ * Override the app identifier returned by `getIdentifier()`.
+ * Pass `null` to reset to the default fallback behavior.
+ *
+ * ```ts
+ * import { setAppIdentifier } from "webtau/app";
+ * setAppIdentifier("com.example.mygame");
+ * setAppIdentifier(null); // reset
+ * ```
+ */
+export function setAppIdentifier(id: string | null): void {
+  appIdentifier = id;
+}
+
+/**
+ * Returns the application identifier.
+ *
+ * Web fallback: returns the value set via `setAppIdentifier()`, or
+ * `document.location.hostname` if available, or `"dev.gametau.app"`.
+ */
+export async function getIdentifier(): Promise<string> {
+  if (appIdentifier !== null) return appIdentifier;
+  if (typeof document !== "undefined" && document.location?.hostname) {
+    return document.location.hostname;
+  }
+  return "dev.gametau.app";
 }
 
 /**

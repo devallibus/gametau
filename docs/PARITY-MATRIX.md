@@ -13,20 +13,20 @@ Scope:
 - `Partial`: API name exists, but semantics differ from native Tauri behavior.
 - `Not implemented`: available in Tauri but not provided by current `webtau` shim.
 
-## Coverage Summary (v0.3.1)
+## Coverage Summary (v0.4.0)
 
 Coverage is an approximate function-level view of each aliased namespace.
 
 | Module | Coverage | Notes |
 |---|---:|---|
-| `webtau/core` | ~20% | Focused on `invoke()` parity; `configure()`/`isTauri()` are webtau-specific helpers |
+| `webtau/core` | ~25% | `invoke()` + `convertFileSrc()` parity; `configure()`/`isTauri()` are webtau-specific helpers |
 | `webtau/window` | ~40% | Common gameplay/window controls implemented; many advanced window APIs are not implemented |
 | `webtau/dpi` | 100% | Core logical/physical size and position classes are implemented |
-| `webtau/fs` | ~50% | Core read/write/dir primitives implemented via IndexedDB-backed virtual FS |
+| `webtau/fs` | ~60% | Core read/write/dir/copy/rename primitives implemented via IndexedDB-backed virtual FS |
 | `webtau/dialog` | 100% (name-level), partial semantics | All common dialog functions exist; browser behavior differs from desktop |
 | `webtau/event` | 100% (name-level), partial semantics | Event API exists; web behavior is browser/local-event scoped |
-| `webtau/app` | ~38% | 5/13 Tauri app APIs implemented (`getName/getVersion/getTauriVersion/show/hide`) |
-| `webtau/path` | ~70% | 23/33 Tauri path APIs implemented; missing advanced/system resolvers and helpers |
+| `webtau/app` | ~46% | 6/13 Tauri app APIs implemented (`getName/getVersion/getTauriVersion/getIdentifier/show/hide`) |
+| `webtau/path` | ~82% | 28/34 Tauri path APIs implemented; missing advanced/system resolvers |
 
 ---
 
@@ -35,10 +35,11 @@ Coverage is an approximate function-level view of each aliased namespace.
 | Export | Status | Web behavior | Tauri equivalent |
 |---|---|---|---|
 | `invoke(command, args?)` | Implemented (partial) | Calls WASM export in web mode; delegates to Tauri IPC in Tauri mode | `invoke` |
+| `convertFileSrc(filePath, protocol?)` | Implemented | Returns path as-is on web (no protocol conversion needed) | `convertFileSrc` |
 | `configure({ loadWasm, onLoadError? })` | webtau-specific | Registers lazy WASM loader for web mode | N/A |
 | `isTauri()` | webtau-specific | Checks `window.__TAURI_INTERNALS__` | N/A |
 
-Common Tauri core APIs not implemented by this shim: `convertFileSrc`, `Channel`, callback/plugin helpers.
+Common Tauri core APIs not implemented by this shim: `Channel`, callback/plugin helpers.
 
 ## `webtau/window` vs `@tauri-apps/api/window`
 
@@ -92,8 +93,10 @@ Backed by IndexedDB with in-memory fallback in non-browser test environments.
 | `mkdir` / `createDir` | Implemented | Creates virtual directory chain |
 | `readDir` | Implemented | Returns virtual directory entries |
 | `remove` / `removeDir` | Implemented | Removes virtual entries (supports recursive) |
+| `copyFile` | Implemented | Copies file content within virtual FS |
+| `rename` | Implemented | Moves file via copy-then-remove in virtual FS |
 
-Common Tauri fs APIs not implemented include copy/rename/link/chmod/chown, direct path resolution against OS locations, and native permission model behavior.
+Common Tauri fs APIs not implemented include link/chmod/chown, direct path resolution against OS locations, and native permission model behavior.
 
 ## `webtau/dialog` vs `@tauri-apps/api/dialog`
 
@@ -122,12 +125,14 @@ Note: Desktop-native file-picker behavior and absolute filesystem paths are not 
 | `getName()` | Implemented (partial) | Configured name, else `document.title`, else `"gametau-app"` | `getName` |
 | `getVersion()` | Implemented (partial) | Configured version, else `"0.0.0"` | `getVersion` |
 | `getTauriVersion()` | Implemented (partial) | Returns `"web"` | `getTauriVersion` |
+| `getIdentifier()` | Implemented (partial) | Configured identifier, else `document.location.hostname`, else `"dev.gametau.app"` | `getIdentifier` |
 | `show()` | No-op | Browser tabs cannot be shown programmatically | `show` |
 | `hide()` | No-op | Browser tabs cannot be hidden programmatically | `hide` |
 | `setAppName(name \| null)` | webtau-specific | Sets/clears fallback app name | N/A |
 | `setAppVersion(version \| null)` | webtau-specific | Sets/clears fallback app version | N/A |
+| `setAppIdentifier(id \| null)` | webtau-specific | Sets/clears fallback app identifier | N/A |
 
-Current Tauri app APIs not implemented include `getIdentifier`, `defaultWindowIcon`, `setTheme`, data-store APIs, bundle-type APIs, dock visibility APIs, and Android back-button listener hooks.
+Current Tauri app APIs not implemented include `defaultWindowIcon`, `setTheme`, data-store APIs, bundle-type APIs, dock visibility APIs, and Android back-button listener hooks.
 
 ## `webtau/path` vs `@tauri-apps/api/path`
 
@@ -136,17 +141,14 @@ Implemented exports:
 | Export | Status | Web behavior |
 |---|---|---|
 | `sep()` | Implemented | Always `/` |
+| `delimiter()` | Implemented | Always `/` (POSIX) |
 | `appDataDir` / `appLocalDataDir` / `appConfigDir` / `appCacheDir` / `appLogDir` | Partial | Virtual `/app/*` locations |
 | `desktopDir` / `documentDir` / `downloadDir` / `homeDir` / `audioDir` / `pictureDir` / `publicDir` / `videoDir` | Partial | Virtual `/app/*` locations |
 | `resourceDir` / `tempDir` | Partial | Virtual `/app/resources` and `/app/temp` |
+| `cacheDir` / `configDir` / `dataDir` / `localDataDir` | Partial | Virtual `/app/*` locations (system-level resolvers) |
 | `basename` / `dirname` / `extname` / `join` / `normalize` / `resolve` / `isAbsolute` | Implemented (POSIX-style) | Browser-safe path utilities |
 
 Tauri path APIs currently not implemented:
-- `delimiter()`
-- `cacheDir()`
-- `configDir()`
-- `dataDir()`
-- `localDataDir()`
 - `executableDir()`
 - `fontDir()`
 - `runtimeDir()`
