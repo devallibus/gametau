@@ -116,7 +116,8 @@ function requestToPromise<T>(request: IDBRequest<T>): Promise<T> {
 
 async function getEntry(path: string): Promise<StoredEntry | null> {
   if (!hasIndexedDb()) {
-    return memoryStore.has(path) ? cloneEntry(memoryStore.get(path)!) : null;
+    const entry = memoryStore.get(path);
+    return entry ? cloneEntry(entry) : null;
   }
   const db = await openDb();
   const tx = db.transaction(STORE_NAME, "readonly");

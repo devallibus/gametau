@@ -7,7 +7,7 @@
  * that was registered via `configure()`.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: WASM modules have dynamic signatures that cannot be statically typed
 type WasmModule = Record<string, (...args: any[]) => any>;
 
 let wasmModule: WasmModule | null = null;

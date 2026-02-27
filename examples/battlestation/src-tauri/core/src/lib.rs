@@ -591,4 +591,65 @@ mod tests {
         // Should not reference the removed enemy
         assert_ne!(sim.enemies.get(sim.selected_index).map(|e| e.id), Some(last_id));
     }
+
+    #[test]
+    fn happy_path_kill_enemy_and_score() {
+        let mut sim = BattlestationSim::new();
+        let view = sim.view();
+        assert!(!view.contacts.is_empty(), "should start with enemies");
+        assert_eq!(view.mission_state, MissionState::Active);
+
+        let initial_score = view.score;
+        // Fire at first enemy (RedCube, 1 HP) — should kill in one shot
+        let result = sim.fire_shot();
+        assert!(result.hit);
+        assert!(result.killed);
+
+        let view = sim.view();
+        assert!(view.score > initial_score, "score should increase on kill");
+    }
+
+    #[test]
+    fn failure_path_integrity_reaches_zero() {
+        let mut sim = BattlestationSim::new();
+        // Tick without firing — enemies will eventually reach center and damage integrity
+        for _ in 0..5000 {
+            sim.tick(0.1);
+            let view = sim.view();
+            if view.mission_state == MissionState::Failed {
+                assert_eq!(view.integrity, 0);
+                return;
+            }
+        }
+        panic!("mission should have failed from enemy breaches within 5000 ticks");
+    }
+
+    #[test]
+    fn cycle_target_wraps_forward_and_back() {
+        let sim = BattlestationSim::new();
+        let view = sim.view();
+        assert!(view.contacts.len() >= 2, "need at least 2 enemies for cycling test");
+
+        let mut sim = BattlestationSim::new();
+        let initial_id = sim.view().selected_contact_id;
+
+        sim.cycle_target(1);
+        let after_forward = sim.view().selected_contact_id;
+        assert_ne!(after_forward, initial_id, "target should change after cycling forward");
+
+        sim.cycle_target(-1);
+        let after_back = sim.view().selected_contact_id;
+        assert_eq!(after_back, initial_id, "should wrap back to initial target");
+    }
+
+    #[test]
+    fn fire_at_position_hits_nearby_enemy() {
+        let mut sim = BattlestationSim::new();
+        let view = sim.view();
+        assert!(!view.contacts.is_empty());
+
+        let target = &view.contacts[0];
+        let result = sim.fire_at(target.x, target.y);
+        assert!(result.hit, "should hit enemy at its exact position");
+    }
 }

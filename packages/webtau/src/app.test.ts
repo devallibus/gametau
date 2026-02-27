@@ -1,14 +1,14 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import {
-  getName,
-  getVersion,
-  getTauriVersion,
   getIdentifier,
-  show,
+  getName,
+  getTauriVersion,
+  getVersion,
   hide,
+  setAppIdentifier,
   setAppName,
   setAppVersion,
-  setAppIdentifier,
+  show,
 } from "./app";
 
 const originalDocument = (globalThis as { document?: unknown }).document;
@@ -113,5 +113,27 @@ describe("webtau/app", () => {
     setAppIdentifier(null);
     (globalThis as { document?: unknown }).document = undefined;
     expect(await getIdentifier()).toBe("dev.gametau.app");
+  });
+
+  // -- edge cases --
+
+  test("setAppName(null) resets to document.title fallback", async () => {
+    setAppName("Overridden");
+    expect(await getName()).toBe("Overridden");
+    setAppName(null);
+    (globalThis as { document?: unknown }).document = { title: "Fallback Title" };
+    expect(await getName()).toBe("Fallback Title");
+  });
+
+  test("getVersion returns empty string when set to empty", async () => {
+    setAppVersion("");
+    expect(await getVersion()).toBe("");
+  });
+
+  test("setAppVersion(null) resets to 0.0.0 default", async () => {
+    setAppVersion("3.0.0");
+    expect(await getVersion()).toBe("3.0.0");
+    setAppVersion(null);
+    expect(await getVersion()).toBe("0.0.0");
   });
 });

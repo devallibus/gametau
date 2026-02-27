@@ -1,19 +1,19 @@
-import { describe, test, expect, beforeEach, afterEach, mock } from "bun:test";
+import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 
 // --- Module mocks (hoisted by Bun before imports) ---
 
-mock.module("child_process", () => ({
+mock.module("node:child_process", () => ({
   execSync: mock(() => "wasm-pack 0.12.0"),
   spawnSync: mock(() => ({ status: 0, error: null, stderr: null, stdout: null })),
 }));
 
-mock.module("fs", () => ({
+mock.module("node:fs", () => ({
   existsSync: mock(() => true),
   readdirSync: mock((...args: unknown[]) => {
     // When called with { withFileTypes: true } (sibling crate discovery),
     // return an empty array by default. Tests that need siblings override this.
     const opts = args[1] as { withFileTypes?: boolean } | undefined;
-    if (opts && opts.withFileTypes) return [];
+    if (opts?.withFileTypes) return [];
     // Normal readdirSync for wasm-opt discovery
     return ["foo_bg.wasm", "package.json"];
   }),
@@ -29,10 +29,10 @@ mock.module("chokidar", () => {
 
 // --- Imports (receive mocked versions) ---
 
-import webtauVite from "./index";
-import { spawnSync, execSync } from "child_process";
-import { existsSync, readdirSync } from "fs";
+import { execSync, spawnSync } from "node:child_process";
+import { existsSync, readdirSync } from "node:fs";
 import { watch } from "chokidar";
+import webtauVite from "./index";
 
 // Grab shared watcher reference for cleanup between tests
 const _watcher = (watch as any)();
@@ -58,7 +58,7 @@ function resetMocks() {
   (readdirSync as any).mockClear();
   (readdirSync as any).mockImplementation((...args: unknown[]) => {
     const opts = args[1] as { withFileTypes?: boolean } | undefined;
-    if (opts && opts.withFileTypes) return [];
+    if (opts?.withFileTypes) return [];
     return ["foo_bg.wasm", "package.json"];
   });
   (watch as any).mockClear();
@@ -184,6 +184,21 @@ describe("webtauVite plugin", () => {
     const resolveId = plugin.resolveId as (source: string) => { id: string } | null;
     expect(resolveId("@tauri-apps/api/core")).toBeNull();
   });
+
+  test("resolveId returns null for @tauri-apps/api with query string", () => {
+    delete process.env.TAURI_ENV_PLATFORM;
+    const plugin = webtauVite();
+    const resolveId = plugin.resolveId as (source: string) => { id: string } | null;
+    // Query strings should not match the alias map
+    expect(resolveId("@tauri-apps/api/core?foo=bar")).toBeNull();
+  });
+
+  test("resolveId returns null for partial match", () => {
+    delete process.env.TAURI_ENV_PLATFORM;
+    const plugin = webtauVite();
+    const resolveId = plugin.resolveId as (source: string) => { id: string } | null;
+    expect(resolveId("@tauri-apps/api")).toBeNull();
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -278,7 +293,7 @@ describe("buildStart — wasm-pack build", () => {
     });
     (readdirSync as any).mockImplementation((...args: unknown[]) => {
       const opts = args[1] as { withFileTypes?: boolean } | undefined;
-      if (opts && opts.withFileTypes) return [];
+      if (opts?.withFileTypes) return [];
       return ["foo_bg.wasm", "foo.js", "package.json"];
     });
 
@@ -303,7 +318,7 @@ describe("buildStart — wasm-pack build", () => {
     });
     (readdirSync as any).mockImplementation((...args: unknown[]) => {
       const opts = args[1] as { withFileTypes?: boolean } | undefined;
-      if (opts && opts.withFileTypes) return [];
+      if (opts?.withFileTypes) return [];
       return ["foo_bg.wasm", "package.json"];
     });
 
@@ -323,7 +338,7 @@ describe("buildStart — wasm-pack build", () => {
     });
     (readdirSync as any).mockImplementation((...args: unknown[]) => {
       const opts = args[1] as { withFileTypes?: boolean } | undefined;
-      if (opts && opts.withFileTypes) return [];
+      if (opts?.withFileTypes) return [];
       return ["foo.js", "package.json"];
     });
 
@@ -370,7 +385,7 @@ describe("buildStart — wasm-pack build", () => {
   test("wasm-opt warns when no .wasm file found", () => {
     (readdirSync as any).mockImplementation((...args: unknown[]) => {
       const opts = args[1] as { withFileTypes?: boolean } | undefined;
-      if (opts && opts.withFileTypes) return [];
+      if (opts?.withFileTypes) return [];
       return []; // No .wasm file in output
     });
     const plugin = createPlugin({ wasmOpt: true }, "build");
@@ -393,6 +408,30 @@ describe("buildStart — wasm-pack build", () => {
       (c: any[]) => c[0] === "wasm-opt",
     );
     expect(wasmOptCall).toBeUndefined();
+  });
+
+  test("errors when wasm-pack exits with non-zero status", () => {
+    (spawnSync as any).mockImplementation(() => ({
+      status: 1,
+      error: null,
+      stderr: Buffer.from("compilation error"),
+      stdout: null,
+    }));
+    const plugin = createPlugin({}, "serve");
+    const ctx = { error: mock(), warn: mock() };
+    expect(() => (plugin.buildStart as Function).call(ctx)).toThrow("wasm-pack build failed");
+  });
+
+  test("errors when wasm-pack exits with signal error", () => {
+    (spawnSync as any).mockImplementation(() => ({
+      status: null,
+      error: new Error("SIGKILL"),
+      stderr: null,
+      stdout: null,
+    }));
+    const plugin = createPlugin({}, "serve");
+    const ctx = { error: mock(), warn: mock() };
+    expect(() => (plugin.buildStart as Function).call(ctx)).toThrow("SIGKILL");
   });
 });
 
@@ -502,7 +541,7 @@ describe("rebuild guard", () => {
     });
     (readdirSync as any).mockImplementation((...args: unknown[]) => {
       const opts = args[1] as { withFileTypes?: boolean } | undefined;
-      if (opts && opts.withFileTypes) return [];
+      if (opts?.withFileTypes) return [];
       return ["foo_bg.wasm", "foo.js", "package.json"];
     });
 
@@ -521,13 +560,46 @@ describe("rebuild guard", () => {
     }
   });
 
+  test("watcher triggers during already-coalesced rebuild are absorbed", () => {
+    const plugin = createPlugin({}, "serve");
+    const mockServer = { ws: { send: mock() } };
+    (plugin.configureServer as Function)(mockServer);
+
+    const changeCall = _watcher.on.mock.calls.find(
+      (c: any[]) => c[0] === "change",
+    );
+    const changeHandler = changeCall[1] as (path: string) => void;
+
+    let buildCount = 0;
+    (spawnSync as any).mockClear();
+    (spawnSync as any).mockImplementation(() => {
+      buildCount++;
+      if (buildCount === 1) {
+        // Simulate multiple file changes arriving during a single build;
+        // they should all coalesce into one follow-up, not two.
+        changeHandler("src/extra1.rs");
+        changeHandler("src/extra2.rs");
+      }
+      return { status: 0, error: null, stderr: null, stdout: null };
+    });
+
+    changeHandler("src/initial.rs");
+
+    // Should have built exactly 2 times (initial + one coalesced follow-up),
+    // even though two changes arrived during the first build.
+    const wasmPackCalls = (spawnSync as any).mock.calls.filter(
+      (c: any[]) => c[0] === "wasm-pack",
+    );
+    expect(wasmPackCalls).toHaveLength(2);
+  });
+
   test("reuses buildStart decision in configureServer when wasm-pack is missing", () => {
     (execSync as any).mockImplementation(() => {
       throw new Error("command not found");
     });
     (readdirSync as any).mockImplementation((...args: unknown[]) => {
       const opts = args[1] as { withFileTypes?: boolean } | undefined;
-      if (opts && opts.withFileTypes) return [];
+      if (opts?.withFileTypes) return [];
       return ["foo_bg.wasm", "foo.js", "package.json"];
     });
 

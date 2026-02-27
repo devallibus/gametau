@@ -1,5 +1,5 @@
-import { describe, test, expect } from "bun:test";
-import { LogicalSize, PhysicalSize, LogicalPosition, PhysicalPosition } from "./dpi";
+import { describe, expect, test } from "bun:test";
+import { LogicalPosition, LogicalSize, PhysicalPosition, PhysicalSize } from "./dpi";
 
 // ---------------------------------------------------------------------------
 // LogicalSize

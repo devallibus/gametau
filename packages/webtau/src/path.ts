@@ -202,7 +202,7 @@ export async function normalize(path: string): Promise<string> {
 export async function resolve(...paths: string[]): Promise<string> {
   let resolved = "";
   for (let i = paths.length - 1; i >= 0; i--) {
-    resolved = paths[i] + (resolved ? "/" + resolved : "");
+    resolved = paths[i] + (resolved ? `/${resolved}` : "");
     if (paths[i].startsWith("/")) break;
   }
   return normalizePath(resolved);
@@ -236,5 +236,5 @@ function normalizePath(path: string): string {
   }
 
   const normalized = result.join("/");
-  return isAbs ? "/" + normalized : normalized || ".";
+  return isAbs ? `/${normalized}` : normalized || ".";
 }

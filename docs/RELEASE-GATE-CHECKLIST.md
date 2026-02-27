@@ -11,6 +11,7 @@ Use this as the canonical gate artifact for `0.3.0+` releases. It complements
 - [ ] `create-gametau` template architecture checks pass (service seams + scaffold tests).
 - [ ] `CHANGELOG.md`, `README.md`, and docs reflect the release narrative and compatibility notes.
 - [ ] Version manifests are aligned across workspace crates, npm packages, and templates.
+- [ ] Local working tree is clean: `git status` shows no untracked generated artifacts (`.playwright-mcp/`, `**/src-tauri/app/gen/`)
 
 ## 2) Tag + Publish Gate
 

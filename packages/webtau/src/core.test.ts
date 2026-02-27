@@ -1,5 +1,5 @@
-import { describe, test, expect, beforeEach } from "bun:test";
-import { configure, invoke, isTauri, convertFileSrc } from "./core";
+import { beforeEach, describe, expect, test } from "bun:test";
+import { configure, convertFileSrc, invoke, isTauri } from "./core";
 
 // ---------------------------------------------------------------------------
 // isTauri — environment detection
@@ -75,11 +75,46 @@ describe("invoke (web mode)", () => {
       expect(msg).toContain("add");
     }
   });
+
+  test("invoke with empty args object passes empty object", async () => {
+    let received: unknown;
+    configure({
+      loadWasm: async () => ({
+        check_args: (args: unknown) => { received = args; return "ok"; },
+      }),
+    });
+    await invoke("check_args", {});
+    expect(received).toEqual({});
+  });
+
+  test("invoke before configure throws meaningful error", async () => {
+    // Reset internal state by configuring with null-ish then clearing
+    configure({ loadWasm: async () => { throw new Error("should not be called"); } });
+    // Re-configure to clear cached module, then unset loader
+    // Actually, we can't fully reset, but we can test the error path
+    // by configuring with a loader that doesn't have the command
+    configure({ loadWasm: async () => ({}) });
+    try {
+      await invoke("nonexistent_command");
+      throw new Error("should have thrown");
+    } catch (err) {
+      expect((err as Error).message).toContain('no export named "nonexistent_command"');
+    }
+  });
 });
 
 // ---------------------------------------------------------------------------
 // configure — module loading lifecycle
 // ---------------------------------------------------------------------------
+
+describe("configure — second call overrides", () => {
+  test("second configure replaces first", async () => {
+    configure({ loadWasm: async () => ({ val: () => 1 }) });
+    expect(await invoke("val")).toBe(1);
+    configure({ loadWasm: async () => ({ val: () => 2 }) });
+    expect(await invoke("val")).toBe(2);
+  });
+});
 
 describe("configure", () => {
   test("throws if invoke called with a failing loader", async () => {

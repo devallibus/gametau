@@ -22,7 +22,7 @@ contributors can make consistent decisions without additional context.
 
 1. Track enemies as they approach from the arena edges toward the center.
 2. Select a high-priority target.
-3. Fire a kinetic shot.
+3. Fire a kinetic shot at the selected target, or click/tap to fire at a specific position.
 4. Observe outcome (hit, kill, or miss feedback).
 5. Repeat as wave difficulty increases.
 
@@ -33,6 +33,26 @@ contributors can make consistent decisions without additional context.
 - **Fire shot** - Player-issued kinetic attack against the selected enemy.
 - **Wave** - Escalating difficulty tier that increases spawn rate and shifts archetype distribution.
 - **Defense integrity** - Aggregate health of the friendly cluster at center.
+
+### Enemy Archetypes
+
+| Type | HP | Speed | Damage on Breach | Kill Reward |
+|---|---:|---:|---:|---:|
+| `RED_CUBE` | 1 | 30 | 4 | 5 |
+| `HEAVY_RED_CUBE` | 3 | 18 | 10 | 12 |
+| `ALIEN_8_BIT` | 2 | 24 | 6 | 8 |
+
+### Wave Escalation
+
+- Waves advance every 100 ticks.
+- Spawn interval decreases with wave number (min 10 ticks).
+- Archetype distribution shifts from pure RedCube in early waves toward heavier types.
+- Maximum concurrent enemies: 8.
+
+### Fire Modes
+
+- **`fire_shot`**: Fires at the currently selected target. Instant hit, 1 HP damage per shot.
+- **`fire_at(x, y)`**: Positional orbital strike. Hits closest enemy within 40-unit blast radius.
 
 ## Feedback Hierarchy
 

@@ -64,6 +64,7 @@
   ],
   "scripts": {
     "build": "tsc",
+    "lint": "biome check src",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
   },

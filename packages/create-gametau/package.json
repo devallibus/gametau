@@ -18,6 +18,7 @@
   ],
   "scripts": {
     "build": "tsc",
+    "lint": "biome check src",
     "prepack": "npm run build",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
