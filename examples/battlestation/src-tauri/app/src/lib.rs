@@ -1,6 +1,6 @@
 use std::sync::Mutex;
 
-use battlestation_commands::{cycle_target, dispatch_support, get_mission_view, tick};
+use battlestation_commands::{cycle_target, fire_at, fire_shot, get_mission_view, tick};
 use battlestation_core::BattlestationSim;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -12,7 +12,8 @@ pub fn run() {
             get_mission_view,
             tick,
             cycle_target,
-            dispatch_support
+            fire_at,
+            fire_shot
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

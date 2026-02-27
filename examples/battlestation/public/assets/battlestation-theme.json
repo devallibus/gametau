@@ -1,17 +1,17 @@
 {
-  "radar": {
-    "background": "#050811",
-    "grid": "#2a5a7d",
-    "sweep": "#37c6ff",
+  "scene": {
+    "background": "#030608",
+    "grid": "#1a3040",
     "selected": "#ffe680",
-    "cameraTiltDeg": 10,
+    "shipColor": "#00e5ff",
+    "friendlyColor": "#22cc44",
     "contactPulseSpeed": 4,
-    "contactPulseAmount": 0.15,
-    "enableDepthLayers": true
+    "contactPulseAmount": 0.15
   },
   "audio": {
-    "dispatchSuccessHz": 820,
-    "dispatchFailureHz": 220,
+    "hitHz": 660,
+    "killConfirmHz": 880,
+    "missHz": 220,
     "integrityLossHz": 160,
     "criticalAlertHz": 120
   },

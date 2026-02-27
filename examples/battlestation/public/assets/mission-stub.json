@@ -1,11 +1,11 @@
 {
-  "callsign": "WATCHTOWER-7",
-  "sector": "Rim Expanse",
-  "objective": "Protect orbital relay chain for 180 tactical cycles.",
-  "intel": "Hostile probes are testing response latency. Prioritize high-threat contacts.",
-  "dispatchProtocol": [
-    "Stabilize CRITICAL contacts before cumulative integrity loss cascades.",
-    "Use quick dispatch cadence on HIGH contacts approaching terminal progress.",
-    "Cycle targets proactively when radar sweep reveals clustered pressure."
+  "callsign": "LANCE-130",
+  "sector": "Outer Grid Delta-7",
+  "objective": "Defend friendly cluster from approaching hostiles.",
+  "intel": "Multiple hostile signatures inbound on converging vectors. Prioritize heavy targets before they breach the perimeter.",
+  "tacticalProtocol": [
+    "Eliminate RED_CUBE contacts quickly — they are fast but fragile.",
+    "Focus fire on HEAVY_RED_CUBE targets early; they deal catastrophic damage on arrival.",
+    "ALIEN_8_BIT contacts require two shots — track HP bars and finish what you start."
   ]
 }
