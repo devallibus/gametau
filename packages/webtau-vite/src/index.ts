@@ -38,6 +38,8 @@ const ALIASES: Record<string, string> = {
   "@tauri-apps/api/fs": "webtau/fs",
   "@tauri-apps/api/dialog": "webtau/dialog",
   "@tauri-apps/api/event": "webtau/event",
+  "@tauri-apps/api/app": "webtau/app",
+  "@tauri-apps/api/path": "webtau/path",
 };
 
 /** Detect Tauri mode via environment variable set by Tauri's build system. */
