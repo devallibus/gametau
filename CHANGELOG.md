@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.3.0-alpha.2] - 2026-02-27
+
+### Added
+- Runtime parity shims for `@tauri-apps/api/app` and `@tauri-apps/api/path` (`webtau/app`, `webtau/path`)
+- `webtau-vite` alias coverage for `@tauri-apps/api/app` and `@tauri-apps/api/path`
+- Public function-level parity documentation in `docs/PARITY-MATRIX.md`
+
+### Fixed
+- Prerelease version alignment so tag-triggered publish uses unreleased `0.3.0-alpha.2` manifests instead of previously published `0.2.1` versions
+- `webtau/app` setter signatures now accept `null` reset values without type-unsafe casts in tests
+
+### Changed
+- Workspace, crate, and npm package versions bumped to `0.3.0-alpha.2`
+- `create-gametau` template dependencies now target `webtau`/`webtau-vite` `^0.3.0-alpha.2` and Rust `webtau = "0.3.0-alpha.2"`
+
 ## [0.2.1] - 2026-02-26
 
 ### Added

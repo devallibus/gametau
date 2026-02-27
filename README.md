@@ -264,6 +264,8 @@ pub fn tick_world(state: &mut GameWorld) -> TickResult {
 
 When `webtau-vite` aliases `@tauri-apps/api/*` imports to `webtau/*`, these shims provide browser-compatible implementations:
 
+For a complete function-level status (implemented, partial, no-op, missing), see the [Parity Matrix](docs/PARITY-MATRIX.md).
+
 **`webtau/window`** — Web shim for `@tauri-apps/api/window`. Import `getCurrentWindow()` — same API as Tauri.
 
 | Method | Web Implementation |
@@ -307,6 +309,25 @@ When `webtau-vite` aliases `@tauri-apps/api/*` imports to `webtau/*`, these shim
 | `once(event, cb)` | Auto-unlisten after first callback |
 | `emit(event, payload)` | `window.dispatchEvent(new CustomEvent(...))` |
 | `emitTo(target, event, payload)` | Web-mode alias of `emit` |
+
+**`webtau/app`** — Web shim for `@tauri-apps/api/app`.
+
+| Method | Web Implementation |
+|---|---|
+| `getName()` | Configured app name, then `document.title`, then `"gametau-app"` |
+| `getVersion()` | Configured app version, then `"0.0.0"` |
+| `getTauriVersion()` | `"web"` sentinel in browser mode |
+| `show()` / `hide()` | No-op in browser tabs |
+| `setAppName(name \| null)` / `setAppVersion(version \| null)` | webtau-specific fallback configurators |
+
+**`webtau/path`** — Web shim for `@tauri-apps/api/path`.
+
+| Method Group | Web Implementation |
+|---|---|
+| Virtual dirs (`appDataDir`, `appConfigDir`, `homeDir`, etc.) | Deterministic virtual `/app/*` paths for browser usage |
+| `basename`, `dirname`, `extname`, `join`, `normalize`, `resolve`, `isAbsolute`, `sep` | POSIX-style path utilities for web mode |
+
+Not all Tauri `path` APIs are implemented yet (for example `resolveResource` and `delimiter`). See [Parity Matrix](docs/PARITY-MATRIX.md) for exact coverage.
 
 ### Gameplay foundation modules
 
@@ -621,7 +642,8 @@ Manual v1 wrappers remain fully supported — you can migrate command-by-command
 ## Roadmap
 
 - **`0.2.x` (shipped, current stable line)**: docs/adoption + parity/foundation backlog is delivered (tutorial, API docs pipeline, release incident checklist, `fs/dialog/event` shims, and `input/audio/assets` modules). See [CHANGELOG `0.2.1`](./CHANGELOG.md#021---2026-02-26) and [roadmap issue #6](https://github.com/devallibus/gametau/issues/6).
-- **`0.3.0` (planned)**: deepen runtime surface and production ergonomics (module maturation, parity expansion, and adoption hardening).
+- **`0.3.0-alpha.2` (current prerelease line)**: `app/path` runtime parity shims are shipped and documented; production ergonomics and public parity narrative continue under [roadmap issue #28](https://github.com/devallibus/gametau/issues/28).
+- **`0.3.0` (planned stable milestone)**: deepen runtime surface and production ergonomics (module maturation, parity expansion, and adoption hardening).
 - **`0.4.0+` (future)**: broader platform capabilities and ecosystem expansion.
 
 ## Support & Commercial Licensing
