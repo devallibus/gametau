@@ -318,3 +318,4 @@ jobs:
           name: release-evidence-v${{ env.VERSION }}
           path: .release-evidence
           if-no-files-found: error
+          include-hidden-files: true

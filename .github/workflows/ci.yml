@@ -102,6 +102,7 @@ jobs:
           name: api-docs
           path: .api-docs
           if-no-files-found: error
+          include-hidden-files: true
 
   smoke:
     name: Scaffold & Build Smoke
