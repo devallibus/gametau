@@ -94,7 +94,7 @@ Backed by IndexedDB with in-memory fallback in non-browser test environments.
 | `readDir` | Implemented | Returns virtual directory entries |
 | `remove` / `removeDir` | Implemented | Removes virtual entries (supports recursive) |
 | `copyFile` | Implemented | Copies file content within virtual FS |
-| `rename` | Implemented | Moves file via copy-then-remove in virtual FS |
+| `rename` | Implemented | Moves file via copy-then-remove in virtual FS (file-only; directories not supported) |
 
 Common Tauri fs APIs not implemented include link/chmod/chown, direct path resolution against OS locations, and native permission model behavior.
 
@@ -141,7 +141,7 @@ Implemented exports:
 | Export | Status | Web behavior |
 |---|---|---|
 | `sep()` | Implemented | Always `/` |
-| `delimiter()` | Implemented | Always `/` (POSIX) |
+| `delimiter()` | Implemented | Always `:` (POSIX PATH-list separator) |
 | `appDataDir` / `appLocalDataDir` / `appConfigDir` / `appCacheDir` / `appLogDir` | Partial | Virtual `/app/*` locations |
 | `desktopDir` / `documentDir` / `downloadDir` / `homeDir` / `audioDir` / `pictureDir` / `publicDir` / `videoDir` | Partial | Virtual `/app/*` locations |
 | `resourceDir` / `tempDir` | Partial | Virtual `/app/resources` and `/app/temp` |

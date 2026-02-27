@@ -353,10 +353,11 @@ export async function copyFile(fromPath: string, toPath: string): Promise<void> 
 }
 
 /**
- * Renames (moves) a file or directory from one path to another.
+ * Renames (moves) a file from one path to another (file-only; directories
+ * are not supported and will throw).
  *
- * Implemented as a copy-then-remove operation. If the source is a file,
- * its contents are copied to the new path and the original is deleted.
+ * Implemented as a copy-then-remove operation. The source file's contents
+ * are copied to the new path and the original is deleted.
  *
  * ```ts
  * await rename("/app/data/old.json", "/app/data/new.json");

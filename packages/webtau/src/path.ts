@@ -14,9 +14,9 @@ export function sep(): string {
   return "/";
 }
 
-/** Path delimiter for the current platform. Always `/` on web (POSIX). */
+/** PATH-list separator for the current platform. Always `":"` on web (POSIX). */
 export function delimiter(): string {
-  return "/";
+  return ":";
 }
 
 // ── Directory resolvers ──

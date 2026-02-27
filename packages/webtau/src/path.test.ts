@@ -39,8 +39,8 @@ describe("webtau/path", () => {
 
   // -- delimiter --
 
-  test("delimiter returns forward slash on web", () => {
-    expect(delimiter()).toBe("/");
+  test("delimiter returns colon (PATH-list separator) on web", () => {
+    expect(delimiter()).toBe(":");
   });
 
   // -- directory resolvers --
