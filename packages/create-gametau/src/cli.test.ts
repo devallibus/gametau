@@ -260,6 +260,17 @@ describe("create-gametau CLI", () => {
     expect(commsService).toContain("webtau/event");
   });
 
+  test("template loop queues autosave and keeps comms publish non-blocking", () => {
+    const dir = freshDir();
+    scaffold({ projectName: "loop-hardening", template: "three" }, dir);
+    const projectDir = join(dir, "loop-hardening");
+    const indexTs = readFileSync(join(projectDir, "src", "index.ts"), "utf-8");
+
+    expect(indexTs).toContain("flushPendingSnapshot");
+    expect(indexTs).toContain("queueSnapshotSave(nextView)");
+    expect(indexTs).toContain("void services.comms.publish");
+  });
+
   test("no {{PROJECT_NAME}} placeholders remain in any file", () => {
     const dir = freshDir();
     scaffold({ projectName: "placeholder-check", template: "three" }, dir);

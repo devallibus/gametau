@@ -68,6 +68,34 @@ async function main() {
   let tickAccumulator = 0;
   let tickInFlight = false;
   const tickRate = 1 / settings.tickRateHz;
+  let snapshotInFlight = false;
+  let pendingSnapshot: WorldView | null = null;
+
+  const flushPendingSnapshot = async (): Promise<void> => {
+    if (snapshotInFlight) return;
+    snapshotInFlight = true;
+    try {
+      // Coalesce writes so autosave does not block tick cadence.
+      while (pendingSnapshot) {
+        const snapshot = pendingSnapshot;
+        pendingSnapshot = null;
+        await services.session.saveSnapshot(snapshot);
+        document.getElementById("session")!.textContent = `saved at tick ${snapshot.tick_count}`;
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      snapshotInFlight = false;
+      if (pendingSnapshot) {
+        void flushPendingSnapshot();
+      }
+    }
+  };
+
+  const queueSnapshotSave = (snapshot: WorldView): void => {
+    pendingSnapshot = snapshot;
+    void flushPendingSnapshot();
+  };
 
   startGameLoop(
     (dt) => {
@@ -81,15 +109,14 @@ async function main() {
             updateHud(nextView, settings);
 
             if (nextView.tick_count % settings.autoSaveEveryTicks === 0) {
-              await services.session.saveSnapshot(nextView);
-              document.getElementById("session")!.textContent = `saved at tick ${nextView.tick_count}`;
+              queueSnapshotSave(nextView);
             }
 
-            await services.comms.publish({
+            void services.comms.publish({
               level: resolveAlertLevel(tickResult.score_delta),
               source: "engine",
               message: `score delta ${tickResult.score_delta}`,
-            });
+            }).catch(console.error);
           })
           .catch(console.error)
           .finally(() => { tickInFlight = false; });
