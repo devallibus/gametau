@@ -272,6 +272,31 @@ describe("buildStart — wasm-pack build", () => {
     expect(errorMsg).toContain("cargo install wasm-pack");
   });
 
+  test("warns and reuses prebuilt output when wasm-pack is missing", () => {
+    (execSync as any).mockImplementation(() => {
+      throw new Error("command not found");
+    });
+    (readdirSync as any).mockImplementation((...args: unknown[]) => {
+      const opts = args[1] as { withFileTypes?: boolean } | undefined;
+      if (opts && opts.withFileTypes) return [];
+      return ["foo_bg.wasm", "foo.js", "package.json"];
+    });
+
+    const plugin = createPlugin({}, "serve");
+    const ctx = { error: mock(), warn: mock() };
+    (plugin.buildStart as Function).call(ctx);
+
+    expect(ctx.error).not.toHaveBeenCalled();
+    expect(ctx.warn).toHaveBeenCalled();
+    const warnMsg = ctx.warn.mock.calls[0][0] as string;
+    expect(warnMsg).toContain("Reusing existing WASM output");
+
+    const wasmPackCall = (spawnSync as any).mock.calls.find(
+      (c: any[]) => c[0] === "wasm-pack",
+    );
+    expect(wasmPackCall).toBeUndefined();
+  });
+
   test("errors when Cargo.toml is missing", () => {
     (existsSync as any).mockImplementation((p: string) => {
       if (p.endsWith("Cargo.toml")) return false;
@@ -417,6 +442,17 @@ describe("rebuild guard", () => {
     (plugin.configureServer as Function)(mockServer);
 
     // watch() should NOT have been called in Tauri mode
+    expect(watch).not.toHaveBeenCalled();
+  });
+
+  test("skips Rust watch rebuilds when wasm-pack is missing", () => {
+    (execSync as any).mockImplementation(() => {
+      throw new Error("command not found");
+    });
+    const plugin = createPlugin({}, "serve");
+    const mockServer = { ws: { send: mock() } };
+    (plugin.configureServer as Function)(mockServer);
+
     expect(watch).not.toHaveBeenCalled();
   });
 });
