@@ -24,9 +24,23 @@ Design intent source: `docs/BATTLESTATION-DESIGN-BRIEF.md`.
 
 1. Enemies approach from arena edges toward the center defense cluster.
 2. Select target via keyboard/touch/gamepad axis.
-3. Fire kinetic shot (instant hit, visual projectile trail).
+3. Fire kinetic shot at selected target, or click/tap for positional orbital strike.
 4. Read comms + audio feedback (hit/kill/miss differentiation).
 5. Preserve defense integrity as waves escalate in speed and enemy composition.
+
+## Command Contract
+
+The TypeScript backend service (`src/services/backend.ts`) wraps these Rust commands:
+
+| Command | Rust Method | Purpose |
+|---|---|---|
+| `get_mission_view` | `BattlestationSim::view()` | Read current state |
+| `tick` | `BattlestationSim::tick(dt)` | Advance simulation |
+| `cycle_target` | `BattlestationSim::cycle_target(direction)` | Change selected target |
+| `fire_shot` | `BattlestationSim::fire_shot()` | Fire at selected target |
+| `fire_at` | `BattlestationSim::fire_at(x, y)` | Positional orbital strike |
+
+Both web (WASM) and desktop (Tauri IPC) paths use identical command names and argument shapes.
 
 ## Local Run
 
