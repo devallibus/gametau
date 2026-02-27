@@ -31,6 +31,10 @@ Thumbs.db
 __test_output__/
 .api-docs/
 
+# Generated artifacts (not versioned)
+.playwright-mcp/
+**/src-tauri/app/gen/
+
 # Env
 .env
 .env.*
