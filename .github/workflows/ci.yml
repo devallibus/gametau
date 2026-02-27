@@ -70,6 +70,7 @@ jobs:
       - run: bunx tsc --noEmit -p packages/webtau/tsconfig.json
       - run: bunx tsc --noEmit -p packages/webtau-vite/tsconfig.json
       - run: bunx tsc --noEmit -p packages/create-gametau/tsconfig.json
+      - run: bunx tsc --noEmit -p examples/battlestation/tsconfig.json
 
   api-docs:
     name: API Docs
@@ -169,6 +170,13 @@ jobs:
             )
             echo "::endgroup::"
           done
+
+      - name: Build battlestation example (web target)
+        run: |
+          cd examples/battlestation
+          bun run build:web
+          test -d dist
+          test -f dist/index.html
 
   publish-preflight:
     name: Publish Preflight

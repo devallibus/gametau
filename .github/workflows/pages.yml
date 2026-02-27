@@ -55,6 +55,11 @@ jobs:
         working-directory: examples/pong
         run: bunx vite build --base=/gametau/pong/
 
+      # Build battlestation example
+      - name: Build battlestation
+        working-directory: examples/battlestation
+        run: bunx vite build --base=/gametau/battlestation/
+
       # Assemble site
       - name: Assemble site
         run: |
@@ -63,6 +68,7 @@ jobs:
           cp -r .api-docs _site/api
           cp -r examples/counter/dist _site/counter
           cp -r examples/pong/dist _site/pong
+          cp -r examples/battlestation/dist _site/battlestation
 
       - uses: actions/upload-pages-artifact@v3
         with:
