@@ -106,18 +106,17 @@ If a tag-triggered release fails (or partially publishes), follow the canonical 
 
 ## Template Dependency Versioning Policy
 
-During prerelease (`alpha`, `beta`, `rc`) cycles, scaffold templates stay pinned to the current prerelease line.
+Templates should target the current stable line by default.
 
-- JS template pins: `packages/create-gametau/templates/base/package.json`
-- Rust template pins: `packages/create-gametau/templates/base/src-tauri/commands/Cargo.toml`
+- JS template references: `packages/create-gametau/templates/base/package.json`
+- Rust template reference: `packages/create-gametau/templates/base/src-tauri/commands/Cargo.toml`
 
-Scheduled stable switch:
+During prerelease (`alpha`, `beta`, `rc`) development for an upcoming release:
 
-- Trigger: immediately before tagging the first stable release (`v0.1.0`).
-- Action:
-  - Switch JS template dependencies from prerelease pins to stable range syntax (for example `^0.1.0`).
-  - Switch Rust template dependency from prerelease pin to stable range syntax (for example `^0.1.0`).
-- Tracking: complete and close this work under Issue #3 (`Post-PR2 CI/Publish hardening follow-ups`).
+- Pin template dependencies to the in-flight prerelease line so smoke coverage is deterministic.
+- Before cutting the corresponding stable tag, switch template dependency ranges back to the stable syntax for that release line.
+
+Track versioning policy changes in the active release milestone/issues rather than legacy release follow-ups.
 
 ## CLA
 

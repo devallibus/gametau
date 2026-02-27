@@ -26,7 +26,7 @@ What you expected to happen.
 
 - **OS:** (e.g., Windows 11, macOS 14, Ubuntu 24.04)
 - **Browser:** (e.g., Chrome 130, Firefox 133)
-- **webtau version:** (e.g., 0.1.0-alpha.1)
+- **webtau version:** (e.g., 0.3.0)
 - **wasm-pack version:** (`wasm-pack --version`)
 - **Rust version:** (`rustc --version`)
 
