@@ -10,461 +10,110 @@
     <meta property="og:url" content="https://devallibus.github.io/gametau/" />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary" />
-    <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-
-      :root {
-        --bg: #0a0a1a;
-        --bg-card: #12122a;
-        --accent: #00d4aa;
-        --accent-dim: #00a885;
-        --text: #e0e0e0;
-        --text-muted: #999;
-        --text-dim: #666;
-        --border: #222;
-        --max-w: 1000px;
-      }
-
-      body {
-        font-family: system-ui, -apple-system, sans-serif;
-        background: var(--bg);
-        color: var(--text);
-        line-height: 1.6;
-      }
-
-      a { color: var(--accent); text-decoration: none; }
-      a:hover { text-decoration: underline; }
-
-      code {
-        font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
-        background: rgba(255,255,255,0.06);
-        padding: 0.15em 0.4em;
-        border-radius: 4px;
-        font-size: 0.9em;
-      }
-
-      /* ── Hero ─────────────────────────────────────── */
-
-      .hero {
-        text-align: center;
-        padding: 6rem 1.5rem 4rem;
-      }
-
-      .hero h1 {
-        font-size: clamp(2.5rem, 6vw, 4rem);
-        color: #fff;
-        letter-spacing: -0.02em;
-        margin-bottom: 1rem;
-      }
-
-      .hero .tagline {
-        font-size: clamp(1rem, 2.5vw, 1.25rem);
-        color: var(--text-muted);
-        max-width: 600px;
-        margin: 0 auto 2.5rem;
-      }
-
-      .hero-buttons {
-        display: flex;
-        gap: 1rem;
-        justify-content: center;
-        flex-wrap: wrap;
-      }
-
-      .btn {
-        display: inline-block;
-        padding: 0.8rem 2rem;
-        border-radius: 8px;
-        font-size: 1rem;
-        font-weight: 600;
-        text-decoration: none;
-        transition: transform 0.15s, box-shadow 0.15s;
-      }
-
-      .btn:hover {
-        transform: translateY(-1px);
-        text-decoration: none;
-      }
-
-      .btn-primary {
-        background: var(--accent);
-        color: var(--bg);
-      }
-
-      .btn-primary:hover {
-        box-shadow: 0 4px 20px rgba(0,212,170,0.3);
-      }
-
-      .btn-secondary {
-        background: transparent;
-        color: var(--accent);
-        border: 1px solid var(--accent);
-      }
-
-      .btn-secondary:hover {
-        background: rgba(0,212,170,0.08);
-      }
-
-      /* ── Sections (shared) ──────────────────────── */
-
-      section {
-        padding: 4rem 1.5rem;
-        max-width: var(--max-w);
-        margin: 0 auto;
-      }
-
-      section h2 {
-        font-size: 1.8rem;
-        color: #fff;
-        text-align: center;
-        margin-bottom: 2.5rem;
-      }
-
-      /* ── How It Works ───────────────────────────── */
-
-      .how-it-works-diagram {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 1.5rem;
-        margin: 0 auto;
-        max-width: 700px;
-      }
-
-      .diagram-box {
-        background: var(--bg-card);
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 1rem 2rem;
-        text-align: center;
-        font-weight: 600;
-        width: 100%;
-        max-width: 320px;
-      }
-
-      .diagram-box.core {
-        border-color: var(--accent);
-        color: var(--accent);
-      }
-
-      .diagram-arrow {
-        color: var(--text-dim);
-        font-size: 1.5rem;
-        line-height: 1;
-      }
-
-      .diagram-split {
-        display: flex;
-        gap: 2rem;
-        justify-content: center;
-        flex-wrap: wrap;
-        width: 100%;
-      }
-
-      .diagram-split .diagram-box {
-        flex: 1;
-        min-width: 200px;
-      }
-
-      .diagram-box small {
-        display: block;
-        font-weight: 400;
-        color: var(--text-dim);
-        font-size: 0.85rem;
-        margin-top: 0.3rem;
-      }
-
-      .diagram-invoke {
-        background: var(--bg-card);
-        border: 1px solid var(--accent);
-        border-radius: 10px;
-        padding: 1rem 2rem;
-        text-align: center;
-        width: 100%;
-        max-width: 500px;
-      }
-
-      .diagram-invoke code {
-        color: var(--accent);
-        font-size: 1.05rem;
-        background: none;
-        padding: 0;
-      }
-
-      .diagram-invoke small {
-        display: block;
-        color: var(--text-dim);
-        font-size: 0.85rem;
-        margin-top: 0.3rem;
-      }
-
-      /* ── Features Grid ──────────────────────────── */
-
-      .features-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 1.5rem;
-      }
-
-      .feature-card {
-        background: var(--bg-card);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 1.5rem;
-      }
-
-      .feature-card h3 {
-        color: var(--accent);
-        font-size: 1.1rem;
-        margin-bottom: 0.5rem;
-      }
-
-      .feature-card p {
-        color: var(--text-muted);
-        font-size: 0.92rem;
-        line-height: 1.5;
-      }
-
-      /* ── Quick Start ────────────────────────────── */
-
-      .quickstart {
-        text-align: center;
-      }
-
-      .quickstart-cmd {
-        display: inline-block;
-        background: var(--bg-card);
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 1.2rem 2.5rem;
-        font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
-        font-size: clamp(0.9rem, 2vw, 1.15rem);
-        color: var(--accent);
-        margin-bottom: 1.5rem;
-        letter-spacing: -0.01em;
-        user-select: all;
-      }
-
-      .quickstart-cmd span {
-        color: var(--text-dim);
-      }
-
-      .templates {
-        color: var(--text-muted);
-        font-size: 0.95rem;
-        line-height: 1.8;
-      }
-
-      .templates code {
-        color: var(--text);
-      }
-
-      /* ── Demos ──────────────────────────────────── */
-
-      .demos-grid {
-        display: flex;
-        gap: 2rem;
-        flex-wrap: wrap;
-        justify-content: center;
-      }
-
-      .demo-card {
-        background: var(--bg-card);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 2rem;
-        width: 320px;
-        text-decoration: none;
-        color: inherit;
-        transition: border-color 0.2s, transform 0.2s;
-        display: block;
-      }
-
-      .demo-card:hover {
-        border-color: var(--accent);
-        transform: translateY(-2px);
-        text-decoration: none;
-      }
-
-      .demo-card h3 {
-        font-size: 1.3rem;
-        color: var(--accent);
-        margin-bottom: 0.5rem;
-      }
-
-      .demo-card p {
-        color: var(--text-muted);
-        font-size: 0.92rem;
-        line-height: 1.5;
-      }
-
-      .demo-card .tech {
-        margin-top: 1rem;
-        font-size: 0.8rem;
-        color: var(--text-dim);
-      }
-
-      /* ── Packages ───────────────────────────────── */
-
-      .packages-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.95rem;
-      }
-
-      .packages-table th,
-      .packages-table td {
-        text-align: left;
-        padding: 0.75rem 1rem;
-        border-bottom: 1px solid var(--border);
-      }
-
-      .packages-table th {
-        color: var(--text-dim);
-        font-weight: 600;
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-      }
-
-      .packages-table td a {
-        font-weight: 500;
-      }
-
-      /* ── Footer ─────────────────────────────────── */
-
-      footer {
-        text-align: center;
-        padding: 3rem 1.5rem 2rem;
-        font-size: 0.85rem;
-        color: var(--text-dim);
-        border-top: 1px solid var(--border);
-        max-width: var(--max-w);
-        margin: 2rem auto 0;
-      }
-
-      footer .links {
-        margin-bottom: 0.75rem;
-      }
-
-      footer .links a {
-        margin: 0 0.75rem;
-      }
-
-      /* ── Responsive ─────────────────────────────── */
-
-      @media (max-width: 600px) {
-        .hero { padding: 4rem 1rem 3rem; }
-        section { padding: 3rem 1rem; }
-        .diagram-split { flex-direction: column; align-items: center; }
-        .quickstart-cmd { padding: 1rem 1.2rem; }
-        .demo-card { width: 100%; }
-      }
-    </style>
   </head>
   <body>
 
     <!-- ── Hero ──────────────────────────────────── -->
-    <header class="hero">
-      <h1>gametau</h1>
-      <p class="tagline">
+    <header class="text-center pt-24 pb-16 px-6 max-sm:pt-16 max-sm:pb-12 max-sm:px-4">
+      <h1 class="text-[clamp(2.5rem,6vw,4rem)] text-white tracking-tight mb-4">gametau</h1>
+      <p class="text-[clamp(1rem,2.5vw,1.25rem)] text-text-muted max-w-[600px] mx-auto mb-10">
         Write game logic once in Rust. Ship native to Steam.
         Keep the web build for itch.io. Develop in Chrome with hot-reload.
       </p>
-      <div class="hero-buttons">
-        <a class="btn btn-primary" href="https://github.com/devallibus/gametau#quick-start">Get Started</a>
-        <a class="btn btn-secondary" href="./battlestation/">Try Battlestation</a>
-        <a class="btn btn-secondary" href="./api/">API Docs</a>
+      <div class="flex gap-4 justify-center flex-wrap">
+        <a class="btn bg-accent text-bg hover:shadow-[0_4px_20px_rgba(0,212,170,0.3)]" href="https://github.com/devallibus/gametau#quick-start">Get Started</a>
+        <a class="btn bg-transparent text-accent border border-accent hover:bg-accent/[0.08]" href="./battlestation/">Try Battlestation</a>
+        <a class="btn bg-transparent text-accent border border-accent hover:bg-accent/[0.08]" href="./api/">API Docs</a>
       </div>
     </header>
 
     <!-- ── How It Works ──────────────────────────── -->
-    <section>
-      <h2>How It Works</h2>
-      <div class="how-it-works-diagram">
-        <div class="diagram-box core">core/ (Rust)<small>Pure game logic &mdash; no framework deps</small></div>
-        <div class="diagram-arrow">&darr;</div>
-        <div class="diagram-split">
-          <div class="diagram-box">Tauri (desktop)<small>#[tauri::command] &rarr; native IPC</small></div>
-          <div class="diagram-box">WASM (browser)<small>#[wasm_bindgen] &rarr; direct call</small></div>
+    <section class="section">
+      <h2 class="section-heading">How It Works</h2>
+      <div class="flex flex-col items-center gap-6 mx-auto max-w-[700px]">
+        <div class="bg-bg-card border border-accent rounded-box py-4 px-8 text-center font-semibold w-full max-w-[320px] text-accent">core/ (Rust)<small class="block font-normal text-text-dim text-[0.85rem] mt-1">Pure game logic &mdash; no framework deps</small></div>
+        <div class="text-text-dim text-2xl leading-none">&darr;</div>
+        <div class="flex gap-8 justify-center flex-wrap w-full max-sm:flex-col max-sm:items-center">
+          <div class="bg-bg-card border border-border rounded-box py-4 px-8 text-center font-semibold flex-1 min-w-[200px] max-w-[320px]">Tauri (desktop)<small class="block font-normal text-text-dim text-[0.85rem] mt-1">#[tauri::command] &rarr; native IPC</small></div>
+          <div class="bg-bg-card border border-border rounded-box py-4 px-8 text-center font-semibold flex-1 min-w-[200px] max-w-[320px]">WASM (browser)<small class="block font-normal text-text-dim text-[0.85rem] mt-1">#[wasm_bindgen] &rarr; direct call</small></div>
         </div>
-        <div class="diagram-arrow">&darr;</div>
-        <div class="diagram-invoke">
-          <code>invoke("tick_world")</code>
-          <small>Same frontend code. Auto-routes at runtime.</small>
+        <div class="text-text-dim text-2xl leading-none">&darr;</div>
+        <div class="bg-bg-card border border-accent rounded-box py-4 px-8 text-center w-full max-w-[500px]">
+          <code class="text-accent text-[1.05rem] bg-transparent p-0">invoke("tick_world")</code>
+          <small class="block text-text-dim text-[0.85rem] mt-1">Same frontend code. Auto-routes at runtime.</small>
         </div>
       </div>
     </section>
 
     <!-- ── Why gametau? ──────────────────────────── -->
-    <section>
-      <h2>Why gametau?</h2>
-      <div class="features-grid">
-        <div class="feature-card">
-          <h3>Dev in Chrome</h3>
-          <p>Full DevTools, hot-reload, shareable dev URLs. Drop into <code>tauri dev</code> only when testing desktop-specific behavior.</p>
+    <section class="section">
+      <h2 class="section-heading">Why gametau?</h2>
+      <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-6">
+        <div class="bg-bg-card border border-border rounded-card p-6">
+          <h3 class="text-accent text-[1.1rem] mb-2">Dev in Chrome</h3>
+          <p class="text-text-muted text-[0.92rem] leading-normal">Full DevTools, hot-reload, shareable dev URLs. Drop into <code>tauri dev</code> only when testing desktop-specific behavior.</p>
         </div>
-        <div class="feature-card">
-          <h3>No GC Pauses</h3>
-          <p>Rust has no garbage collector. Your simulation ticks at a consistent cost every frame, not whenever JS decides to collect.</p>
+        <div class="bg-bg-card border border-border rounded-card p-6">
+          <h3 class="text-accent text-[1.1rem] mb-2">No GC Pauses</h3>
+          <p class="text-text-muted text-[0.92rem] leading-normal">Rust has no garbage collector. Your simulation ticks at a consistent cost every frame, not whenever JS decides to collect.</p>
         </div>
-        <div class="feature-card">
-          <h3>2-5x Faster Physics</h3>
-          <p>Physics, pathfinding, and large entity counts run measurably faster in WASM than equivalent JS. On desktop, it's full native code.</p>
+        <div class="bg-bg-card border border-border rounded-card p-6">
+          <h3 class="text-accent text-[1.1rem] mb-2">2-5x Faster Physics</h3>
+          <p class="text-text-muted text-[0.92rem] leading-normal">Physics, pathfinding, and large entity counts run measurably faster in WASM than equivalent JS. On desktop, it's full native code.</p>
         </div>
-        <div class="feature-card">
-          <h3>Portable Core</h3>
-          <p>The <code>core/</code> crate has zero framework dependencies. Reuse it for a multiplayer server, a new target, or anywhere else.</p>
+        <div class="bg-bg-card border border-border rounded-card p-6">
+          <h3 class="text-accent text-[1.1rem] mb-2">Portable Core</h3>
+          <p class="text-text-muted text-[0.92rem] leading-normal">The <code>core/</code> crate has zero framework dependencies. Reuse it for a multiplayer server, a new target, or anywhere else.</p>
         </div>
       </div>
     </section>
 
     <!-- ── Quick Start ───────────────────────────── -->
-    <section class="quickstart">
-      <h2>Quick Start</h2>
-      <div class="quickstart-cmd"><span>$</span> bunx create-gametau my-game</div>
-      <div class="templates">
-        Templates: <code>-t three</code> (default) &middot; <code>-t pixi</code> &middot; <code>-t vanilla</code>
+    <section class="section text-center">
+      <h2 class="section-heading">Quick Start</h2>
+      <div class="inline-block bg-bg-card border border-border rounded-box py-[1.2rem] px-10 font-mono text-[clamp(0.9rem,2vw,1.15rem)] text-accent mb-6 tracking-[-0.01em] select-all max-sm:py-4 max-sm:px-5"><span class="text-text-dim">$</span> bunx create-gametau my-game</div>
+      <div class="text-text-muted text-[0.95rem] leading-[1.8]">
+        Templates: <code class="text-text">-t three</code> (default) &middot; <code class="text-text">-t pixi</code> &middot; <code class="text-text">-t vanilla</code>
       </div>
     </section>
 
     <!-- ── Live Demos ────────────────────────────── -->
-    <section>
-      <h2>Live Demos</h2>
-      <div class="demos-grid">
-        <a class="demo-card" href="./battlestation/">
-          <h3>Battlestation</h3>
-          <p>
+    <section class="section">
+      <h2 class="section-heading">Live Demos</h2>
+      <div class="flex gap-8 flex-wrap justify-center">
+        <a class="block bg-bg-card border border-border rounded-card p-8 w-80 no-underline text-inherit transition-[border-color,transform] duration-200 hover:border-accent hover:-translate-y-0.5 hover:no-underline max-sm:w-full" href="./battlestation/">
+          <h3 class="text-[1.3rem] text-accent mb-2">Battlestation</h3>
+          <p class="text-text-muted text-[0.92rem] leading-normal">
             Flagship tactical radar command loop. Exercises runtime bridge,
             app metadata, local profile persistence, asset loading, and alert
             event orchestration in one end-to-end scenario.
           </p>
-          <div class="tech">Rust + Canvas2D + full webtau module story</div>
+          <div class="mt-4 text-[0.8rem] text-text-dim">Rust + Canvas2D + full webtau module story</div>
         </a>
-        <a class="demo-card" href="./counter/">
-          <h3>Counter</h3>
-          <p>
+        <a class="block bg-bg-card border border-border rounded-card p-8 w-80 no-underline text-inherit transition-[border-color,transform] duration-200 hover:border-accent hover:-translate-y-0.5 hover:no-underline max-sm:w-full" href="./counter/">
+          <h3 class="text-[1.3rem] text-accent mb-2">Counter</h3>
+          <p class="text-text-muted text-[0.92rem] leading-normal">
             Simplest possible example. Increment, decrement, reset &mdash;
             Rust logic called through the same <code>invoke()</code> API
             that works on both web and desktop.
           </p>
-          <div class="tech">Rust + vanilla DOM</div>
+          <div class="mt-4 text-[0.8rem] text-text-dim">Rust + vanilla DOM</div>
         </a>
-        <a class="demo-card" href="./pong/">
-          <h3>Pong</h3>
-          <p>
+        <a class="block bg-bg-card border border-border rounded-card p-8 w-80 no-underline text-inherit transition-[border-color,transform] duration-200 hover:border-accent hover:-translate-y-0.5 hover:no-underline max-sm:w-full" href="./pong/">
+          <h3 class="text-[1.3rem] text-accent mb-2">Pong</h3>
+          <p class="text-text-muted text-[0.92rem] leading-normal">
             Two-player Pong with real physics. Ball collision, paddle clamping,
             score tracking &mdash; all in Rust, rendered with PixiJS at 60fps.
           </p>
-          <div class="tech">Rust + PixiJS</div>
+          <div class="mt-4 text-[0.8rem] text-text-dim">Rust + PixiJS</div>
         </a>
       </div>
     </section>
 
     <!-- ── Packages ──────────────────────────────── -->
-    <section>
-      <h2>Packages</h2>
-      <table class="packages-table">
+    <section class="section">
+      <h2 class="section-heading">Packages</h2>
+      <table class="pkg-table w-full border-collapse text-[0.95rem]">
         <thead>
           <tr>
             <th>Package</th>
@@ -474,22 +123,22 @@
         </thead>
         <tbody>
           <tr>
-            <td><a href="https://crates.io/crates/webtau">webtau</a></td>
+            <td><a href="https://crates.io/crates/webtau" class="font-medium">webtau</a></td>
             <td>crates.io</td>
             <td><code>wasm_state!</code> macro for WASM state management</td>
           </tr>
           <tr>
-            <td><a href="https://npmjs.com/package/webtau">webtau</a></td>
+            <td><a href="https://npmjs.com/package/webtau" class="font-medium">webtau</a></td>
             <td>npm</td>
             <td><code>invoke()</code> router + Tauri API shims</td>
           </tr>
           <tr>
-            <td><a href="https://npmjs.com/package/webtau-vite">webtau-vite</a></td>
+            <td><a href="https://npmjs.com/package/webtau-vite" class="font-medium">webtau-vite</a></td>
             <td>npm</td>
             <td>Vite plugin: wasm-pack automation + import aliasing</td>
           </tr>
           <tr>
-            <td><a href="https://npmjs.com/package/create-gametau">create-gametau</a></td>
+            <td><a href="https://npmjs.com/package/create-gametau" class="font-medium">create-gametau</a></td>
             <td>npm</td>
             <td>Project scaffolder CLI</td>
           </tr>
@@ -498,15 +147,16 @@
     </section>
 
     <!-- ── Footer ────────────────────────────────── -->
-    <footer>
-      <div class="links">
-        <a href="https://github.com/devallibus/gametau">GitHub</a>
-        <a href="https://npmjs.com/package/webtau">npm</a>
-        <a href="https://crates.io/crates/webtau">crates.io</a>
-        <a href="./api/">API docs</a>
+    <footer class="text-center pt-12 pb-8 px-6 text-[0.85rem] text-text-dim border-t border-border max-w-content mt-8 mx-auto">
+      <div class="mb-3">
+        <a class="mx-3" href="https://github.com/devallibus/gametau">GitHub</a>
+        <a class="mx-3" href="https://npmjs.com/package/webtau">npm</a>
+        <a class="mx-3" href="https://crates.io/crates/webtau">crates.io</a>
+        <a class="mx-3" href="./api/">API docs</a>
       </div>
       <div>Apache-2.0 License</div>
     </footer>
 
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

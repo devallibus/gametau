@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg:         #0a0a1a;
+  --color-bg-card:    #12122a;
+  --color-accent:     #00d4aa;
+  --color-accent-dim: #00a885;
+  --color-text:       #e0e0e0;
+  --color-text-muted: #999999;
+  --color-text-dim:   #666666;
+  --color-border:     #222222;
+  --breakpoint-sm:    600px;
+  --max-width-content: 1000px;
+  --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  --radius-card: 12px;
+  --radius-box:  10px;
+  --radius-btn:  8px;
+  --radius-code: 4px;
+}
+
+@layer base {
+  body   { @apply bg-bg text-text font-sans leading-[1.6]; }
+  a      { @apply text-accent no-underline; }
+  a:hover { @apply underline; }
+  code   { @apply font-mono bg-white/[0.06] px-[0.4em] py-[0.15em] rounded-code text-[0.9em]; }
+}
+
+@layer components {
+  .btn { @apply inline-block py-[0.8rem] px-8 rounded-btn text-base font-semibold no-underline transition-[transform,box-shadow] duration-150 hover:-translate-y-px hover:no-underline; }
+  .section { @apply py-16 px-6 max-w-content mx-auto max-sm:py-12 max-sm:px-4; }
+  .section-heading { @apply text-[1.8rem] text-white text-center mb-10; }
+  .pkg-table th { @apply text-left py-3 px-4 border-b border-border text-text-dim font-semibold text-[0.8rem] uppercase tracking-wider; }
+  .pkg-table td { @apply text-left py-3 px-4 border-b border-border; }
+}
