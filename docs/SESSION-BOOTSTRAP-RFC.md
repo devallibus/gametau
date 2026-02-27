@@ -67,6 +67,22 @@ Default behavior (`prefer_remote`):
 4. If remote is unavailable/invalid, continue with local snapshot.
 5. Persist selected startup snapshot locally and expose source in UI/logs.
 
+### `prefer_local` behavior
+
+1. Load local snapshot from existing local service seam.
+2. Attempt adapter `load(sessionId)`.
+3. Always use local snapshot for startup, regardless of remote availability.
+4. If local is absent and remote exists, use remote as fallback.
+5. Persist selected startup snapshot locally.
+
+### `lww` (last-writer-wins) behavior
+
+1. Load local snapshot from existing local service seam.
+2. Attempt adapter `load(sessionId)`.
+3. Compare `updated_at` timestamps; use whichever is more recent.
+4. If timestamps are equal, prefer local (tie-breaking toward local-first).
+5. Persist selected startup snapshot locally.
+
 Custom resolver behavior:
 
 - Consumers may provide `resolve(local, remote)` for domain-specific merges.

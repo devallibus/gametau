@@ -1,5 +1,6 @@
 import { configure, isTauri } from "webtau";
 import { startGameLoop } from "./game/loop";
+import { createSnapshotQueue } from "./game/snapshot-queue";
 import { initScene, updateScene } from "./game/scene";
 import {
   createServiceLayer,
@@ -68,34 +69,13 @@ async function main() {
   let tickAccumulator = 0;
   let tickInFlight = false;
   const tickRate = 1 / settings.tickRateHz;
-  let snapshotInFlight = false;
-  let pendingSnapshot: WorldView | null = null;
 
-  const flushPendingSnapshot = async (): Promise<void> => {
-    if (snapshotInFlight) return;
-    snapshotInFlight = true;
-    try {
-      // Coalesce writes so autosave does not block tick cadence.
-      while (pendingSnapshot) {
-        const snapshot = pendingSnapshot;
-        pendingSnapshot = null;
-        await services.session.saveSnapshot(snapshot);
-        document.getElementById("session")!.textContent = `saved at tick ${snapshot.tick_count}`;
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      snapshotInFlight = false;
-      if (pendingSnapshot) {
-        void flushPendingSnapshot();
-      }
-    }
-  };
-
-  const queueSnapshotSave = (snapshot: WorldView): void => {
-    pendingSnapshot = snapshot;
-    void flushPendingSnapshot();
-  };
+  const snapshotQueue = createSnapshotQueue<WorldView>(
+    async (snapshot) => {
+      await services.session.saveSnapshot(snapshot);
+      document.getElementById("session")!.textContent = `saved at tick ${snapshot.tick_count}`;
+    },
+  );
 
   startGameLoop(
     (dt) => {
@@ -109,9 +89,11 @@ async function main() {
             updateHud(nextView, settings);
 
             if (nextView.tick_count % settings.autoSaveEveryTicks === 0) {
-              queueSnapshotSave(nextView);
+              snapshotQueue.enqueue(nextView);
             }
 
+            // Intentional fire-and-forget: comms events are non-critical side effects
+            // and must not block the tick cadence. void suppresses the floating-promise lint.
             void services.comms.publish({
               level: resolveAlertLevel(tickResult.score_delta),
               source: "engine",

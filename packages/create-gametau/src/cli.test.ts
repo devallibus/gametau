@@ -266,8 +266,10 @@ describe("create-gametau CLI", () => {
     const projectDir = join(dir, "loop-hardening");
     const indexTs = readFileSync(join(projectDir, "src", "index.ts"), "utf-8");
 
-    expect(indexTs).toContain("flushPendingSnapshot");
-    expect(indexTs).toContain("queueSnapshotSave(nextView)");
+    // Snapshot coalescing is extracted to its own module
+    expect(existsSync(join(projectDir, "src", "game", "snapshot-queue.ts"))).toBe(true);
+    expect(indexTs).toContain("createSnapshotQueue");
+    expect(indexTs).toContain("snapshotQueue.enqueue");
     expect(indexTs).toContain("void services.comms.publish");
   });
 
