@@ -91,7 +91,14 @@ Desktop build:
 bun run build:desktop
 ```
 
-## 8) Next Steps
+## 8) Understand What's Available
+
+Before expanding your game, check current runtime parity and API surface:
+
+- Function-level parity matrix: `docs/PARITY-MATRIX.md`
+- Live API docs: `https://devallibus.github.io/gametau/api/`
+
+## 9) Next Steps
 
 - Read architecture details in `README.md`
 - Review release/incident procedures in `docs/RELEASE-INCIDENT-RESPONSE.md`

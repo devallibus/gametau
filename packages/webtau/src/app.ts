@@ -13,25 +13,29 @@ let appVersion: string | null = null;
 /**
  * Override the app name returned by `getName()`.
  * Useful for setting metadata early in your web entry point.
+ * Pass `null` to reset to the default fallback behavior.
  *
  * ```ts
  * import { setAppName } from "webtau/app";
  * setAppName("My Game");
+ * setAppName(null); // reset
  * ```
  */
-export function setAppName(name: string): void {
+export function setAppName(name: string | null): void {
   appName = name;
 }
 
 /**
  * Override the app version returned by `getVersion()`.
+ * Pass `null` to reset to the default fallback behavior.
  *
  * ```ts
  * import { setAppVersion } from "webtau/app";
  * setAppVersion("1.2.0");
+ * setAppVersion(null); // reset
  * ```
  */
-export function setAppVersion(version: string): void {
+export function setAppVersion(version: string | null): void {
   appVersion = version;
 }
 

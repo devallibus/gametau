@@ -12,22 +12,10 @@ import {
 const originalDocument = (globalThis as { document?: unknown }).document;
 
 afterEach(() => {
-  // Reset configured overrides by setting to a known name then clearing
-  // via the module's internal state. We re-import fresh state by calling
-  // the setters with values that restore defaults.
-  setAppName(null as unknown as string);
-  setAppVersion(null as unknown as string);
+  setAppName(null);
+  setAppVersion(null);
   (globalThis as { document?: unknown }).document = originalDocument;
 });
-
-// Re-set null after import to clear any leftover state — the setters
-// accept string but we exploit the null check internally.
-function clearOverrides() {
-  // The module stores null as "not configured" — we poke it back.
-  // This is safe because the module checks `!== null`.
-  (setAppName as (v: string | null) => void)(null);
-  (setAppVersion as (v: string | null) => void)(null);
-}
 
 describe("webtau/app", () => {
   // -- getName --
@@ -38,19 +26,22 @@ describe("webtau/app", () => {
   });
 
   test("getName falls back to document.title", async () => {
-    clearOverrides();
+    setAppName(null);
+    setAppVersion(null);
     (globalThis as { document?: unknown }).document = { title: "Browser Title" };
     expect(await getName()).toBe("Browser Title");
   });
 
   test("getName returns default when no title or config", async () => {
-    clearOverrides();
+    setAppName(null);
+    setAppVersion(null);
     (globalThis as { document?: unknown }).document = undefined;
     expect(await getName()).toBe("gametau-app");
   });
 
   test("getName returns default when document.title is empty", async () => {
-    clearOverrides();
+    setAppName(null);
+    setAppVersion(null);
     (globalThis as { document?: unknown }).document = { title: "" };
     expect(await getName()).toBe("gametau-app");
   });
@@ -63,7 +54,8 @@ describe("webtau/app", () => {
   });
 
   test("getVersion returns 0.0.0 by default", async () => {
-    clearOverrides();
+    setAppName(null);
+    setAppVersion(null);
     expect(await getVersion()).toBe("0.0.0");
   });
 
