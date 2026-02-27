@@ -101,16 +101,6 @@ function touchSelectionAxis(touches: TouchPoint[], bounds: DOMRect): number {
   return 0;
 }
 
-function touchFirePressed(touches: TouchPoint[], bounds: DOMRect): boolean {
-  return touches.some((touch) => {
-    const x = touch.x - bounds.left;
-    const y = touch.y - bounds.top;
-    const inCenter = x >= bounds.width / 3 && x <= (bounds.width * 2) / 3;
-    const inBottom = y >= bounds.height * 0.65;
-    return inCenter && inBottom;
-  });
-}
-
 function resolveSelectionDirection(...values: number[]): number {
   for (const value of values) {
     const direction = axisDirection(value);
@@ -262,12 +252,11 @@ async function main() {
         selectionLatchTime = now;
       }
 
-      // Keyboard/gamepad fire (fires at selected target via legacy fireShot)
+      // Keyboard/gamepad fire (touch/click fire goes through pointerdown -> pendingFires)
       const firePressed =
         input.isPressed(" ") ||
         input.isPressed("Enter") ||
-        input.gamepadAxis(5, { deadzone: 0.4 }) > 0.5 ||
-        touchFirePressed(touches, bounds);
+        input.gamepadAxis(5, { deadzone: 0.4 }) > 0.5;
       if (firePressed && !fireLatch) {
         actions.push("fire");
       }
