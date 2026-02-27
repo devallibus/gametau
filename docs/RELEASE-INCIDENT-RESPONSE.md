@@ -1,6 +1,7 @@
 # Release Incident Response Checklist
 
 Use this checklist when a tag-triggered `Publish` workflow fails or when release artifacts are partially published.
+For normal release gating before/after tag cut, use `docs/RELEASE-GATE-CHECKLIST.md`.
 
 ## 1) Freeze and Capture Evidence
 
@@ -53,6 +54,7 @@ Apply this to each superseded version that should no longer be installed by user
 
 - `CI` on `master` is green.
 - `Publish Preflight` checks pass (`cargo publish --dry-run`, `npm pack --dry-run`).
+- `docs/RELEASE-GATE-CHECKLIST.md` pre-tag items are complete.
 - Release tracking issues are updated with:
   - failing run reference
   - fix commits

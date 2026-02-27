@@ -441,6 +441,10 @@ my-game/
     game/scene.ts           # Three.js / PixiJS / Canvas2D scene
     game/loop.ts            # requestAnimationFrame + tick integration
     services/backend.ts     # Typed invoke() wrappers
+    services/settings.ts    # Runtime settings persistence (webtau/path + webtau/fs)
+    services/session.ts     # Mission/session snapshots (webtau/path + webtau/fs)
+    services/comms.ts       # Event-driven comms/alerts (webtau/event)
+    services/contracts.ts   # Service-layer interfaces and shared types
   package.json
   vite.config.ts            # Pre-configured with webtau-vite
 ```
@@ -641,7 +645,7 @@ Manual v1 wrappers remain fully supported — you can migrate command-by-command
 
 ## Roadmap
 
-- **`0.2.x` (shipped, current stable line)**: docs/adoption + parity/foundation backlog is delivered (tutorial, API docs pipeline, release incident checklist, `fs/dialog/event` shims, and `input/audio/assets` modules). See [CHANGELOG `0.2.1`](./CHANGELOG.md#021---2026-02-26) and [roadmap issue #6](https://github.com/devallibus/gametau/issues/6).
+- **`0.2.x` (shipped, current stable line)**: docs/adoption + parity/foundation backlog is delivered (tutorial, API docs pipeline, release gate + incident checklists, `fs/dialog/event` shims, and `input/audio/assets` modules). See [CHANGELOG `0.2.1`](./CHANGELOG.md#021---2026-02-26) and [roadmap issue #6](https://github.com/devallibus/gametau/issues/6).
 - **`0.3.0-alpha.2` (current prerelease line)**: `app/path` runtime parity shims are shipped and documented; production ergonomics and public parity narrative continue under [roadmap issue #28](https://github.com/devallibus/gametau/issues/28).
 - **`0.3.0` (planned stable milestone)**: deepen runtime surface and production ergonomics (module maturation, parity expansion, and adoption hardening).
 - **`0.4.0+` (future)**: broader platform capabilities and ecosystem expansion.

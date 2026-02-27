@@ -1,7 +1,27 @@
 import { configure, isTauri } from "webtau";
-import { getWorldView, tickWorld } from "./services/backend";
 import { startGameLoop } from "./game/loop";
 import { initScene, updateScene } from "./game/scene";
+import {
+  createServiceLayer,
+  getWorldView,
+  tickWorld,
+  type AlertLevel,
+  type RuntimeSettings,
+  type WorldView,
+} from "./services";
+
+function resolveAlertLevel(scoreDelta: number): AlertLevel {
+  if (scoreDelta >= 2) return "critical";
+  if (scoreDelta > 0) return "info";
+  return "warning";
+}
+
+function updateHud(view: WorldView, settings: RuntimeSettings): void {
+  document.getElementById("score")!.textContent = String(view.score);
+  document.getElementById("tick")!.textContent = String(view.tick_count);
+  document.getElementById("tick-rate")!.textContent = String(settings.tickRateHz);
+  document.getElementById("autosave")!.textContent = String(settings.autoSaveEveryTicks);
+}
 
 async function main() {
   // Configure webtau for web mode (no-op in Tauri)
@@ -20,27 +40,56 @@ async function main() {
   const app = document.getElementById("app")!;
   await initScene(app);
 
-  // Get initial state
+  // Build service seams up front: backend invoke wrappers + fs/path + event orchestration.
+  const services = await createServiceLayer();
+  const settings = await services.settings.load();
+  const previousSession = await services.session.loadLastSnapshot();
+  document.getElementById("session")!.textContent = previousSession
+    ? `restored (${previousSession.savedAt})`
+    : "fresh";
+  document.getElementById("alert")!.textContent = "ready";
+
+  const unlistenAlerts = await services.comms.subscribe((message) => {
+    document.getElementById("alert")!.textContent = `[${message.level}] ${message.message}`;
+  });
+  window.addEventListener("beforeunload", () => {
+    unlistenAlerts();
+  });
+
+  // Persist settings on first run so users have an explicit config seam to extend.
+  await services.settings.save(settings);
+
+  // Get and display initial state.
   const view = await getWorldView();
-  document.getElementById("score")!.textContent = String(view.score);
-  document.getElementById("tick")!.textContent = String(view.tick_count);
+  updateHud(view, settings);
+  await services.session.saveSnapshot(view);
 
   // Start game loop
   let tickAccumulator = 0;
   let tickInFlight = false;
-  const TICK_RATE = 1 / 10; // 10 ticks per second
+  const tickRate = 1 / settings.tickRateHz;
 
   startGameLoop(
     (dt) => {
       tickAccumulator += dt;
-      if (!tickInFlight && tickAccumulator >= TICK_RATE) {
-        tickAccumulator -= TICK_RATE;
+      if (!tickInFlight && tickAccumulator >= tickRate) {
+        tickAccumulator -= tickRate;
         tickInFlight = true;
         tickWorld()
-          .then(() => getWorldView())
-          .then((view) => {
-            document.getElementById("score")!.textContent = String(view.score);
-            document.getElementById("tick")!.textContent = String(view.tick_count);
+          .then(async (tickResult) => {
+            const nextView = await getWorldView();
+            updateHud(nextView, settings);
+
+            if (nextView.tick_count % settings.autoSaveEveryTicks === 0) {
+              await services.session.saveSnapshot(nextView);
+              document.getElementById("session")!.textContent = `saved at tick ${nextView.tick_count}`;
+            }
+
+            await services.comms.publish({
+              level: resolveAlertLevel(tickResult.score_delta),
+              source: "engine",
+              message: `score delta ${tickResult.score_delta}`,
+            });
           })
           .catch(console.error)
           .finally(() => { tickInFlight = false; });

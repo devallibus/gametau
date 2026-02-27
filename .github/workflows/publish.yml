@@ -259,3 +259,56 @@ jobs:
           test -d smoke-game/dist
           test -f smoke-game/dist/index.html
           echo "Consumer smoke test passed for v${VERSION}"
+
+  release-evidence:
+    name: Release Evidence Bundle
+    needs: [publish-npm, publish-crate, verify-publish, consumer-smoke]
+    if: >-
+      always() && !cancelled() &&
+      needs.verify-publish.result == 'success' &&
+      needs.consumer-smoke.result == 'success' &&
+      (
+        github.event_name == 'workflow_dispatch' ||
+        (needs.publish-npm.result == 'success' && needs.publish-crate.result == 'success')
+      )
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve version
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            version="${{ inputs.version }}"
+          else
+            version="${GITHUB_REF_NAME#v}"
+          fi
+          echo "VERSION=${version}" >> "$GITHUB_ENV"
+
+      - name: Build evidence markdown
+        env:
+          PUBLISH_NPM_RESULT: ${{ needs.publish-npm.result }}
+          PUBLISH_CRATE_RESULT: ${{ needs.publish-crate.result }}
+          VERIFY_RESULT: ${{ needs.verify-publish.result }}
+          CONSUMER_SMOKE_RESULT: ${{ needs.consumer-smoke.result }}
+        run: |
+          mkdir -p .release-evidence
+          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          cat <<EOF > ".release-evidence/release-evidence-v${VERSION}.md"
+          # Release Evidence — v${VERSION}
+
+          ## Workflow Summary
+          - Run URL: ${run_url}
+          - publish-npm: ${PUBLISH_NPM_RESULT}
+          - publish-crate: ${PUBLISH_CRATE_RESULT}
+          - verify-publish: ${VERIFY_RESULT}
+          - consumer-smoke: ${CONSUMER_SMOKE_RESULT}
+
+          ## Required Gate References
+          - Tag: v${VERSION}
+          - Workflow run: ${run_url}
+          - Checklist source: docs/RELEASE-GATE-CHECKLIST.md
+          EOF
+          cat ".release-evidence/release-evidence-v${VERSION}.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-evidence-v${{ env.VERSION }}
+          path: .release-evidence
