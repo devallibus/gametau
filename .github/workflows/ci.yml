@@ -178,6 +178,31 @@ jobs:
             echo "::endgroup::"
           done
 
+      - name: Verify webtau-vite fallback path without wasm-pack
+        run: |
+          cd packages/create-gametau/.pack-smoke/smoke-game
+
+          # Ensure the initial web build produced reusable wasm-pack artifacts.
+          test -d src/wasm
+          ls src/wasm/*_bg.wasm >/dev/null
+          ls src/wasm/*.js >/dev/null
+
+          path_without_cargo="$(python3 - <<'PY'
+          import os
+          path_entries = os.environ["PATH"].split(":")
+          filtered = [p for p in path_entries if not p.endswith("/.cargo/bin")]
+          print(":".join(filtered))
+          PY
+          )"
+
+          fallback_log="$(mktemp)"
+          env PATH="$path_without_cargo" bun run build:web 2>&1 | tee "$fallback_log"
+
+          if [[ "$(cat "$fallback_log")" != *"Reusing existing WASM output"* ]]; then
+            echo "Expected fallback warning was not emitted when wasm-pack was unavailable."
+            exit 1
+          fi
+
       - name: Build battlestation example (web target)
         run: |
           cd examples/battlestation

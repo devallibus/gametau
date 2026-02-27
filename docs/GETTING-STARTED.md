@@ -5,7 +5,7 @@ This guide walks you from a fresh scaffold to a playable game loop in both brows
 ## 1) Prerequisites
 
 - Rust (with `wasm32-unknown-unknown`)
-- `wasm-pack`
+- `wasm-pack` (required for fresh Rust/WASM builds and Rust watch rebuilds)
 - Bun (or Node 18+)
 - Tauri CLI (for desktop run path)
 
@@ -68,6 +68,8 @@ let delta = self.rng.gen_range(1..=5);
 ```
 
 Save and refresh the browser. `Score` should now climb faster, proving the Rust gameplay path is active in web mode.
+
+Note: if `wasm-pack` is unavailable but you already have valid prebuilt `src/wasm` artifacts, web builds can still run in fallback mode. In that mode, Rust watch rebuilds are disabled until `wasm-pack` is installed.
 
 ## 6) Run in Tauri Desktop Mode
 

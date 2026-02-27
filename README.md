@@ -62,7 +62,7 @@ Then follow [Migrating an Existing Tauri Game](#migrating-an-existing-tauri-game
 ### Prerequisites
 
 - [Rust](https://rustup.rs/) with `wasm32-unknown-unknown` target
-- [wasm-pack](https://rustwasm.github.io/wasm-pack/installer/)
+- [wasm-pack](https://rustwasm.github.io/wasm-pack/installer/) (required for fresh Rust/WASM builds and Rust watch rebuilds)
 - [Bun](https://bun.sh/) (or Node.js 18+)
 - [Tauri CLI](https://v2.tauri.app/start/create-project/) (for desktop builds only)
 
@@ -435,6 +435,13 @@ webtauVite({
   wasmOpt: false,                    // Run wasm-opt on release (default)
 })
 ```
+
+### `wasm-pack` requirement and fallback semantics
+
+- Fresh Rust/WASM builds and the dev rebuild loop require `wasm-pack`.
+- If `wasm-pack` is missing but valid prebuilt output already exists in `wasmOutDir`, `webtau-vite` reuses it and continues.
+- In this fallback mode, Rust watch rebuilds are intentionally disabled until `wasm-pack` is installed.
+- If `wasm-pack` is missing and reusable prebuilt artifacts are unavailable or incomplete, the plugin fails fast with a clear error.
 
 ---
 
