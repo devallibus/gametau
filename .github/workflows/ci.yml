@@ -92,10 +92,17 @@ jobs:
       - run: bun install
       - name: Generate API docs (TypeDoc + rustdoc)
         run: bun run docs:api
+      - name: Verify API docs were generated
+        run: |
+          test -d .api-docs
+          test -f .api-docs/index.html
+          echo "API docs directory verified."
       - uses: actions/upload-artifact@v4
         with:
           name: api-docs
           path: .api-docs
+          if-no-files-found: error
+          include-hidden-files: true
 
   smoke:
     name: Scaffold & Build Smoke
