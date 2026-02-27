@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.3.0] - 2026-02-27
+
+### Added
+- Battlestation flagship showcase example (`examples/battlestation`) covering the full module story (`input`, `audio`, `assets`, `fs/path`, `event`, `app`) across web + desktop
+- Public battlestation design and reuse docs: `docs/BATTLESTATION-DESIGN-BRIEF.md` and `docs/BATTLESTATION-SHOWCASE.md`
+- Canonical stable release gate artifact in `docs/RELEASE-GATE-CHECKLIST.md` plus publish-time `Release Evidence Bundle` workflow artifact
+
+### Changed
+- Workspace, crate, npm package, and template dependency versions moved from prerelease to stable `0.3.0`
+- `create-gametau` templates now ship a production-oriented service layer (`settings`, `session`, `comms`, shared contracts) as default extension seams
+- CI wasm codegen checks now include `examples/battlestation`
+- README/Getting Started examples list now positions battlestation as flagship showcase
+
+### Stabilized
+- `app/path` parity shims, parity matrix docs, and release evidence discipline from the `0.3.0-alpha.2` line are now part of stable `0.3.0`
+
 ## [0.3.0-alpha.2] - 2026-02-27
 
 ### Added
