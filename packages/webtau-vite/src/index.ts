@@ -87,6 +87,19 @@ function isWasmPackInstalled(): boolean {
   }
 }
 
+function hasUsableWasmOutput(outDir: string): boolean {
+  if (!existsSync(outDir)) return false;
+
+  try {
+    const files = readdirSync(outDir);
+    const hasWasm = files.some((f) => f.endsWith(".wasm"));
+    const hasJsLoader = files.some((f) => f.endsWith(".js"));
+    return hasWasm && hasJsLoader;
+  } catch {
+    return false;
+  }
+}
+
 function runWasmPack(
   cratePath: string,
   outDir: string,
@@ -128,6 +141,7 @@ export default function webtauVite(
   let resolvedCratePath: string;
   let resolvedOutDir: string;
   let isDev: boolean;
+  let canRunWasmPack = true;
   let watcher: FSWatcher | null = null;
 
   return {
@@ -147,13 +161,29 @@ export default function webtauVite(
         return;
       }
 
+      canRunWasmPack = true;
+
       // Check wasm-pack is installed
       if (!isWasmPackInstalled()) {
-        this.error(
-          "[webtau-vite] wasm-pack is not installed.\n" +
-            "Install it with: cargo install wasm-pack\n" +
-            "Or: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh",
-        );
+        if (hasUsableWasmOutput(resolvedOutDir)) {
+          canRunWasmPack = false;
+          this.warn(
+            "[webtau-vite] wasm-pack is not installed. Reusing existing WASM output.\n" +
+              "Rust source changes will not trigger WASM rebuilds until wasm-pack is installed.\n" +
+              "Install it with: cargo install wasm-pack\n" +
+              "Or: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh",
+          );
+        } else {
+          this.error(
+            "[webtau-vite] wasm-pack is not installed and no prebuilt WASM output was found.\n" +
+              "Install it with: cargo install wasm-pack\n" +
+              "Or: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh",
+          );
+          return;
+        }
+      }
+
+      if (!canRunWasmPack) {
         return;
       }
 
@@ -203,6 +233,15 @@ export default function webtauVite(
     configureServer(server) {
       // In Tauri mode, Tauri handles file watching and rebuilds.
       if (isTauriMode()) return;
+
+      if (!isWasmPackInstalled()) {
+        if (hasUsableWasmOutput(resolvedOutDir)) {
+          console.warn(
+            "[webtau-vite] wasm-pack is not installed; Rust watch rebuilds are disabled.",
+          );
+        }
+        return;
+      }
 
       // Build the list of directories to watch for .rs file changes.
       // Always watch the wasm crate's own src/. Auto-discover sibling
