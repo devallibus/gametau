@@ -102,4 +102,4 @@ Before expanding your game, check current runtime parity and API surface:
 
 - Read architecture details in `README.md`
 - Review release gating + incident procedures in `docs/RELEASE-GATE-CHECKLIST.md` and `docs/RELEASE-INCIDENT-RESPONSE.md`
-- Explore examples in `examples/counter` and `examples/pong`
+- Explore examples in `examples/counter`, `examples/pong`, and `examples/battlestation`

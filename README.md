@@ -387,7 +387,10 @@ These modules provide a lightweight, browser-first baseline for common game subs
 | `loadImage(url)` | Load image via `Image` object |
 | `clear()` | Clear loader cache |
 
-Example integration path: `examples/pong` now uses all three modules together (input + audio + theme asset loading).
+Example integration paths:
+
+- `examples/pong` uses the three foundation modules together (input + audio + theme asset loading).
+- `examples/battlestation` is the flagship full-stack showcase (runtime bridge + `app`, `event`, `fs/path`, and foundation modules).
 
 ---
 
@@ -633,6 +636,7 @@ Expected sizes:
 
 - **[`examples/counter`](./examples/counter)** — Simplest possible example. Counter with increment/decrement/reset that works on both web and desktop.
 - **[`examples/pong`](./examples/pong)** — Two-player Pong with Rust physics + PixiJS rendering. Demonstrates real game loop, collision detection, and keyboard input across both targets.
+- **[`examples/battlestation`](./examples/battlestation)** — Flagship tactical radar command loop demonstrating full module coverage (`input`, `audio`, `assets`, `fs/path`, `event`, `app`) with persistent profile + comms narrative. See `docs/BATTLESTATION-SHOWCASE.md`.
 
 ## Migrating an Existing Tauri Game
 
