@@ -275,6 +275,27 @@ describe("Tauri lazy auto-registration", () => {
     resetProvider();
     expect(getProvider()).toBeNull();
   });
+
+  test("explicit provider takes precedence over Tauri auto-detection", async () => {
+    // __TAURI_INTERNALS__ is already set by beforeEach
+    const providerInvoke = mock(async <T>(cmd: string, args?: Record<string, unknown>) => (
+      { provider: true, cmd, args } as T
+    ));
+
+    registerProvider({
+      id: "electrobun",
+      invoke: providerInvoke,
+      convertFileSrc: (p) => `electrobun://asset/${p}`,
+    });
+
+    const result = await invoke("test_cmd", { key: "val" });
+
+    expect(providerInvoke).toHaveBeenCalledWith("test_cmd", { key: "val" });
+    expect(result).toEqual({ provider: true, cmd: "test_cmd", args: { key: "val" } });
+    expect(getProvider()?.id).toBe("electrobun");
+    // Tauri mock should NOT have been called
+    expect(tauriInvoke).not.toHaveBeenCalled();
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -386,5 +407,33 @@ describe("provider registry", () => {
     configure({ loadWasm: async () => ({ ping: () => "pong" }) });
     const result = await invoke("ping");
     expect(result).toBe("pong");
+  });
+
+  test("provider invoke rejection propagates to caller", async () => {
+    registerProvider({
+      id: "failing",
+      invoke: async () => { throw new Error("provider error"); },
+      convertFileSrc: (p) => p,
+    });
+
+    await expect(invoke("any_cmd")).rejects.toThrow("provider error");
+  });
+
+  test("re-registration replaces previous provider", async () => {
+    registerProvider({
+      id: "first",
+      invoke: async () => "from-first",
+      convertFileSrc: (p) => p,
+    });
+    expect(await invoke("cmd")).toBe("from-first");
+    expect(getProvider()?.id).toBe("first");
+
+    registerProvider({
+      id: "second",
+      invoke: async () => "from-second",
+      convertFileSrc: (p) => p,
+    });
+    expect(await invoke("cmd")).toBe("from-second");
+    expect(getProvider()?.id).toBe("second");
   });
 });
