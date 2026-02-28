@@ -1,0 +1,24 @@
+[package]
+name = "counter-wasm"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wasm-bindgen = "0.2"
+serde = { version = "1", features = ["derive"] }
+serde-wasm-bindgen = "0.6"
+webtau = { path = "../../../../crates/webtau" }
+counter-core = { path = "../core" }
+counter-commands = { path = "../commands" }
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = ["-O", "--enable-bulk-memory", "--enable-nontrapping-float-to-int"]
+
+[profile.release]
+lto = true
+opt-level = "z"
+codegen-units = 1
+strip = true

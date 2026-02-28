@@ -8,7 +8,9 @@
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/devallibus/gametau)](https://github.com/devallibus/gametau)
 
-A toolkit for building games in Rust that run **both** as native desktop apps (via [Tauri](https://v2.tauri.app/)) **and** in the browser (via WASM) — from the same codebase, with zero `if`-statements to switch between them.
+A toolkit for building games in Rust that run in the browser (WASM) and on desktop from one codebase.
+
+Stable desktop support is via [Tauri](https://v2.tauri.app/). Electrobun is available as an explicit experimental track for opt-in trials.
 
 You write your game logic once in a plain Rust crate. gametau gives you:
 
@@ -17,6 +19,17 @@ You write your game logic once in a plain Rust crate. gametau gives you:
 - **A scaffolder** (`create-gametau`) that generates a ready-to-run project with all of this wired up
 
 **[Play the Battlestation demo in your browser →](https://devallibus.github.io/gametau/battlestation/)** — Flagship tactical radar loop running as WASM in-browser from the same Rust command surface used on desktop.
+
+## Supported Runtimes
+
+**Stable (production default)**
+- **Web (WASM)**
+- **Desktop (Tauri)**
+
+**Experimental (opt-in)**
+- **Desktop (Electrobun)** — under evaluation, not the default scaffolder/runtime path
+- Trial guide: `docs/ELECTROBUN-EXPERIMENTAL.md`
+- Decision record: `docs/ELECTROBUN-INTEGRATION-DECISION.md`
 
 ---
 
@@ -34,7 +47,9 @@ bun install
 bun run dev                              # localhost:1420 — hot-reload in Chrome
 ```
 
-Need a full first-run walkthrough (including browser + Tauri paths)? See `docs/GETTING-STARTED.md`.
+Need a full first-run walkthrough (stable browser + Tauri paths)? See `docs/GETTING-STARTED.md`.
+
+For the experimental Electrobun trial flow, see `docs/ELECTROBUN-EXPERIMENTAL.md`.
 
 ### API docs
 
@@ -57,14 +72,16 @@ Then follow [Migrating an Existing Tauri Game](#migrating-an-existing-tauri-game
 |---|---|---|
 | **Dev** | `bun run dev` | `localhost:1420` — hot-reload, no Tauri needed |
 | **Web** | `bun run build:web` | Static files for itch.io, GitHub Pages, any host |
-| **Desktop** | `bun run build:desktop` | Steam-ready `.exe` / `.dmg` / `.AppImage` |
+| **Desktop (Stable)** | `bun run build:desktop` | Steam-ready `.exe` / `.dmg` / `.AppImage` via Tauri |
+| **Desktop (Experimental)** | See `docs/ELECTROBUN-EXPERIMENTAL.md` | Electrobun trial path (opt-in, not default) |
 
 ### Prerequisites
 
 - [Rust](https://rustup.rs/) with `wasm32-unknown-unknown` target
 - [wasm-pack](https://rustwasm.github.io/wasm-pack/installer/) (required for fresh Rust/WASM builds and Rust watch rebuilds)
 - [Bun](https://bun.sh/) (or Node.js 18+)
-- [Tauri CLI](https://v2.tauri.app/start/create-project/) (for desktop builds only)
+- [Tauri CLI](https://v2.tauri.app/start/create-project/) (stable desktop builds)
+- Electrobun tooling (experimental path only; see `docs/ELECTROBUN-EXPERIMENTAL.md`)
 
 ```bash
 rustup target add wasm32-unknown-unknown
@@ -104,6 +121,7 @@ flowchart TD
 Your frontend calls `invoke("command_name")` everywhere. At runtime:
 - **Inside Tauri** → routes through Tauri IPC (native speed)
 - **In a browser** → calls the WASM export directly
+- **With a registered runtime provider** → routes through the provider (experimental runtime bridge path)
 
 The switch is automatic. Zero `if` statements in your game code.
 

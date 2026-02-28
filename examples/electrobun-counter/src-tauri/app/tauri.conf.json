@@ -1,0 +1,21 @@
+{
+  "productName": "counter",
+  "version": "0.1.0",
+  "identifier": "com.gametau.counter-example",
+  "build": {
+    "frontendDist": "../../../dist",
+    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "bun run dev",
+    "beforeBuildCommand": "bun run build:web"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Counter — gametau example",
+        "width": 600,
+        "height": 400,
+        "resizable": true
+      }
+    ]
+  }
+}

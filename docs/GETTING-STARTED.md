@@ -1,13 +1,16 @@
 # Getting Started: Scaffold to Playable
 
-This guide walks you from a fresh scaffold to a playable game loop in both browser and Tauri desktop mode.
+This guide walks you from a fresh scaffold to a playable game loop in the stable browser + Tauri desktop path.
+
+Electrobun support is experimental and intentionally documented separately in `docs/ELECTROBUN-EXPERIMENTAL.md`.
 
 ## 1) Prerequisites
 
 - Rust (with `wasm32-unknown-unknown`)
 - `wasm-pack` (required for fresh Rust/WASM builds and Rust watch rebuilds)
 - Bun (or Node 18+)
-- Tauri CLI (for desktop run path)
+- Tauri CLI (stable desktop run path)
+- Electrobun tooling (experimental path only; see `docs/ELECTROBUN-EXPERIMENTAL.md`)
 
 ```bash
 rustup target add wasm32-unknown-unknown
@@ -31,6 +34,8 @@ Install dependencies:
 cd my-game
 bun install
 ```
+
+This scaffold defaults to the stable Tauri desktop path. Experimental Electrobun trials use a separate opt-in flow.
 
 ## 3) Run in Browser (Web/WASM)
 
@@ -71,7 +76,7 @@ Save and refresh the browser. `Score` should now climb faster, proving the Rust 
 
 Note: if `wasm-pack` is unavailable but you already have valid prebuilt `src/wasm` artifacts, web builds can still run in fallback mode. In that mode, Rust watch rebuilds are disabled until `wasm-pack` is installed.
 
-## 6) Run in Tauri Desktop Mode
+## 6) Run in Tauri Desktop Mode (Stable)
 
 ```bash
 bun run dev:tauri
@@ -107,5 +112,6 @@ Run `bun run lint` from the repository root to check all packages. CI enforces l
 ## 9) Next Steps
 
 - Read architecture details in `README.md`
+- Try the experimental Electrobun flow (opt-in): `docs/ELECTROBUN-EXPERIMENTAL.md`
 - Review release gating + incident procedures in `docs/RELEASE-GATE-CHECKLIST.md` and `docs/RELEASE-INCIDENT-RESPONSE.md`
 - Explore examples in `examples/counter`, `examples/pong`, and `examples/battlestation`
