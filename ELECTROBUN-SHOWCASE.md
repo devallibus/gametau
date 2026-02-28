@@ -1,20 +1,21 @@
-# Electrobun Showcase Branch
+# Electrobun x gametau Showcase
 
-Branch: `electrobun/showcase`
+Welcome! This page is the easiest way to try gametau running in Electrobun.
 
-This branch is a single handoff surface for Electrobun-focused review.
+If you just want one link to share, use this branch:
 
-## What is included
+- `electrobun/showcase`
 
-- Runtime-provider and adapter tranche already merged into `master`.
-- Electrobun smoke lane and dogfood workflow already merged.
-- Electrobun example scripts added for:
-  - `examples/counter`
-  - `examples/pong`
-  - `examples/battlestation`
-  - (existing) `examples/electrobun-counter`
+## What this is
 
-## Quick run commands
+gametau lets one Rust game codebase run in both:
+
+- browser (WASM)
+- desktop app shells
+
+In this branch, we wired Electrobun for a simple hands-on demo path.
+
+## Try it in 2 minutes
 
 From repo root:
 
@@ -22,13 +23,30 @@ From repo root:
 bun install
 bun run --cwd packages/webtau build
 bun run --cwd packages/webtau-vite build
+```
 
+Now launch the Counter demo in Electrobun:
+
+```bash
 bun run --cwd examples/counter dev:electrobun
+```
+
+What you should see:
+
+- A native Electrobun window opens (the command starts both Vite + Electrobun).
+- Counter buttons work (increment/decrement/reset).
+- Closing the app also stops the local dev server.
+
+## More demos
+
+Run either of these the same way:
+
+```bash
 bun run --cwd examples/pong dev:electrobun
 bun run --cwd examples/battlestation dev:electrobun
 ```
 
-Build checks:
+## Build desktop packages
 
 ```bash
 bun run --cwd examples/counter build:electrobun
@@ -36,9 +54,8 @@ bun run --cwd examples/pong build:electrobun
 bun run --cwd examples/battlestation build:electrobun
 ```
 
-## Tracking references
+## Useful links
 
-- Readiness epic: [Issue #78](https://github.com/devallibus/gametau/issues/78)
-- Adapter tranche: [PR #91](https://github.com/devallibus/gametau/pull/91)
-- Platform matrix: [PR #92](https://github.com/devallibus/gametau/pull/92)
-- Latest CI (master): [CI workflow](https://github.com/devallibus/gametau/actions/workflows/ci.yml)
+- Showcase PR: [#94](https://github.com/devallibus/gametau/pull/94)
+- Main Electrobun tracking issue: [#84](https://github.com/devallibus/gametau/issues/84)
+- Local dev bug report and fix thread: [#95](https://github.com/devallibus/gametau/issues/95)
