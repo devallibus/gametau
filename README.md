@@ -12,6 +12,8 @@ A toolkit for building games in Rust that run in the browser (WASM) and on deskt
 
 Stable desktop support is via [Tauri](https://v2.tauri.app/). Electrobun is available as an explicit experimental track for opt-in trials.
 
+> Repository note: `docs/` is intentionally local-only and is not published in remote history. Any `docs/...` path in this file assumes a local clone where that directory exists.
+
 You write your game logic once in a plain Rust crate. gametau gives you:
 
 - **A runtime bridge** (`webtau`) that lets your frontend call Rust functions identically on both platforms — Tauri IPC on desktop, direct WASM calls in the browser
@@ -28,8 +30,8 @@ You write your game logic once in a plain Rust crate. gametau gives you:
 
 **Experimental (opt-in)**
 - **Desktop (Electrobun)** — under evaluation, not the default scaffolder/runtime path
-- Trial guide: `docs/ELECTROBUN-EXPERIMENTAL.md`
-- Decision record: `docs/ELECTROBUN-INTEGRATION-DECISION.md`
+- Trial tracking: [Issue #84](https://github.com/devallibus/gametau/issues/84)
+- Decision/release track: [Milestone v0.5.0-alpha](https://github.com/devallibus/gametau/milestone/8)
 
 ---
 
@@ -47,9 +49,9 @@ bun install
 bun run dev                              # localhost:1420 — hot-reload in Chrome
 ```
 
-Need a full first-run walkthrough (stable browser + Tauri paths)? See `docs/GETTING-STARTED.md`.
+Need current onboarding/release context? See [repository milestones](https://github.com/devallibus/gametau/milestones).
 
-For the experimental Electrobun trial flow, see `docs/ELECTROBUN-EXPERIMENTAL.md`.
+For the experimental Electrobun runtime gate, see [Issue #75](https://github.com/devallibus/gametau/issues/75).
 
 ### API docs
 
@@ -66,7 +68,7 @@ For the experimental Electrobun trial flow, see `docs/ELECTROBUN-EXPERIMENTAL.md
 - Required GitHub secrets:
   - `CLOUDFLARE_ACCOUNT_ID`
   - `CLOUDFLARE_API_TOKEN`
-- Deployment runbook: `docs/WORKERS-DEPLOYMENT.md`
+- Deployment runbook: `.github/release/WORKERS-DEPLOYMENT.md`
 
 ### Existing Tauri project
 
@@ -85,7 +87,7 @@ Then follow [Migrating an Existing Tauri Game](#migrating-an-existing-tauri-game
 | **Dev** | `bun run dev` | `localhost:1420` — hot-reload, no Tauri needed |
 | **Web** | `bun run build:web` | Static files for itch.io, Cloudflare Workers static assets, any host |
 | **Desktop (Stable)** | `bun run build:desktop` | Steam-ready `.exe` / `.dmg` / `.AppImage` via Tauri |
-| **Desktop (Experimental)** | See `docs/ELECTROBUN-EXPERIMENTAL.md` | Electrobun trial path (opt-in, not default) |
+| **Desktop (Experimental)** | See [Issue #75](https://github.com/devallibus/gametau/issues/75) | Electrobun trial path (opt-in, not default) |
 
 ### Prerequisites
 
@@ -93,7 +95,7 @@ Then follow [Migrating an Existing Tauri Game](#migrating-an-existing-tauri-game
 - [wasm-pack](https://rustwasm.github.io/wasm-pack/installer/) (required for fresh Rust/WASM builds and Rust watch rebuilds)
 - [Bun](https://bun.sh/) (or Node.js 18+)
 - [Tauri CLI](https://v2.tauri.app/start/create-project/) (stable desktop builds)
-- Electrobun tooling (experimental path only; see `docs/ELECTROBUN-EXPERIMENTAL.md`)
+- Electrobun tooling (experimental path only; see [Issue #75](https://github.com/devallibus/gametau/issues/75))
 
 ```bash
 rustup target add wasm32-unknown-unknown
@@ -319,7 +321,7 @@ pub fn tick_world(state: &mut GameWorld) -> TickResult {
 
 When `webtau-vite` aliases `@tauri-apps/api/*` imports to `webtau/*`, these shims provide browser-compatible implementations:
 
-For a complete function-level status (implemented, partial, no-op, missing), see the [Parity Matrix](docs/PARITY-MATRIX.md).
+For parity status context, see [roadmap issue #6](https://github.com/devallibus/gametau/issues/6).
 
 **`webtau/window`** — Web shim for `@tauri-apps/api/window`. Import `getCurrentWindow()` — same API as Tauri.
 
@@ -382,7 +384,7 @@ For a complete function-level status (implemented, partial, no-op, missing), see
 | Virtual dirs (`appDataDir`, `appConfigDir`, `homeDir`, etc.) | Deterministic virtual `/app/*` paths for browser usage |
 | `basename`, `dirname`, `extname`, `join`, `normalize`, `resolve`, `isAbsolute`, `sep` | POSIX-style path utilities for web mode |
 
-Not all Tauri `path` APIs are implemented yet (for example `resolveResource` and `delimiter`). See [Parity Matrix](docs/PARITY-MATRIX.md) for exact coverage.
+Not all Tauri `path` APIs are implemented yet (for example `resolveResource` and `delimiter`). Current tracking is in [roadmap issue #6](https://github.com/devallibus/gametau/issues/6).
 
 ### Gameplay foundation modules
 
@@ -673,7 +675,7 @@ Expected sizes:
 
 - **[`examples/counter`](./examples/counter)** — Simplest possible example. Counter with increment/decrement/reset that works on both web and desktop.
 - **[`examples/pong`](./examples/pong)** — Two-player Pong with Rust physics + PixiJS rendering. Demonstrates real game loop, collision detection, and keyboard input across both targets.
-- **[`examples/battlestation`](./examples/battlestation)** — Flagship tactical radar command loop demonstrating full module coverage (`input`, `audio`, `assets`, `fs/path`, `event`, `app`) with persistent profile + comms narrative. Live demo: <https://gametau.devallibus.com/battlestation/>. See `docs/BATTLESTATION-SHOWCASE.md`.
+- **[`examples/battlestation`](./examples/battlestation)** — Flagship tactical radar command loop demonstrating full module coverage (`input`, `audio`, `assets`, `fs/path`, `event`, `app`) with persistent profile + comms narrative. Live demo: <https://gametau.devallibus.com/battlestation/>. Tracking context: [roadmap issue #6](https://github.com/devallibus/gametau/issues/6).
 
 ## Migrating an Existing Tauri Game
 
@@ -723,7 +725,7 @@ If your commercial game using Gametau reaches more than $100k lifetime revenue, 
 optional commercial license with a gentle one-time donation (1%, min $2k, max $15k per game, due
 within one year). It's our way of saying thank you when things go well.
 
-[Read the commercial license →](docs/COMMERCIAL-LICENSE.md)
+Commercial licensing requests are handled in-repo via issues (open one labeled `commercial license`).
 
 Contributors also agree to our friendly [CLA](CLA.md).
 

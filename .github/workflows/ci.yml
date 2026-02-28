@@ -335,5 +335,5 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify canonical gate docs exist
         run: |
-          test -f docs/RELEASE-GATE-CHECKLIST.md
-          test -f docs/RELEASE-INCIDENT-RESPONSE.md
+          test -f .github/release/RELEASE-GATE-CHECKLIST.md
+          test -f .github/release/RELEASE-INCIDENT-RESPONSE.md

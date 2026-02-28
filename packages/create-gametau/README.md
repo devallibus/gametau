@@ -2,7 +2,9 @@
 
 Scaffold a Rust game project for the stable Web (WASM) + Tauri desktop path from one codebase.
 
-Electrobun is available as an experimental opt-in track and is documented separately: `docs/ELECTROBUN-EXPERIMENTAL.md`.
+Electrobun is available as an experimental opt-in track and tracked via [Issue #75](https://github.com/devallibus/gametau/issues/75) and [Milestone v0.5.0-alpha](https://github.com/devallibus/gametau/milestone/8).
+
+> Repository note: `docs/` is intentionally local-only and not published in remote history.
 
 ## Quick Start
 
@@ -13,11 +15,10 @@ bun install
 bun run dev
 ```
 
-For a step-by-step scaffold-to-playable tutorial (browser and Tauri), see:
-[`docs/GETTING-STARTED.md`](../../docs/GETTING-STARTED.md)
-
-For the experimental Electrobun trial flow, see:
-[`docs/ELECTROBUN-EXPERIMENTAL.md`](../../docs/ELECTROBUN-EXPERIMENTAL.md)
+For project status and rollout context, see:
+- [Milestones](https://github.com/devallibus/gametau/milestones)
+- [Issue #75 (runtime flag gate)](https://github.com/devallibus/gametau/issues/75)
+- [Issue #84 (example/platform validation evidence)](https://github.com/devallibus/gametau/issues/84)
 
 ## Templates
 
