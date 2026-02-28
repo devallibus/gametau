@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 import {
   configure,
   convertFileSrc,
@@ -186,6 +186,94 @@ describe("configure", () => {
     await expect(invoke("anything")).rejects.toThrow("boom");
     expect(capturedError).toBeInstanceOf(Error);
     expect((capturedError as Error).message).toBe("boom");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// invoke — Tauri lazy auto-registration
+// ---------------------------------------------------------------------------
+
+describe("Tauri lazy auto-registration", () => {
+  const globalObj = globalThis as Record<string, unknown>;
+  const tauriInvoke = mock(async (cmd: string, args?: Record<string, unknown>) => ({
+    command: cmd,
+    args,
+  }));
+  const tauriConvertFileSrc = mock((path: string, protocol?: string) => (
+    `${protocol ?? "asset"}://localhost${path}`
+  ));
+  let tauriImportCount = 0;
+  let hadWindow = false;
+  let previousWindow: unknown;
+
+  beforeEach(() => {
+    hadWindow = Object.hasOwn(globalObj, "window");
+    previousWindow = globalObj.window;
+    globalObj.window = { __TAURI_INTERNALS__: {} };
+
+    tauriInvoke.mockClear();
+    tauriConvertFileSrc.mockClear();
+    tauriImportCount = 0;
+
+    mock.module("@tauri-apps/api/core", () => {
+      tauriImportCount += 1;
+      return {
+        invoke: tauriInvoke,
+        convertFileSrc: tauriConvertFileSrc,
+      };
+    });
+
+    resetProvider();
+  });
+
+  afterEach(() => {
+    resetProvider();
+    if (hadWindow) {
+      globalObj.window = previousWindow;
+    } else {
+      delete globalObj.window;
+    }
+  });
+
+  test("auto-registers Tauri provider on first invoke when isTauri is true", async () => {
+    const result = await invoke<{ command: string; args?: Record<string, unknown> }>(
+      "test_cmd",
+      { key: "val" },
+    );
+
+    expect(tauriInvoke).toHaveBeenCalledWith("test_cmd", { key: "val" });
+    expect(result).toEqual({ command: "test_cmd", args: { key: "val" } });
+    expect(getProvider()?.id).toBe("tauri");
+    expect(tauriImportCount).toBe(1);
+  });
+
+  test("caches Tauri provider across subsequent invoke calls", async () => {
+    await invoke("first_cmd");
+    const providerAfterFirstInvoke = getProvider();
+
+    await invoke("second_cmd", { n: 2 });
+    const providerAfterSecondInvoke = getProvider();
+
+    expect(providerAfterSecondInvoke).toBe(providerAfterFirstInvoke);
+    expect(tauriInvoke).toHaveBeenCalledTimes(2);
+    expect(tauriInvoke).toHaveBeenNthCalledWith(1, "first_cmd", undefined);
+    expect(tauriInvoke).toHaveBeenNthCalledWith(2, "second_cmd", { n: 2 });
+  });
+
+  test("convertFileSrc delegates to Tauri provider after auto-registration", async () => {
+    await invoke("boot");
+
+    const converted = convertFileSrc("/sprite.png", "asset");
+    expect(tauriConvertFileSrc).toHaveBeenCalledWith("/sprite.png", "asset");
+    expect(converted).toBe("asset://localhost/sprite.png");
+  });
+
+  test("resetProvider clears auto-registered Tauri provider", async () => {
+    await invoke("init");
+    expect(getProvider()?.id).toBe("tauri");
+
+    resetProvider();
+    expect(getProvider()).toBeNull();
   });
 });
 
