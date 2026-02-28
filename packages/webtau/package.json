@@ -57,6 +57,10 @@
     "./path": {
       "types": "./dist/path.d.ts",
       "import": "./dist/path.js"
+    },
+    "./provider": {
+      "types": "./dist/provider.d.ts",
+      "import": "./dist/provider.js"
     }
   },
   "files": [

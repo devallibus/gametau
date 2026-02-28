@@ -3,7 +3,12 @@
  *
  * Uses a CustomEvent bridge in browser environments, with a
  * lightweight in-memory fallback for non-browser test environments.
+ *
+ * An optional EventAdapter can be set via `setEventAdapter()` to
+ * route all event operations through an alternative runtime.
  */
+
+import type { EventAdapter } from "./provider";
 
 export interface Event<T> {
   event: string;
@@ -13,6 +18,16 @@ export interface Event<T> {
 
 export type EventCallback<T> = (event: Event<T>) => void;
 export type UnlistenFn = () => void;
+
+let eventAdapter: EventAdapter | null = null;
+
+/**
+ * Set (or clear) an event adapter that overrides listen/emit.
+ * Pass `null` to restore default CustomEvent/fallback behavior.
+ */
+export function setEventAdapter(adapter: EventAdapter | null): void {
+  eventAdapter = adapter;
+}
 
 interface FallbackListener<T> {
   id: number;
@@ -79,6 +94,8 @@ export async function listen<T>(
   event: string,
   handler: EventCallback<T>,
 ): Promise<UnlistenFn> {
+  if (eventAdapter) return eventAdapter.listen(event, handler);
+
   const id = nextListenerId++;
 
   if (!hasCustomEventBridge()) {
@@ -114,6 +131,8 @@ export async function once<T>(
 }
 
 export async function emit<T>(event: string, payload?: T): Promise<void> {
+  if (eventAdapter) return eventAdapter.emit(event, payload);
+
   if (!hasCustomEventBridge()) {
     emitFallback(event, payload);
     return;

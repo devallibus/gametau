@@ -1,5 +1,14 @@
-import { beforeEach, describe, expect, test } from "bun:test";
-import { configure, convertFileSrc, invoke, isTauri } from "./core";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import {
+  configure,
+  convertFileSrc,
+  getProvider,
+  invoke,
+  isTauri,
+  registerProvider,
+  resetProvider,
+} from "./core";
+import type { CoreProvider } from "./provider";
 
 // ---------------------------------------------------------------------------
 // isTauri — environment detection
@@ -185,6 +194,10 @@ describe("configure", () => {
 // ---------------------------------------------------------------------------
 
 describe("convertFileSrc", () => {
+  afterEach(() => {
+    resetProvider();
+  });
+
   test("returns path as-is when no protocol given", () => {
     expect(convertFileSrc("/app/data/sprite.png")).toBe("/app/data/sprite.png");
   });
@@ -193,5 +206,97 @@ describe("convertFileSrc", () => {
     expect(convertFileSrc("/app/data/sprite.png", "asset")).toBe(
       "/app/data/sprite.png",
     );
+  });
+
+  test("delegates to provider when registered", () => {
+    registerProvider({
+      id: "test",
+      invoke: async () => {},
+      convertFileSrc: (path, protocol) => `${protocol ?? "custom"}://localhost/${path}`,
+    });
+
+    expect(convertFileSrc("/sprites/hero.png", "asset")).toBe(
+      "asset://localhost//sprites/hero.png",
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// registerProvider / getProvider / resetProvider — provider registry
+// ---------------------------------------------------------------------------
+
+describe("provider registry", () => {
+  afterEach(() => {
+    resetProvider();
+  });
+
+  test("getProvider returns null by default", () => {
+    expect(getProvider()).toBeNull();
+  });
+
+  test("registerProvider sets a provider retrievable via getProvider", () => {
+    const provider: CoreProvider = {
+      id: "test-runtime",
+      invoke: async () => "result",
+      convertFileSrc: (p) => p,
+    };
+    registerProvider(provider);
+    expect(getProvider()).toBe(provider);
+    expect(getProvider()?.id).toBe("test-runtime");
+  });
+
+  test("resetProvider clears the registered provider", () => {
+    registerProvider({
+      id: "temp",
+      invoke: async () => {},
+      convertFileSrc: (p) => p,
+    });
+    expect(getProvider()).not.toBeNull();
+    resetProvider();
+    expect(getProvider()).toBeNull();
+  });
+
+  test("invoke delegates to registered provider", async () => {
+    let capturedCmd = "";
+    let capturedArgs: Record<string, unknown> | undefined;
+
+    registerProvider({
+      id: "mock",
+      invoke: async <T>(cmd: string, args?: Record<string, unknown>) => {
+        capturedCmd = cmd;
+        capturedArgs = args;
+        return { mock: true } as T;
+      },
+      convertFileSrc: (p) => p,
+    });
+
+    const result = await invoke("test_cmd", { key: "value" });
+    expect(capturedCmd).toBe("test_cmd");
+    expect(capturedArgs).toEqual({ key: "value" });
+    expect(result).toEqual({ mock: true });
+  });
+
+  test("provider invoke takes precedence over WASM", async () => {
+    configure({ loadWasm: async () => ({ test_cmd: () => "from-wasm" }) });
+    registerProvider({
+      id: "priority",
+      invoke: async () => "from-provider",
+      convertFileSrc: (p) => p,
+    });
+
+    const result = await invoke("test_cmd");
+    expect(result).toBe("from-provider");
+  });
+
+  test("WASM path still works after resetProvider", async () => {
+    registerProvider({
+      id: "temp",
+      invoke: async () => "from-provider",
+      convertFileSrc: (p) => p,
+    });
+    resetProvider();
+    configure({ loadWasm: async () => ({ ping: () => "pong" }) });
+    const result = await invoke("ping");
+    expect(result).toBe("pong");
   });
 });

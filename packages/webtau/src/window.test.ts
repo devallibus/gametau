@@ -1,4 +1,5 @@
-import { beforeAll, describe, expect, test } from "bun:test";
+import { afterEach, beforeAll, describe, expect, test } from "bun:test";
+import type { WindowAdapter } from "./provider";
 
 // Provide minimal browser globals for testing.
 // Must be set before importing the window module since it
@@ -33,10 +34,16 @@ beforeAll(() => {
 
 // Must import AFTER globals are set up — use dynamic import
 let getCurrentWindow: typeof import("./window").getCurrentWindow;
+let setWindowAdapter: typeof import("./window").setWindowAdapter;
 
 beforeAll(async () => {
   const mod = await import("./window");
   getCurrentWindow = mod.getCurrentWindow;
+  setWindowAdapter = mod.setWindowAdapter;
+});
+
+afterEach(() => {
+  setWindowAdapter(null);
 });
 
 // ---------------------------------------------------------------------------
@@ -246,5 +253,87 @@ describe("monitor", () => {
     const win = getCurrentWindow();
     const sf = await win.scaleFactor();
     expect(sf).toBe(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// WindowAdapter — adapter override
+// ---------------------------------------------------------------------------
+
+describe("setWindowAdapter", () => {
+  function makeNoopAdapter(overrides: Partial<WindowAdapter> = {}): WindowAdapter {
+    return {
+      isFullscreen: async () => false,
+      setFullscreen: async () => {},
+      innerSize: async () => ({ width: 0, height: 0, type: "Physical" }),
+      outerSize: async () => ({ width: 0, height: 0, type: "Physical" }),
+      setSize: async () => {},
+      maximize: async () => {},
+      isMaximized: async () => false,
+      title: async () => "",
+      setTitle: async () => {},
+      close: async () => {},
+      minimize: async () => {},
+      unminimize: async () => {},
+      show: async () => {},
+      hide: async () => {},
+      setDecorations: async () => {},
+      center: async () => {},
+      currentMonitor: async () => null,
+      scaleFactor: async () => 1,
+      ...overrides,
+    };
+  }
+
+  test("adapter overrides title methods", async () => {
+    let stored = "";
+    setWindowAdapter(
+      makeNoopAdapter({
+        title: async () => stored,
+        setTitle: async (t) => { stored = t; },
+      }),
+    );
+
+    const win = getCurrentWindow();
+    await win.setTitle("Adapter Title");
+    expect(await win.title()).toBe("Adapter Title");
+  });
+
+  test("adapter overrides innerSize", async () => {
+    setWindowAdapter(
+      makeNoopAdapter({
+        innerSize: async () => ({ width: 999, height: 888, type: "Physical" }),
+      }),
+    );
+
+    const win = getCurrentWindow();
+    const size = await win.innerSize();
+    expect(size.width).toBe(999);
+    expect(size.height).toBe(888);
+  });
+
+  test("adapter overrides scaleFactor", async () => {
+    setWindowAdapter(
+      makeNoopAdapter({
+        scaleFactor: async () => 2.5,
+      }),
+    );
+
+    const win = getCurrentWindow();
+    expect(await win.scaleFactor()).toBe(2.5);
+  });
+
+  test("clearing adapter restores browser behavior", async () => {
+    setWindowAdapter(
+      makeNoopAdapter({ title: async () => "adapter" }),
+    );
+
+    const win = getCurrentWindow();
+    expect(await win.title()).toBe("adapter");
+
+    setWindowAdapter(null);
+    // Should fall back to document.title
+    document.title = "browser";
+    expect(await win.title()).toBe("browser");
   });
 });

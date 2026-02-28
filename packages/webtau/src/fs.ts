@@ -3,7 +3,22 @@
  *
  * Uses IndexedDB when available, with an in-memory fallback for
  * non-browser test environments.
+ *
+ * An optional FsAdapter can be set via `setFsAdapter()` to route
+ * all filesystem operations through an alternative runtime.
  */
+
+import type { FsAdapter } from "./provider";
+
+let fsAdapter: FsAdapter | null = null;
+
+/**
+ * Set (or clear) a filesystem adapter that overrides all fs operations.
+ * Pass `null` to restore default IndexedDB/memory behavior.
+ */
+export function setFsAdapter(adapter: FsAdapter | null): void {
+  fsAdapter = adapter;
+}
 
 type EntryKind = "file" | "dir";
 
@@ -229,12 +244,14 @@ export async function writeTextFile(
   contents: string,
   _options?: unknown,
 ): Promise<void> {
+  if (fsAdapter) return fsAdapter.writeTextFile(path, contents);
   const normalized = requirePath(path);
   await ensureDirChain(parentPath(normalized));
   await putEntry({ path: normalized, kind: "file", text: contents });
 }
 
 export async function readTextFile(path: string, _options?: unknown): Promise<string> {
+  if (fsAdapter) return fsAdapter.readTextFile(path);
   const normalized = requirePath(path);
   const entry = await getEntry(normalized);
   if (!entry || entry.kind !== "file") {
@@ -250,6 +267,7 @@ export async function writeFile(
   contents: Uint8Array | ArrayBuffer | number[] | string,
   _options?: unknown,
 ): Promise<void> {
+  if (fsAdapter) return fsAdapter.writeFile(path, contents);
   const normalized = requirePath(path);
   await ensureDirChain(parentPath(normalized));
   const bytes = toUint8Array(contents);
@@ -261,6 +279,7 @@ export async function writeFile(
 }
 
 export async function readFile(path: string, _options?: unknown): Promise<Uint8Array> {
+  if (fsAdapter) return fsAdapter.readFile(path);
   const normalized = requirePath(path);
   const entry = await getEntry(normalized);
   if (!entry || entry.kind !== "file") {
@@ -271,12 +290,14 @@ export async function readFile(path: string, _options?: unknown): Promise<Uint8A
 }
 
 export async function exists(path: string, _options?: unknown): Promise<boolean> {
+  if (fsAdapter) return fsAdapter.exists(path);
   const normalized = normalizePath(path);
   if (!normalized) return true;
   return (await getEntry(normalized)) !== null;
 }
 
 export async function mkdir(path: string, options: CreateDirOptions = {}): Promise<void> {
+  if (fsAdapter) return fsAdapter.mkdir(path, options);
   const normalized = requirePath(path);
   const parent = parentPath(normalized);
   if (!options.recursive && parent && !(await exists(parent))) {
@@ -290,6 +311,7 @@ export async function createDir(path: string, options: CreateDirOptions = {}): P
 }
 
 export async function readDir(path = "", options: ReadDirOptions = {}): Promise<FsEntry[]> {
+  if (fsAdapter) return fsAdapter.readDir(path, options);
   const normalized = normalizePath(path);
   if (normalized && !(await exists(normalized))) {
     throw new Error(`[webtau/fs] Directory not found: ${normalized}`);
@@ -299,6 +321,7 @@ export async function readDir(path = "", options: ReadDirOptions = {}): Promise<
 }
 
 export async function remove(path: string, options: RemoveOptions = {}): Promise<void> {
+  if (fsAdapter) return fsAdapter.remove(path, options);
   const normalized = normalizePath(path);
   if (!normalized) {
     if (!options.recursive) {
@@ -343,6 +366,7 @@ export async function removeDir(path: string, options: RemoveOptions = {}): Prom
  * ```
  */
 export async function copyFile(fromPath: string, toPath: string): Promise<void> {
+  if (fsAdapter) return fsAdapter.copyFile(fromPath, toPath);
   const normalizedFrom = requirePath(fromPath);
   const normalizedTo = requirePath(toPath);
   const entry = await getEntry(normalizedFrom);
@@ -365,6 +389,7 @@ export async function copyFile(fromPath: string, toPath: string): Promise<void> 
  * ```
  */
 export async function rename(oldPath: string, newPath: string): Promise<void> {
+  if (fsAdapter) return fsAdapter.rename(oldPath, newPath);
   const normalizedOld = requirePath(oldPath);
   const normalizedNew = requirePath(newPath);
   const entry = await getEntry(normalizedOld);
