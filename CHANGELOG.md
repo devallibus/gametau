@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.0-alpha.2] - 2026-02-28
+
+### Added
+- Dedicated `Electrobun Counter Smoke` CI job in `.github/workflows/ci.yml` that validates `examples/electrobun-counter` with both `build:web` and `build:electrobun`.
+- Failure artifact upload for Electrobun smoke outputs (`dist` and `build`) to speed up CI triage.
+
+### Changed
+- Workspace, crate, npm package, and template dependency versions moved to `0.5.0-alpha.2`.
+
 ## [0.5.0-alpha.1] - 2026-02-28
 
 ### Added
