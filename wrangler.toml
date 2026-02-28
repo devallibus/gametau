@@ -1,0 +1,8 @@
+name = "gametau-prod"
+compatibility_date = "2026-02-28"
+
+[assets]
+directory = "./_site"
+
+[env.staging]
+name = "gametau-dev"

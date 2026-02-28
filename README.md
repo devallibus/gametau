@@ -18,7 +18,7 @@ You write your game logic once in a plain Rust crate. gametau gives you:
 - **A Vite plugin** (`webtau-vite`) that compiles your Rust to WASM on save, watches for changes, and hot-reloads
 - **A scaffolder** (`create-gametau`) that generates a ready-to-run project with all of this wired up
 
-**[Play the Battlestation demo in your browser →](https://devallibus.github.io/gametau/battlestation/)** — Flagship tactical radar loop running as WASM in-browser from the same Rust command surface used on desktop.
+**[Play the Battlestation demo in your browser →](https://gametau.devallibus.com/battlestation/)** — Flagship tactical radar loop running as WASM in-browser from the same Rust command surface used on desktop.
 
 ## Supported Runtimes
 
@@ -53,8 +53,20 @@ For the experimental Electrobun trial flow, see `docs/ELECTROBUN-EXPERIMENTAL.md
 
 ### API docs
 
-- Live API docs: <https://devallibus.github.io/gametau/api/>
-- Generated automatically from TypeDoc + rustdoc in CI and published via GitHub Pages.
+- Live API docs: <https://gametau.devallibus.com/api/>
+- Generated automatically from TypeDoc + rustdoc in CI and deployed via Cloudflare Workers.
+
+### Environments and branches
+
+- `master` deploys production assets to Worker `gametau-prod` (`gametau.devallibus.com`).
+- `development` deploys staging assets to Worker `gametau-dev` (`dev.gametau.devallibus.com`).
+- Deployment workflows:
+  - `.github/workflows/deploy-workers-prod.yml`
+  - `.github/workflows/deploy-workers-staging.yml`
+- Required GitHub secrets:
+  - `CLOUDFLARE_ACCOUNT_ID`
+  - `CLOUDFLARE_API_TOKEN`
+- Deployment runbook: `docs/WORKERS-DEPLOYMENT.md`
 
 ### Existing Tauri project
 
@@ -71,7 +83,7 @@ Then follow [Migrating an Existing Tauri Game](#migrating-an-existing-tauri-game
 | Target | Command | Output |
 |---|---|---|
 | **Dev** | `bun run dev` | `localhost:1420` — hot-reload, no Tauri needed |
-| **Web** | `bun run build:web` | Static files for itch.io, GitHub Pages, any host |
+| **Web** | `bun run build:web` | Static files for itch.io, Cloudflare Workers static assets, any host |
 | **Desktop (Stable)** | `bun run build:desktop` | Steam-ready `.exe` / `.dmg` / `.AppImage` via Tauri |
 | **Desktop (Experimental)** | See `docs/ELECTROBUN-EXPERIMENTAL.md` | Electrobun trial path (opt-in, not default) |
 
@@ -657,11 +669,11 @@ Expected sizes:
 
 ## Examples
 
-**[Live demos →](https://devallibus.github.io/gametau/)**
+**[Live demos →](https://gametau.devallibus.com/)**
 
 - **[`examples/counter`](./examples/counter)** — Simplest possible example. Counter with increment/decrement/reset that works on both web and desktop.
 - **[`examples/pong`](./examples/pong)** — Two-player Pong with Rust physics + PixiJS rendering. Demonstrates real game loop, collision detection, and keyboard input across both targets.
-- **[`examples/battlestation`](./examples/battlestation)** — Flagship tactical radar command loop demonstrating full module coverage (`input`, `audio`, `assets`, `fs/path`, `event`, `app`) with persistent profile + comms narrative. Live demo: <https://devallibus.github.io/gametau/battlestation/>. See `docs/BATTLESTATION-SHOWCASE.md`.
+- **[`examples/battlestation`](./examples/battlestation)** — Flagship tactical radar command loop demonstrating full module coverage (`input`, `audio`, `assets`, `fs/path`, `event`, `app`) with persistent profile + comms narrative. Live demo: <https://gametau.devallibus.com/battlestation/>. See `docs/BATTLESTATION-SHOWCASE.md`.
 
 ## Migrating an Existing Tauri Game
 
