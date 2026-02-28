@@ -1,69 +1,93 @@
-# Electrobun Experimental Trial Path
+# Electrobun Runtime — Experimental Status
 
-Status: **Experimental (opt-in)**  
-Stable default remains: **Web (WASM) + Desktop (Tauri)**.
+> **Status: Experimental** — Not recommended for production use.
 
-This guide is for trying Electrobun without changing gametau's stable defaults.
+## Overview
 
-## Scope And Support Boundary
+Electrobun is an alternative desktop runtime to Tauri for webtau-based games. It is under active evaluation as an opt-in experimental track. The stable default remains **Web (WASM) + Desktop (Tauri)**.
 
-- Electrobun support is under active evaluation.
-- The default `create-gametau` scaffolds and stable docs remain Tauri-first for desktop.
-- Experimental flows may change across alpha releases.
-- For production workloads today, prefer the stable Tauri desktop path.
+For the integration decision record, see `docs/ELECTROBUN-INTEGRATION-DECISION.md`.
 
-See also:
-- `docs/ELECTROBUN-INTEGRATION-DECISION.md`
-- `docs/GETTING-STARTED.md`
+## Stable vs Experimental Boundaries
 
-## Prerequisites
+| Surface | Status | Notes |
+|---------|--------|-------|
+| Core invoke/convertFileSrc | Experimental | Provider registry delegates correctly |
+| Window adapter | Experimental | Full WindowAdapter interface wired |
+| Event adapter | Experimental | listen/emit delegation functional |
+| Filesystem adapter | Experimental | Full FsAdapter interface wired |
+| Dialog adapter | Experimental | Full DialogAdapter interface wired |
+| Example: counter | Not yet validated | Pending platform matrix (#84) |
+| Example: pong | Not yet validated | Pending platform matrix (#84) |
+| Example: battlestation | Not yet validated | Pending platform matrix (#84) |
 
-- Rust with `wasm32-unknown-unknown`
-- `wasm-pack`
-- Bun
-- Electrobun tooling/runtime for local desktop execution
+## Architecture
 
-```bash
-rustup target add wasm32-unknown-unknown
-cargo install wasm-pack
+How Electrobun integrates with webtau:
+
+- **Provider registry** (`registerProvider`) for core invoke — routes `invoke()` calls through the registered Electrobun provider instead of Tauri IPC or WASM direct calls.
+- **Module-level adapters** (`setWindowAdapter`, `setEventAdapter`, `setFsAdapter`, `setDialogAdapter`) for domain APIs — each adapter implements the same interface as the Tauri/web shim counterparts.
+- **`bootstrapElectrobun()`** convenience function — registers the provider and all adapters in a single call for quick setup.
+
+```
+┌─────────────────────────────────────────┐
+│  Frontend: invoke("command", args)      │
+└──────────────┬──────────────────────────┘
+               │
+       ┌───────▼────────┐
+       │ Provider Router │
+       │  (webtau core)  │
+       └───┬───┬───┬────┘
+           │   │   │
+    Tauri  │ WASM │  Electrobun
+    IPC    │ direct│  provider
+           │   │   │
 ```
 
-## Quick Trial (Repository Example)
+## Getting Started (Experimental)
 
-Use the isolated example so your existing projects remain untouched:
+```bash
+# Electrobun is not yet available via create-gametau (see #75)
+# Manual integration steps:
+```
+
+1. Install webtau: `bun add webtau`
+2. Import and call `bootstrapElectrobun()` in your app entry point
+3. Configure your Electrobun project according to Electrobun's own documentation
+
+For a working example, see `examples/electrobun-counter`:
 
 ```bash
 cd examples/electrobun-counter
 bun install
-bun run dev
-```
-
-Run the Electrobun desktop path:
-
-```bash
 bun run dev:electrobun
 ```
 
-Build artifacts:
+## Known Limitations
 
-```bash
-bun run build:web
-bun run build:electrobun
-```
+- No `create-gametau --runtime electrobun` option yet (#75)
+- Platform matrix not yet validated (#84)
+- Dogfood automation pending (#85)
+- Experimental flows may change across alpha releases
+- For production workloads today, prefer the stable Tauri desktop path
 
-## How The Runtime Wiring Works
+## Evidence & CI
 
-- Browser mode keeps the normal `configure(...)` WASM path.
-- Electrobun mode registers a runtime provider via `registerProvider(...)`.
-- Frontend command calls still use `invoke("...")` so app code stays portable.
+<!-- Placeholders — to be filled as evidence becomes available -->
+- [ ] Dogfood workflow: (link pending, see #85)
+- [ ] Platform matrix: (link pending, see #84)
+- [ ] Contract test results: PR #87
 
-## Known Limitations (Current Phase)
+## Related Issues
 
-- This is not the default scaffold/runtime selection path yet.
-- CLI runtime selection (`create-gametau --runtime electrobun`) is intentionally deferred.
-- Compatibility and API parity are still being validated.
+- #78 — Electrobun parity checklist
+- #82 — Core-provider contract gaps (closed)
+- #83 — Adapter implementation tranche
+- #84 — Example + platform matrix validation
+- #85 — Dogfood automation
+- #75 — create-gametau --runtime electrobun evaluation
 
-## Rollback To Stable Path
+## Rollback to Stable Path
 
 If experimental behavior is not suitable, switch back to stable flows:
 
@@ -74,13 +98,3 @@ bun run build:desktop
 ```
 
 No migration is required to continue using the standard Web + Tauri path.
-
-## Distribution Notes
-
-Electrobun-related rollout work is distributed on the alpha line (`0.5.0-alpha.x`) so `latest` stable consumers are unaffected.
-
-Install prerelease packages explicitly:
-
-```bash
-npm install webtau@alpha webtau-vite@alpha create-gametau@alpha
-```
