@@ -8,4 +8,4 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-webtau-macros = { path = "../webtau-macros", version = "=0.5.0-alpha.1" }
+webtau-macros = { path = "../webtau-macros", version = "=0.5.0-alpha.2" }
