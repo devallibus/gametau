@@ -5,12 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:electrobun": "electrobun dev",
     "dev:tauri": "tauri dev",
     "build:web": "vite build",
+    "build:electrobun": "bun run build:web && electrobun build",
     "build:desktop": "tauri build",
     "preview": "vite preview"
   },
   "dependencies": {
+    "electrobun": "^1.14.4",
     "three": "^0.172.0",
     "webtau": "workspace:*"
   },

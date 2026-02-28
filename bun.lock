@@ -13,6 +13,7 @@
       "name": "battlestation-example",
       "version": "0.1.0",
       "dependencies": {
+        "electrobun": "^1.14.4",
         "three": "^0.172.0",
         "webtau": "workspace:*",
       },
@@ -29,6 +30,7 @@
       "name": "counter-example",
       "version": "0.1.0",
       "dependencies": {
+        "electrobun": "^1.14.4",
         "webtau": "workspace:*",
       },
       "devDependencies": {
@@ -58,6 +60,7 @@
       "name": "pong-example",
       "version": "0.1.0",
       "dependencies": {
+        "electrobun": "^1.14.4",
         "pixi.js": "^8.0.0",
         "webtau": "workspace:*",
       },
@@ -82,7 +85,7 @@
     },
     "packages/webtau": {
       "name": "webtau",
-      "version": "0.5.0-alpha.2",
+      "version": "0.4.0",
       "devDependencies": {
         "@types/bun": "^1.2.0",
         "typescript": "^5.8.0",
