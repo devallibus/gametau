@@ -4,7 +4,7 @@
 space-defense gameplay loop while intentionally exercising the full `webtau`
 runtime/module story.
 
-Live web demo: <https://devallibus.github.io/gametau/battlestation/>
+Live web demo: <https://gametau.devallibus.com/battlestation/>
 
 Design intent source: `docs/BATTLESTATION-DESIGN-BRIEF.md`.
 

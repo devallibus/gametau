@@ -81,6 +81,18 @@ Please open an issue before submitting a PR for any of the following:
 3. **Use conventional commits**: `feat:`, `fix:`, `chore:`, `docs:`, etc.
 4. **Keep PRs focused** — one concern per PR.
 
+## Branch and deployment flow
+
+- `feature/*` branches target `development`.
+- `development` is staging and deploys to Worker `gametau-dev` (`dev.gametau.devallibus.com`).
+- `master` is production and deploys to Worker `gametau-prod` (`gametau.devallibus.com`).
+- Promote from `development` to `master` only after staging smoke checks pass.
+
+Workers deploy workflows require repository secrets:
+
+- `CLOUDFLARE_ACCOUNT_ID`
+- `CLOUDFLARE_API_TOKEN`
+
 ## CI Publish Preflight Expectations
 
 The CI workflow includes a **Publish Preflight** job to catch release regressions before tags are pushed.

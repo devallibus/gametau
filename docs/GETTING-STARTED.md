@@ -103,7 +103,7 @@ bun run build:desktop
 Before expanding your game, check current runtime parity and API surface:
 
 - Function-level parity matrix: `docs/PARITY-MATRIX.md`
-- Live API docs: `https://devallibus.github.io/gametau/api/`
+- Live API docs: `https://gametau.devallibus.com/api/`
 
 ### Linting
 
