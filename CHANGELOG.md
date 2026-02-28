@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.0-alpha.1] - 2026-02-28
+
+### Added
+- Runtime provider contracts in `webtau/provider` (`CoreProvider`, `WindowAdapter`, `EventAdapter`, `FsAdapter`, `DialogAdapter`)
+- Provider registry APIs in `webtau/core` (`registerProvider`, `getProvider`, `resetProvider`) with lazy Tauri provider self-registration
+- Adapter override hooks in `webtau/window`, `webtau/event`, `webtau/fs`, and `webtau/dialog`
+- Dedicated lazy Tauri auto-registration test coverage in `webtau/src/core.test.ts`
+- Experimental trial docs in `docs/ELECTROBUN-EXPERIMENTAL.md`
+- Isolated `examples/electrobun-counter` trial path with provider-based Electrobun bridge wiring
+
+### Changed
+- Runtime support messaging now explicitly distinguishes Stable (Web + Tauri) vs Experimental (Electrobun) in `README.md`, `docs/GETTING-STARTED.md`, and `packages/create-gametau/README.md`
+- Workspace, crate, npm package, and template dependency versions moved to `0.5.0-alpha.1`
+
+### Experimental
+- Electrobun support remains opt-in and is distributed on the `alpha` line so `latest` stable users are unaffected.
+- Install alpha packages explicitly for trials:
+  - `npm install webtau@alpha webtau-vite@alpha create-gametau@alpha`
+
 ## [0.4.0] - 2026-02-27
 
 ### Added

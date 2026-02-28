@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Electrobun Counter — gametau experimental example</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        font-family: system-ui, sans-serif;
+        background: #1a1a2e;
+        color: #e0e0e0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+      }
+      .container {
+        text-align: center;
+      }
+      h1 {
+        font-size: 1.5rem;
+        margin-bottom: 2rem;
+        color: #00d4aa;
+      }
+      .counter {
+        font-size: 6rem;
+        font-weight: bold;
+        margin: 1rem 0;
+        font-variant-numeric: tabular-nums;
+      }
+      .buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+      }
+      button {
+        padding: 0.75rem 2rem;
+        font-size: 1.25rem;
+        border: 2px solid #00d4aa;
+        background: transparent;
+        color: #00d4aa;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      button:hover {
+        background: #00d4aa22;
+      }
+      button:active {
+        background: #00d4aa44;
+      }
+      .meta {
+        margin-top: 2rem;
+        font-size: 0.85rem;
+        color: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>gametau electrobun counter (experimental)</h1>
+      <div class="counter" id="value">0</div>
+      <div class="buttons">
+        <button id="dec">-</button>
+        <button id="reset">Reset</button>
+        <button id="inc">+</button>
+      </div>
+      <p class="meta">
+        Rust logic via <span id="mode">...</span>
+      </p>
+    </div>
+    <script type="module" src="/src/index.ts"></script>
+  </body>
+</html>
