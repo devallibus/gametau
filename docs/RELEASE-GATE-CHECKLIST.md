@@ -6,6 +6,7 @@ Use this as the canonical gate artifact for `0.3.0+` releases. It complements
 
 ## 1) Pre-Tag Gate (On `master`)
 
+- [ ] Candidate release was promoted from `development` after staging validation (Cloudflare staging deploy green).
 - [ ] Scope issues are closed (or explicitly deferred with notes).
 - [ ] `CI` run on `master` is green (`MSRV`, `Rust`, `TypeScript`, `API Docs`, `Scaffold & Build Smoke`, `Publish Preflight`).
 - [ ] `create-gametau` template architecture checks pass (service seams + scaffold tests).

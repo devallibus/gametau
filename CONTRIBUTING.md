@@ -81,6 +81,20 @@ Please open an issue before submitting a PR for any of the following:
 3. **Use conventional commits**: `feat:`, `fix:`, `chore:`, `docs:`, etc.
 4. **Keep PRs focused** — one concern per PR.
 
+## Branch and environment flow
+
+- `feature/*` branches target `development`.
+- `development` is the integration branch and staging deployment source.
+- `master` is the production release branch.
+- Promote from `development` to `master` with a focused PR after staging validation.
+
+Staging deployment uses `.github/workflows/staging-cloudflare.yml` and requires:
+
+- Repository variable: `CLOUDFLARE_PAGES_STAGING_PROJECT`
+- Repository secrets: `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`
+
+See `docs/STAGING-DEPLOYMENT.md` for setup and validation steps.
+
 ## CI Publish Preflight Expectations
 
 The CI workflow includes a **Publish Preflight** job to catch release regressions before tags are pushed.

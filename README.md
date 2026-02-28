@@ -56,6 +56,17 @@ For the experimental Electrobun trial flow, see `docs/ELECTROBUN-EXPERIMENTAL.md
 - Live API docs: <https://devallibus.github.io/gametau/api/>
 - Generated automatically from TypeDoc + rustdoc in CI and published via GitHub Pages.
 
+### Environments and branches
+
+- `master` is production release/publish source.
+- `development` is integration + staging source.
+- Production site deploy: `.github/workflows/pages.yml` (GitHub Pages).
+- Staging deploy: `.github/workflows/staging-cloudflare.yml` (Cloudflare Pages direct upload).
+- Cloudflare staging deploy expects:
+  - Repository variable: `CLOUDFLARE_PAGES_STAGING_PROJECT`
+  - Repository secrets: `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`
+- Full setup guide: `docs/STAGING-DEPLOYMENT.md`
+
 ### Existing Tauri project
 
 ```bash
