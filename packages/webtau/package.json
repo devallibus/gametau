@@ -61,6 +61,10 @@
     "./provider": {
       "types": "./dist/provider.d.ts",
       "import": "./dist/provider.js"
+    },
+    "./adapters/electrobun": {
+      "types": "./dist/adapters/electrobun.d.ts",
+      "import": "./dist/adapters/electrobun.js"
     }
   },
   "files": [
