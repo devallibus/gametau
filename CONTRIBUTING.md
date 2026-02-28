@@ -102,7 +102,7 @@ Any non-zero exit or missing package/tarball metadata should be treated as a rel
 
 If a tag-triggered release fails (or partially publishes), follow the canonical checklist:
 
-- `docs/RELEASE-INCIDENT-RESPONSE.md`
+- `.github/release/RELEASE-INCIDENT-RESPONSE.md`
 
 ## Template Dependency Versioning Policy
 

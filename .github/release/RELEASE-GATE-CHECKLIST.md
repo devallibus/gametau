@@ -1,8 +1,8 @@
 # Release Gate Checklist
 
 Use this as the canonical gate artifact for `0.3.0+` releases. It complements
-`docs/RELEASE-INCIDENT-RESPONSE.md` by defining what must be true *before* and
-*after* tagging.
+`.github/release/RELEASE-INCIDENT-RESPONSE.md` by defining what must be true
+*before* and *after* tagging.
 
 ## 1) Pre-Tag Gate (On `master`)
 
