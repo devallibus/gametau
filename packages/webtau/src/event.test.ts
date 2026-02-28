@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { emit, emitTo, listen, once } from "./event";
+import { emit, emitTo, listen, once, setEventAdapter } from "./event";
+import type { EventAdapter } from "./provider";
 
 const originalWindow = (globalThis as { window?: unknown }).window;
 const originalCustomEvent = (globalThis as { CustomEvent?: unknown }).CustomEvent;
@@ -26,6 +27,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  setEventAdapter(null);
   (globalThis as { window?: unknown }).window = originalWindow;
   (globalThis as { CustomEvent?: unknown }).CustomEvent = originalCustomEvent;
 });
@@ -78,5 +80,67 @@ describe("webtau/event", () => {
     await emit("game:stop");
 
     expect(count).toBe(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// EventAdapter — adapter override
+// ---------------------------------------------------------------------------
+
+describe("setEventAdapter", () => {
+  test("adapter overrides listen and emit", async () => {
+    const handlers = new Map<string, Function>();
+
+    const adapter: EventAdapter = {
+      listen: async (event, handler) => {
+        handlers.set(event, handler);
+        return () => { handlers.delete(event); };
+      },
+      emit: async (event, payload) => {
+        const handler = handlers.get(event);
+        if (handler) handler({ event, id: 0, payload });
+      },
+    };
+
+    setEventAdapter(adapter);
+
+    const received: number[] = [];
+    const unlisten = await listen<{ val: number }>("test:event", (e) => {
+      received.push(e.payload.val);
+    });
+
+    await emit("test:event", { val: 42 });
+    expect(received).toEqual([42]);
+
+    unlisten();
+    await emit("test:event", { val: 99 });
+    // After unlisten, handler was removed from adapter
+    expect(received).toEqual([42]);
+  });
+
+  test("clearing adapter restores default behavior", async () => {
+    let adapterCalled = false;
+    setEventAdapter({
+      listen: async () => {
+        adapterCalled = true;
+        return () => {};
+      },
+      emit: async () => { adapterCalled = true; },
+    });
+
+    await listen("x", () => {});
+    expect(adapterCalled).toBe(true);
+
+    adapterCalled = false;
+    setEventAdapter(null);
+
+    // Should use default CustomEvent path, not adapter
+    const received: unknown[] = [];
+    const unlisten = await listen("y", (e) => { received.push(e.payload); });
+    await emit("y", "hello");
+    unlisten();
+
+    expect(adapterCalled).toBe(false);
+    expect(received).toEqual(["hello"]);
   });
 });

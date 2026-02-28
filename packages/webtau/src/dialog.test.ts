@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { ask, confirm, message, open, save } from "./dialog";
+import { ask, confirm, message, open, save, setDialogAdapter } from "./dialog";
 
 type MutableGlobal = {
   alert?: (message?: string) => void;
@@ -18,6 +18,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  setDialogAdapter(null);
   globalThis.alert = originalAlert;
   globalThis.confirm = originalConfirm;
   globalThis.prompt = originalPrompt;
@@ -56,5 +57,67 @@ describe("webtau/dialog", () => {
   test("open returns null without DOM access", async () => {
     const result = await open({ multiple: true });
     expect(result).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// DialogAdapter — adapter override
+// ---------------------------------------------------------------------------
+
+describe("setDialogAdapter", () => {
+  test("adapter overrides message", async () => {
+    let captured = "";
+    setDialogAdapter({
+      message: async (text) => { captured = text; },
+      ask: async () => true,
+      open: async () => null,
+      save: async () => null,
+    });
+
+    await message("Adapter message");
+    expect(captured).toBe("Adapter message");
+  });
+
+  test("adapter overrides ask and confirm", async () => {
+    setDialogAdapter({
+      message: async () => {},
+      ask: async (_text, opts) => opts?.okLabel === "Yes",
+      open: async () => null,
+      save: async () => null,
+    });
+
+    expect(await ask("Q?", { okLabel: "Yes" })).toBe(true);
+    expect(await ask("Q?", { okLabel: "Nope" })).toBe(false);
+    expect(await confirm("C?", { okLabel: "Yes" })).toBe(true);
+  });
+
+  test("adapter overrides open and save", async () => {
+    setDialogAdapter({
+      message: async () => {},
+      ask: async () => true,
+      open: async () => ["/file1.txt", "/file2.txt"],
+      save: async (opts) => opts?.defaultPath ?? "default.txt",
+    });
+
+    expect(await open({ multiple: true })).toEqual(["/file1.txt", "/file2.txt"]);
+    expect(await save({ defaultPath: "save.json" })).toBe("save.json");
+  });
+
+  test("clearing adapter restores default behavior", async () => {
+    setDialogAdapter({
+      message: async () => {},
+      ask: async () => false,
+      open: async () => null,
+      save: async () => null,
+    });
+
+    // Adapter returns false for ask
+    expect(await ask("Q?")).toBe(false);
+
+    setDialogAdapter(null);
+
+    // Default fallback: confirm returns true
+    globalThis.confirm = () => true;
+    expect(await ask("Q?")).toBe(true);
   });
 });

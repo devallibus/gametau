@@ -5,11 +5,21 @@
  * plain web app. In Tauri mode, delegates to `@tauri-apps/api/core`.
  * In web mode, calls the corresponding function from a WASM module
  * that was registered via `configure()`.
+ *
+ * A runtime provider can be registered via `registerProvider()` to
+ * route invoke() and convertFileSrc() through an arbitrary backend
+ * (e.g. Electrobun). When no provider is registered and `isTauri()`
+ * is true, Tauri auto-registers itself on first invoke().
  */
+
+import type { CoreProvider } from "./provider";
+
+export type { CoreProvider };
 
 // biome-ignore lint/suspicious/noExplicitAny: WASM modules have dynamic signatures that cannot be statically typed
 type WasmModule = Record<string, (...args: any[]) => any>;
 
+let registeredProvider: CoreProvider | null = null;
 let wasmModule: WasmModule | null = null;
 let wasmLoader: (() => Promise<WasmModule>) | null = null;
 let wasmLoadPromise: Promise<WasmModule> | null = null;
@@ -52,6 +62,34 @@ export function configure(config: WebtauConfig): void {
   if (config.onLoadError) {
     onLoadError = config.onLoadError;
   }
+}
+
+/**
+ * Register a runtime provider that replaces the default Tauri/WASM
+ * routing in `invoke()` and `convertFileSrc()`.
+ *
+ * ```ts
+ * import { registerProvider } from "webtau";
+ *
+ * registerProvider({
+ *   id: "electrobun",
+ *   invoke: (cmd, args) => electrobun.ipc.invoke(cmd, args),
+ *   convertFileSrc: (path) => `electrobun://asset/${path}`,
+ * });
+ * ```
+ */
+export function registerProvider(provider: CoreProvider): void {
+  registeredProvider = provider;
+}
+
+/** Returns the currently registered provider, or `null`. */
+export function getProvider(): CoreProvider | null {
+  return registeredProvider;
+}
+
+/** Clears the registered provider (useful for testing). */
+export function resetProvider(): void {
+  registeredProvider = null;
 }
 
 /**
@@ -120,14 +158,28 @@ export async function invoke<T = unknown>(
   command: string,
   args?: Record<string, unknown>
 ): Promise<T> {
+  // 1. Explicit provider — delegate immediately.
+  if (registeredProvider) {
+    return registeredProvider.invoke<T>(command, args);
+  }
+
+  // 2. Auto-detect Tauri — lazily register a Tauri provider, then delegate.
   if (isTauri()) {
     // Dynamic import — @tauri-apps/api is an optional peer dependency.
     // Only loaded at runtime inside Tauri, never in web builds.
-    const mod: { invoke: (cmd: string, args?: Record<string, unknown>) => Promise<T> } =
-      await import("@tauri-apps/api/core" as string);
-    return mod.invoke(command, args);
+    const mod = await import("@tauri-apps/api/core" as string);
+
+    const tauriProvider: CoreProvider = {
+      id: "tauri",
+      invoke: (cmd, a) => mod.invoke(cmd, a),
+      convertFileSrc: (path, protocol) => mod.convertFileSrc(path, protocol),
+    };
+    registeredProvider = tauriProvider;
+
+    return tauriProvider.invoke<T>(command, args);
   }
 
+  // 3. WASM path — unchanged.
   const wasm = await getWasmModule();
   const fn = wasm[command];
 
@@ -159,7 +211,9 @@ export async function invoke<T = unknown>(
  * ```
  */
 export function convertFileSrc(filePath: string, protocol?: string): string {
+  if (registeredProvider) {
+    return registeredProvider.convertFileSrc(filePath, protocol);
+  }
   // On web, just return the path as-is — no protocol conversion needed
-  void protocol;
   return filePath;
 }

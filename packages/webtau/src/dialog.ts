@@ -2,7 +2,22 @@
  * webtau/dialog — Web shim for @tauri-apps/api/dialog.
  *
  * Uses HTML <dialog> when available, with safe browser fallbacks.
+ *
+ * An optional DialogAdapter can be set via `setDialogAdapter()` to
+ * route all dialog operations through an alternative runtime.
  */
+
+import type { DialogAdapter } from "./provider";
+
+let dialogAdapter: DialogAdapter | null = null;
+
+/**
+ * Set (or clear) a dialog adapter that overrides all dialog functions.
+ * Pass `null` to restore default HTML dialog/browser fallback behavior.
+ */
+export function setDialogAdapter(adapter: DialogAdapter | null): void {
+  dialogAdapter = adapter;
+}
 
 export interface DialogFilter {
   name?: string;
@@ -226,6 +241,7 @@ export async function message(
   messageText: string,
   options: MessageDialogOptions = {},
 ): Promise<void> {
+  if (dialogAdapter) return dialogAdapter.message(messageText, options);
   await showChoiceDialog(messageText, options, [
     { value: "ok", label: options.okLabel ?? "OK" },
   ]);
@@ -235,6 +251,7 @@ export async function ask(
   messageText: string,
   options: MessageDialogOptions = {},
 ): Promise<boolean> {
+  if (dialogAdapter) return dialogAdapter.ask(messageText, options);
   const value = await showChoiceDialog(messageText, options, [
     { value: "ok", label: options.okLabel ?? "OK" },
     { value: "cancel", label: options.cancelLabel ?? "Cancel" },
@@ -246,12 +263,14 @@ export async function confirm(
   messageText: string,
   options: MessageDialogOptions = {},
 ): Promise<boolean> {
+  if (dialogAdapter) return dialogAdapter.ask(messageText, options);
   return ask(messageText, options);
 }
 
 export async function open(
   options: OpenDialogOptions = {},
 ): Promise<string | string[] | null> {
+  if (dialogAdapter) return dialogAdapter.open(options);
   if (!hasDom()) return null;
 
   return new Promise((resolve) => {
@@ -294,5 +313,6 @@ export async function open(
 }
 
 export async function save(options: SaveDialogOptions = {}): Promise<string | null> {
+  if (dialogAdapter) return dialogAdapter.save(options);
   return showInputDialog("Select a file path to save.", options);
 }

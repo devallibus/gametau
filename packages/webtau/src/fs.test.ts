@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import {
   copyFile,
   createDir,
@@ -9,9 +9,11 @@ import {
   readTextFile,
   remove,
   rename,
+  setFsAdapter,
   writeFile,
   writeTextFile,
 } from "./fs";
+import type { FsAdapter } from "./provider";
 
 const TEST_ROOT = "__webtau_fs_tests__";
 
@@ -119,5 +121,84 @@ describe("webtau/fs", () => {
     const oldP = testPath("rename-missing");
     const newP = testPath("rename-dst");
     await expect(rename(oldP, newP)).rejects.toThrow("File not found");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// FsAdapter — adapter override
+// ---------------------------------------------------------------------------
+
+describe("setFsAdapter", () => {
+  afterEach(() => {
+    setFsAdapter(null);
+  });
+
+  function makeMemoryAdapter(): FsAdapter & { store: Map<string, string> } {
+    const store = new Map<string, string>();
+    return {
+      store,
+      writeTextFile: async (path, contents) => { store.set(path, contents); },
+      readTextFile: async (path) => {
+        const val = store.get(path);
+        if (val === undefined) throw new Error("Not found");
+        return val;
+      },
+      writeFile: async (path, contents) => { store.set(path, String(contents)); },
+      readFile: async (path) => {
+        const val = store.get(path);
+        if (val === undefined) throw new Error("Not found");
+        return new TextEncoder().encode(val);
+      },
+      exists: async (path) => store.has(path),
+      mkdir: async () => {},
+      readDir: async () => [],
+      remove: async (path) => { store.delete(path); },
+      copyFile: async (from, to) => {
+        const val = store.get(from);
+        if (val === undefined) throw new Error("Not found");
+        store.set(to, val);
+      },
+      rename: async (from, to) => {
+        const val = store.get(from);
+        if (val === undefined) throw new Error("Not found");
+        store.set(to, val);
+        store.delete(from);
+      },
+    };
+  }
+
+  test("adapter overrides writeTextFile and readTextFile", async () => {
+    const adapter = makeMemoryAdapter();
+    setFsAdapter(adapter);
+
+    await writeTextFile("/adapter/test.txt", "adapter content");
+    expect(await readTextFile("/adapter/test.txt")).toBe("adapter content");
+    // Data is in adapter, not in default store
+    expect(adapter.store.has("/adapter/test.txt")).toBe(true);
+  });
+
+  test("adapter overrides exists", async () => {
+    const adapter = makeMemoryAdapter();
+    setFsAdapter(adapter);
+
+    expect(await exists("/nope")).toBe(false);
+    adapter.store.set("/nope", "x");
+    expect(await exists("/nope")).toBe(true);
+  });
+
+  test("clearing adapter restores default behavior", async () => {
+    const adapter = makeMemoryAdapter();
+    setFsAdapter(adapter);
+
+    await writeTextFile("adapter-file", "data");
+    expect(adapter.store.has("adapter-file")).toBe(true);
+
+    setFsAdapter(null);
+
+    // Should use default store now, which won't have "adapter-file"
+    // (the default store uses its own normalized paths)
+    const path = testPath("default-after-clear");
+    await writeTextFile(path, "default data");
+    expect(await readTextFile(path)).toBe("default data");
   });
 });
