@@ -49,7 +49,12 @@ jobs:
         continue-on-error: true
         run: |
           cd packages/webtau
-          bun test src/adapters/ 2>&1 | tee ../../adapter-test-results.log || echo "No adapter tests found"
+          if compgen -G "src/adapters/*.test.ts" > /dev/null 2>&1; then
+            bun test src/adapters/ 2>&1 | tee ../../adapter-test-results.log
+          else
+            echo "No adapter test files found, skipping." | tee ../../adapter-test-results.log
+          fi
+        shell: bash
         env:
           VERBOSE: ${{ inputs.verbose && '1' || '' }}
 
