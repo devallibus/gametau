@@ -20,6 +20,8 @@ From repo root:
 
 ```bash
 bun install
+bun run --cwd packages/webtau build
+bun run --cwd packages/webtau-vite build
 
 bun run --cwd examples/counter dev:electrobun
 bun run --cwd examples/pong dev:electrobun
