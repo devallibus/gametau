@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { registerProvider, resetProvider } from "./core";
+import { WebtauError } from "./diagnostics";
 import {
   cancelTask,
   pollTask,
@@ -6,9 +8,6 @@ import {
   startTask,
   updateTaskProgress,
 } from "./task";
-import { WebtauError } from "./diagnostics";
-import { configure, registerProvider, resetProvider } from "./core";
-import type { CoreProvider } from "./provider";
 
 // ---------------------------------------------------------------------------
 // Helpers

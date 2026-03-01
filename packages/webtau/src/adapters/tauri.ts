@@ -12,10 +12,26 @@
  */
 
 import { registerProvider } from "../core";
-import type { CoreProvider } from "../provider";
-import type { EventAdapter } from "../provider";
 import type { EventCallback, UnlistenFn } from "../event";
 import { setEventAdapter } from "../event";
+import type { CoreProvider, EventAdapter } from "../provider";
+
+// ── Typed shapes for dynamically imported Tauri modules ─────────────────────
+// @tauri-apps/api is an optional peer dependency. These interfaces describe
+// only the members we use so we can safely cast the dynamic import result
+// without pulling in the full @tauri-apps/api type surface.
+
+interface TauriEventModule {
+  listen: <T>(
+    event: string,
+    handler: (ev: { event: string; id: number; payload: T }) => void,
+  ) => Promise<() => void>;
+  emit: (event: string, payload?: unknown) => Promise<void>;
+}
+
+interface TauriCoreModule {
+  invoke: <T>(command: string, args?: Record<string, unknown>) => Promise<T>;
+}
 
 // ── Event Adapter ───────────────────────────────────────────────────────────
 // Wraps @tauri-apps/api/event listen/emit for use as webtau EventAdapter.
@@ -26,10 +42,10 @@ export function createTauriEventAdapter(): EventAdapter {
   return {
     async listen<T>(event: string, handler: EventCallback<T>): Promise<UnlistenFn> {
       // Dynamic import so @tauri-apps/api is only loaded at runtime in Tauri.
-      const mod = await import("@tauri-apps/api/event" as string);
-      const unlisten = await (mod.listen as Function)<T>(
+      const mod = await import("@tauri-apps/api/event" as string) as TauriEventModule;
+      const unlisten = await mod.listen<T>(
         event,
-        (tauriEvent: { event: string; id: number; payload: T }) => {
+        (tauriEvent) => {
           handler({ event: tauriEvent.event, id: tauriEvent.id, payload: tauriEvent.payload });
         },
       );
@@ -37,8 +53,8 @@ export function createTauriEventAdapter(): EventAdapter {
     },
 
     async emit<T>(event: string, payload?: T): Promise<void> {
-      const mod = await import("@tauri-apps/api/event" as string);
-      await (mod.emit as Function)(event, payload);
+      const mod = await import("@tauri-apps/api/event" as string) as TauriEventModule;
+      await mod.emit(event, payload);
     },
   };
 }
@@ -52,8 +68,8 @@ export function createTauriCoreProvider(): CoreProvider {
   return {
     id: "tauri",
     invoke: async <T = unknown>(command: string, args?: Record<string, unknown>): Promise<T> => {
-      const mod = await import("@tauri-apps/api/core" as string);
-      return (mod.invoke as Function)<T>(command, args);
+      const mod = await import("@tauri-apps/api/core" as string) as TauriCoreModule;
+      return mod.invoke<T>(command, args);
     },
     convertFileSrc: (filePath: string, protocol?: string): string => {
       const proto = protocol ?? "asset";

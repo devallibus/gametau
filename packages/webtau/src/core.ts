@@ -12,8 +12,8 @@
  * is true, Tauri auto-registers itself on first invoke().
  */
 
-import type { CoreProvider } from "./provider";
 import { WebtauError } from "./diagnostics";
+import type { CoreProvider } from "./provider";
 
 export type { CoreProvider };
 export type { DiagnosticCode, DiagnosticEnvelope } from "./diagnostics";
