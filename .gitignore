@@ -22,7 +22,7 @@ Thumbs.db
 .claude/
 .cursor/plans/
 .instance/
-docs/
+/docs/
 
 # Turbo
 .turbo/

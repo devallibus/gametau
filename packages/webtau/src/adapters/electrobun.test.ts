@@ -45,9 +45,8 @@ const invokeErrors = new Map<string, Error>();
 const mockInvoke = mock(
   async <T = unknown>(command: string, args?: Record<string, unknown>): Promise<T> => {
     invokeCalls.push({ command, args });
-    const error = invokeErrors.get(command);
-    if (error) {
-      throw error;
+    if (invokeErrors.has(command)) {
+      throw invokeErrors.get(command)!;
     }
     return (invokeReturns.get(command) ?? null) as T;
   },
@@ -77,11 +76,20 @@ let setEventAdapter: typeof import("../event").setEventAdapter;
 
 let writeTextFile: typeof import("../fs").writeTextFile;
 let readTextFile: typeof import("../fs").readTextFile;
+let writeFile: typeof import("../fs").writeFile;
+let readFile: typeof import("../fs").readFile;
 let exists: typeof import("../fs").exists;
+let mkdir: typeof import("../fs").mkdir;
+let readDir: typeof import("../fs").readDir;
+let remove: typeof import("../fs").remove;
+let copyFile: typeof import("../fs").copyFile;
+let rename: typeof import("../fs").rename;
 let setFsAdapter: typeof import("../fs").setFsAdapter;
 
 let message: typeof import("../dialog").message;
 let ask: typeof import("../dialog").ask;
+let open: typeof import("../dialog").open;
+let save: typeof import("../dialog").save;
 let setDialogAdapter: typeof import("../dialog").setDialogAdapter;
 
 beforeAll(async () => {
@@ -106,12 +114,21 @@ beforeAll(async () => {
   const fsMod = await import("../fs");
   writeTextFile = fsMod.writeTextFile;
   readTextFile = fsMod.readTextFile;
+  writeFile = fsMod.writeFile;
+  readFile = fsMod.readFile;
   exists = fsMod.exists;
+  mkdir = fsMod.mkdir;
+  readDir = fsMod.readDir;
+  remove = fsMod.remove;
+  copyFile = fsMod.copyFile;
+  rename = fsMod.rename;
   setFsAdapter = fsMod.setFsAdapter;
 
   const dialogMod = await import("../dialog");
   message = dialogMod.message;
   ask = dialogMod.ask;
+  open = dialogMod.open;
+  save = dialogMod.save;
   setDialogAdapter = dialogMod.setDialogAdapter;
 });
 
