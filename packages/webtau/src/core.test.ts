@@ -7,6 +7,7 @@ import {
   isTauri,
   registerProvider,
   resetProvider,
+  WebtauError,
 } from "./core";
 import type { CoreProvider } from "./provider";
 
@@ -435,5 +436,83 @@ describe("provider registry", () => {
     });
     expect(await invoke("cmd")).toBe("from-second");
     expect(getProvider()?.id).toBe("second");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// WebtauError — structured diagnostic envelope
+// ---------------------------------------------------------------------------
+
+describe("WebtauError envelope shape", () => {
+  afterEach(() => {
+    resetProvider();
+  });
+
+  test("WebtauError is instanceof Error and WebtauError", () => {
+    const err = new WebtauError({
+      code: "NO_WASM_CONFIGURED",
+      runtime: "wasm",
+      command: "",
+      message: "test message",
+      hint: "test hint",
+    });
+    expect(err).toBeInstanceOf(Error);
+    expect(err).toBeInstanceOf(WebtauError);
+    expect(err.name).toBe("WebtauError");
+  });
+
+  test("invoke throws WebtauError with UNKNOWN_COMMAND for missing export", async () => {
+    configure({ loadWasm: async () => ({ existing_cmd: () => 42 }) });
+
+    try {
+      await invoke("nonexistent_export");
+      throw new Error("should have thrown");
+    } catch (err) {
+      expect(err).toBeInstanceOf(WebtauError);
+      const webtauErr = err as WebtauError;
+      expect(webtauErr.code).toBe("UNKNOWN_COMMAND");
+      expect(webtauErr.runtime).toBe("wasm");
+      expect(webtauErr.command).toBe("nonexistent_export");
+      expect(webtauErr.message).toContain("nonexistent_export");
+      expect(webtauErr.hint).toContain("existing_cmd");
+    }
+  });
+
+  test("invoke throws WebtauError with LOAD_FAILED when loader throws", async () => {
+    configure({
+      loadWasm: async () => { throw new Error("network unavailable"); },
+      onLoadError: () => {},
+    });
+
+    try {
+      await invoke("any_cmd");
+      throw new Error("should have thrown");
+    } catch (err) {
+      expect(err).toBeInstanceOf(WebtauError);
+      const webtauErr = err as WebtauError;
+      expect(webtauErr.code).toBe("LOAD_FAILED");
+      expect(webtauErr.runtime).toBe("wasm");
+      expect(webtauErr.message).toContain("network unavailable");
+      expect(typeof webtauErr.hint).toBe("string");
+      expect(webtauErr.hint.length).toBeGreaterThan(0);
+    }
+  });
+
+  test("all DiagnosticEnvelope fields are present and typed correctly", () => {
+    const err = new WebtauError({
+      code: "PROVIDER_ERROR",
+      runtime: "provider",
+      command: "my_cmd",
+      message: "Provider failed",
+      hint: "Check provider configuration",
+    });
+
+    expect(typeof err.code).toBe("string");
+    expect(typeof err.runtime).toBe("string");
+    expect(typeof err.command).toBe("string");
+    expect(typeof err.message).toBe("string");
+    expect(typeof err.hint).toBe("string");
+    expect(err.command).toBe("my_cmd");
+    expect(err.runtime).toBe("provider");
   });
 });

@@ -13,8 +13,11 @@
  */
 
 import type { CoreProvider } from "./provider";
+import { WebtauError } from "./diagnostics";
 
 export type { CoreProvider };
+export type { DiagnosticCode, DiagnosticEnvelope } from "./diagnostics";
+export { WebtauError } from "./diagnostics";
 
 // biome-ignore lint/suspicious/noExplicitAny: WASM modules have dynamic signatures that cannot be statically typed
 type WasmModule = Record<string, (...args: any[]) => any>;
@@ -119,10 +122,13 @@ async function getWasmModule(): Promise<WasmModule> {
   if (wasmLoadPromise) return wasmLoadPromise;
 
   if (!wasmLoader) {
-    throw new Error(
-      "[webtau] No WASM module configured. " +
-        'Call configure({ loadWasm: () => import("./wasm") }) before invoke().'
-    );
+    throw new WebtauError({
+      code: "NO_WASM_CONFIGURED",
+      runtime: "wasm",
+      command: "",
+      message: "[webtau] No WASM module configured.",
+      hint: 'Call configure({ loadWasm: () => import("./wasm") }) before invoke().',
+    });
   }
 
   wasmLoadPromise = wasmLoader().then(
@@ -135,7 +141,13 @@ async function getWasmModule(): Promise<WasmModule> {
       // user fixes the issue (e.g. reconfigures with a valid loader).
       wasmLoadPromise = null;
       onLoadError(err);
-      throw err;
+      throw new WebtauError({
+        code: "LOAD_FAILED",
+        runtime: "wasm",
+        command: "",
+        message: `[webtau] Failed to load WASM module: ${err instanceof Error ? err.message : String(err)}`,
+        hint: "Check that loadWasm returns a valid WASM module and network is available.",
+      });
     }
   );
 
@@ -184,10 +196,14 @@ export async function invoke<T = unknown>(
   const fn = wasm[command];
 
   if (typeof fn !== "function") {
-    throw new Error(
-      `[webtau] WASM module has no export named "${command}". ` +
-        `Available: ${Object.keys(wasm).filter((k) => typeof wasm[k] === "function").join(", ")}`
-    );
+    const available = Object.keys(wasm).filter((k) => typeof wasm[k] === "function").join(", ");
+    throw new WebtauError({
+      code: "UNKNOWN_COMMAND",
+      runtime: "wasm",
+      command,
+      message: `[webtau] WASM module has no export named "${command}". Available: ${available}`,
+      hint: `Export "${command}" is not defined. Available exports: ${available}`,
+    });
   }
 
   const result = args ? fn(args) : fn();

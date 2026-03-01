@@ -65,6 +65,14 @@
     "./adapters/electrobun": {
       "types": "./dist/adapters/electrobun.d.ts",
       "import": "./dist/adapters/electrobun.js"
+    },
+    "./adapters/tauri": {
+      "types": "./dist/adapters/tauri.d.ts",
+      "import": "./dist/adapters/tauri.js"
+    },
+    "./task": {
+      "types": "./dist/task.d.ts",
+      "import": "./dist/task.js"
     }
   },
   "files": [
