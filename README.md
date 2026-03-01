@@ -738,7 +738,7 @@ Manual v1 wrappers remain fully supported — you can migrate command-by-command
 
 - **`0.2.x` (historical stable line)**: docs/adoption + parity/foundation backlog delivered (`fs/dialog/event` shims and `input/audio/assets` modules). See [CHANGELOG `0.2.1`](./CHANGELOG.md#021---2026-02-26) and [roadmap issue #6](https://github.com/devallibus/gametau/issues/6).
 - **`0.4.0` (historical stable line)**: quality baseline uplift (CI lint gate + broader contract tests), battlestation scenario smoke coverage, release artifact integrity hardening, and parity tranche 1 (`core/app/path/fs`) expansion.
-- **`0.5.1` (current stable line)**: task lifecycle, Tauri adapter bootstrap, structured diagnostics, experimental Electrobun provider track, version coherence alignment across all packages, and Node ESM import compatibility fix.
+- **`0.5.2` (current stable line)**: task lifecycle, Tauri adapter bootstrap, structured diagnostics, Node ESM import compatibility fix, and pre-publish ESM consumer smoke guardrails.
 
 ## Support & Commercial Licensing
 

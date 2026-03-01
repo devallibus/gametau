@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-03-01
+
+### Added
+- Reusable Node ESM consumer smoke script (`scripts/smoke-webtau-esm-consumer.mjs`) to validate `webtau` importability from packed tarballs in clean environments.
+- Package-level smoke hook in `webtau`: `npm run smoke:esm-consumer`.
+
+### Changed
+- CI `publish-preflight` and tag-time publish flow now run Node ESM consumer smoke before npm pack/publish steps.
+- Release gate docs now include explicit Node ESM consumer smoke as a release reliability requirement.
+- Workspace, crate, npm package, and template dependency versions moved to `0.5.2`.
+
 ## [0.5.1] - 2026-03-01
 
 ### Fixed
