@@ -2,7 +2,7 @@
 
 Scaffold a Rust game project for the stable Web (WASM) + Tauri desktop path from one codebase.
 
-Electrobun is available as an experimental opt-in track and tracked in [Milestone v0.5.0 Complex Game Readiness](https://github.com/devallibus/gametau/milestone/10).
+Electrobun is available as an experimental opt-in track — see [active milestones](https://github.com/devallibus/gametau/milestones).
 
 > Repository note: `docs/` is intentionally local-only and not published in remote history.
 
@@ -15,10 +15,7 @@ bun install
 bun run dev
 ```
 
-For project status and rollout context, see:
-
-- [Milestones](https://github.com/devallibus/gametau/milestones)
-- [Milestone v0.5.0 Complex Game Readiness](https://github.com/devallibus/gametau/milestone/10)
+For project status and rollout context, see [active milestones](https://github.com/devallibus/gametau/milestones).
 
 ## Templates
 

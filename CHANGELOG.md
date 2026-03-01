@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-03-01
+
 ### Added
 - `webtau/task` lifecycle surface (`startTask`, `pollTask`, `cancelTask`, progress helpers) with deterministic state transition tests.
 - `webtau/adapters/tauri` adapter bootstrap surface (`bootstrapTauri`, `createTauriCoreProvider`, `createTauriEventAdapter`) for explicit desktop parity wiring.
@@ -16,6 +18,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - `create-gametau` base scaffold now wires `bootstrapTauri()` in desktop mode and ships task lifecycle backend seams in `src/services/backend.ts`.
 - Release/readiness docs now reference only public tracked artifacts for gate evidence and integration validation.
 - API docs generation now includes all public `webtau` entrypoints from the export map, including `task`, `provider`, and `adapters/*`.
+- Workspace, crate, npm package, and template dependency versions moved to `0.5.0`.
+- Stale milestone/issue tracking links in READMEs replaced with durable `/milestones` and `/issues` URLs.
+- `webtau/path` docs corrected: `delimiter` shipped in 0.4.0, only `resolveResource` remains unimplemented.
+
+### Version Coherence
+- `webtau` npm package jumps from `0.4.0` → `0.5.0` (aligning with `webtau-vite` and `create-gametau` on a stable line).
+- Template dependency pins for `three` and `pixi` jump from `^0.4.0` → `^0.5.0` to match.
+- Template `wasm/Cargo.toml` pin jumps from `0.4.0` → `0.5.0` to match.
 
 ## [0.5.0-alpha.2] - 2026-02-28
 

@@ -30,7 +30,7 @@ You write your game logic once in a plain Rust crate. gametau gives you:
 
 **Experimental (opt-in)**
 - **Desktop (Electrobun)** — under evaluation, not the default scaffolder/runtime path
-- Trial and release track: [Milestone v0.5.0 Complex Game Readiness](https://github.com/devallibus/gametau/milestone/10)
+- Trial and release track: see [active milestones](https://github.com/devallibus/gametau/milestones)
 
 ---
 
@@ -54,7 +54,7 @@ Integration-readiness gate references:
 - `RUNTIME-PORTABILITY-READINESS.md`
 - `INTEGRATION-PROXY-VALIDATION.md`
 
-For the experimental Electrobun runtime gate, see [Milestone v0.5.0 Complex Game Readiness](https://github.com/devallibus/gametau/milestone/10).
+For the experimental Electrobun runtime gate, see [active milestones](https://github.com/devallibus/gametau/milestones).
 
 ### API docs
 
@@ -90,7 +90,7 @@ Then follow [Migrating an Existing Tauri Game](#migrating-an-existing-tauri-game
 | **Dev** | `bun run dev` | `localhost:1420` — hot-reload, no Tauri needed |
 | **Web** | `bun run build:web` | Static files for itch.io, Cloudflare Workers static assets, any host |
 | **Desktop (Stable)** | `bun run build:desktop` | Steam-ready `.exe` / `.dmg` / `.AppImage` via Tauri |
-| **Desktop (Experimental)** | See [Milestone v0.5.0 Complex Game Readiness](https://github.com/devallibus/gametau/milestone/10) | Electrobun trial path (opt-in, not default) |
+| **Desktop (Experimental)** | See [active milestones](https://github.com/devallibus/gametau/milestones) | Electrobun trial path (opt-in, not default) |
 
 ### Prerequisites
 
@@ -98,7 +98,7 @@ Then follow [Migrating an Existing Tauri Game](#migrating-an-existing-tauri-game
 - [wasm-pack](https://rustwasm.github.io/wasm-pack/installer/) (required for fresh Rust/WASM builds and Rust watch rebuilds)
 - [Bun](https://bun.sh/) (or Node.js 18+)
 - [Tauri CLI](https://v2.tauri.app/start/create-project/) (stable desktop builds)
-- Electrobun tooling (experimental path only; see [Milestone v0.5.0 Complex Game Readiness](https://github.com/devallibus/gametau/milestone/10))
+- Electrobun tooling (experimental path only; see [active milestones](https://github.com/devallibus/gametau/milestones))
 
 ```bash
 rustup target add wasm32-unknown-unknown
@@ -325,7 +325,7 @@ pub fn tick_world(state: &mut GameWorld) -> TickResult {
 
 When `webtau-vite` aliases `@tauri-apps/api/*` imports to `webtau/*`, these shims provide browser-compatible implementations:
 
-For parity status context, see [roadmap issue #6](https://github.com/devallibus/gametau/issues/6).
+Parity gaps are tracked in the [issue tracker](https://github.com/devallibus/gametau/issues).
 
 **`webtau/window`** — Web shim for `@tauri-apps/api/window`. Import `getCurrentWindow()` — same API as Tauri.
 
@@ -407,7 +407,7 @@ Task cancellation is cooperative. Provide `onCancel` in `startTask(..., { onCanc
 | Virtual dirs (`appDataDir`, `appConfigDir`, `homeDir`, etc.) | Deterministic virtual `/app/*` paths for browser usage |
 | `basename`, `dirname`, `extname`, `join`, `normalize`, `resolve`, `isAbsolute`, `sep` | POSIX-style path utilities for web mode |
 
-Not all Tauri `path` APIs are implemented yet (for example `resolveResource` and `delimiter`). Current tracking is in [roadmap issue #6](https://github.com/devallibus/gametau/issues/6).
+Not all Tauri `path` APIs are implemented yet (for example `resolveResource`). Gaps are tracked in the [issue tracker](https://github.com/devallibus/gametau/issues).
 
 ### Gameplay foundation modules
 
@@ -698,7 +698,7 @@ Expected sizes:
 
 - **[`examples/counter`](./examples/counter)** — Simplest possible example. Counter with increment/decrement/reset that works on both web and desktop.
 - **[`examples/pong`](./examples/pong)** — Two-player Pong with Rust physics + PixiJS rendering. Demonstrates real game loop, collision detection, and keyboard input across both targets.
-- **[`examples/battlestation`](./examples/battlestation)** — Flagship tactical radar command loop demonstrating full module coverage (`input`, `audio`, `assets`, `fs/path`, `event`, `app`) with persistent profile + comms narrative. Live demo: <https://gametau.devallibus.com/battlestation/>. Tracking context: [roadmap issue #6](https://github.com/devallibus/gametau/issues/6).
+- **[`examples/battlestation`](./examples/battlestation)** — Flagship tactical radar command loop demonstrating full module coverage (`input`, `audio`, `assets`, `fs/path`, `event`, `app`) with persistent profile + comms narrative. Live demo: <https://gametau.devallibus.com/battlestation/>.
 
 ## Migrating an Existing Tauri Game
 
@@ -738,7 +738,7 @@ Manual v1 wrappers remain fully supported — you can migrate command-by-command
 
 - **`0.2.x` (historical stable line)**: docs/adoption + parity/foundation backlog delivered (`fs/dialog/event` shims and `input/audio/assets` modules). See [CHANGELOG `0.2.1`](./CHANGELOG.md#021---2026-02-26) and [roadmap issue #6](https://github.com/devallibus/gametau/issues/6).
 - **`0.4.0` (current stable line)**: quality baseline uplift (CI lint gate + broader contract tests), battlestation scenario smoke coverage, release artifact integrity hardening, and parity tranche 1 (`core/app/path/fs`) expansion.
-- **`0.5.0+` (future)**: broader platform capabilities and ecosystem expansion.
+- **`0.5.0` (current stable line)**: task lifecycle, Tauri adapter bootstrap, structured diagnostics, experimental Electrobun provider track, and version coherence alignment across all packages.
 
 ## Support & Commercial Licensing
 
