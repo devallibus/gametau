@@ -105,6 +105,8 @@ After each S1 or S2 incident:
 - Incident: `webtau@0.5.0` Node ESM import failure (`ERR_MODULE_NOT_FOUND`) tracked in [#109](https://github.com/devallibus/gametau/issues/109).
 - Fix-forward release: `v0.5.1` with explicit `.js` internal ESM specifiers.
 - Corrective publish run (Green): [actions run](https://github.com/devallibus/gametau/actions/runs/22550637914)
+- Hardening follow-up release: `v0.5.2` added pre-publish Node ESM consumer smoke guardrails.
+- Hardening publish run (Green): [actions run](https://github.com/devallibus/gametau/actions/runs/22551613028)
 
 ## Verification Checklist Before Next Tag
 

@@ -87,12 +87,12 @@ For each release, capture these references in the release issue/roadmap update:
 - [ ] Tag URL and GitHub release URL (when the release is created)
 - [ ] Any follow-up risk/mitigation notes
 
-### Latest Snapshot (v0.5.1)
+### Latest Snapshot (v0.5.2)
 
-- Tag URL: [`v0.5.1`](https://github.com/devallibus/gametau/tree/v0.5.1)
-- Publish workflow run: [actions run](https://github.com/devallibus/gametau/actions/runs/22550637914)
-- Incident/fix issue: [#109](https://github.com/devallibus/gametau/issues/109)
-- Incident closure evidence: [issue comment](https://github.com/devallibus/gametau/issues/109#issuecomment-3980839013)
+- Tag URL: [`v0.5.2`](https://github.com/devallibus/gametau/tree/v0.5.2)
+- Release URL: [v0.5.2 release notes](https://github.com/devallibus/gametau/releases/tag/v0.5.2)
+- Publish workflow run: [actions run](https://github.com/devallibus/gametau/actions/runs/22551613028)
+- Incident lineage: [#109](https://github.com/devallibus/gametau/issues/109) and [closure note](https://github.com/devallibus/gametau/issues/109#issuecomment-3980839013)
 
 ## 4) Post-Publish Gate
 

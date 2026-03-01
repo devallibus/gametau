@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Release gate docs now include explicit Node ESM consumer smoke as a release reliability requirement.
 - Workspace, crate, npm package, and template dependency versions moved to `0.5.2`.
 
+### Release Evidence
+- Publish workflow (`v0.5.2`) Green: [actions run](https://github.com/devallibus/gametau/actions/runs/22551613028)
+- Release commit: [`ee5ac65`](https://github.com/devallibus/gametau/commit/ee5ac65)
+- Release notes: [v0.5.2](https://github.com/devallibus/gametau/releases/tag/v0.5.2)
+
 ## [0.5.1] - 2026-03-01
 
 ### Fixed
