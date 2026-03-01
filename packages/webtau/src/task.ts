@@ -14,8 +14,8 @@
  * ```
  */
 
-import { invoke } from "./core";
-import { WebtauError } from "./diagnostics";
+import { invoke } from "./core.js";
+import { WebtauError } from "./diagnostics.js";
 
 // ── Public types ────────────────────────────────────────────────────────────
 

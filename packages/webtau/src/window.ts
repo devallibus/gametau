@@ -9,8 +9,8 @@
  * route all window operations through an alternative runtime.
  */
 
-import { type LogicalSize, PhysicalPosition, PhysicalSize } from "./dpi";
-import type { WindowAdapter } from "./provider";
+import { type LogicalSize, PhysicalPosition, PhysicalSize } from "./dpi.js";
+import type { WindowAdapter } from "./provider.js";
 
 let windowAdapter: WindowAdapter | null = null;
 

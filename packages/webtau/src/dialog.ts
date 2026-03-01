@@ -7,7 +7,7 @@
  * route all dialog operations through an alternative runtime.
  */
 
-import type { DialogAdapter } from "./provider";
+import type { DialogAdapter } from "./provider.js";
 
 let dialogAdapter: DialogAdapter | null = null;
 

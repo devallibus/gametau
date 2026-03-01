@@ -12,30 +12,30 @@
  * ```
  */
 
-import { invoke, registerProvider } from "../core";
+import { invoke, registerProvider } from "../core.js";
 import type {
   MessageDialogOptions,
   OpenDialogOptions,
   SaveDialogOptions,
-} from "../dialog";
-import { setDialogAdapter } from "../dialog";
-import type { EventCallback, UnlistenFn } from "../event";
-import { setEventAdapter } from "../event";
+} from "../dialog.js";
+import { setDialogAdapter } from "../dialog.js";
+import type { EventCallback, UnlistenFn } from "../event.js";
+import { setEventAdapter } from "../event.js";
 import type {
   CreateDirOptions,
   FsEntry,
   ReadDirOptions,
   RemoveOptions,
-} from "../fs";
-import { setFsAdapter } from "../fs";
+} from "../fs.js";
+import { setFsAdapter } from "../fs.js";
 import type {
   CoreProvider,
   DialogAdapter,
   EventAdapter,
   FsAdapter,
   WindowAdapter,
-} from "../provider";
-import { setWindowAdapter } from "../window";
+} from "../provider.js";
+import { setWindowAdapter } from "../window.js";
 
 // ── Window Adapter ──────────────────────────────────────────────────────────
 // Supported: isFullscreen, setFullscreen, innerSize, outerSize, setSize,

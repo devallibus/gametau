@@ -10,14 +10,14 @@ import type {
   MessageDialogOptions,
   OpenDialogOptions,
   SaveDialogOptions,
-} from "./dialog";
-import type { EventCallback, UnlistenFn } from "./event";
+} from "./dialog.js";
+import type { EventCallback, UnlistenFn } from "./event.js";
 import type {
   CreateDirOptions,
   FsEntry,
   ReadDirOptions,
   RemoveOptions,
-} from "./fs";
+} from "./fs.js";
 
 // ── Core ──
 

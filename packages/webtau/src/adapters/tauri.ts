@@ -11,10 +11,10 @@
  * ```
  */
 
-import { registerProvider } from "../core";
-import type { EventCallback, UnlistenFn } from "../event";
-import { setEventAdapter } from "../event";
-import type { CoreProvider, EventAdapter } from "../provider";
+import { registerProvider } from "../core.js";
+import type { EventCallback, UnlistenFn } from "../event.js";
+import { setEventAdapter } from "../event.js";
+import type { CoreProvider, EventAdapter } from "../provider.js";
 
 // ── Typed shapes for dynamically imported Tauri modules ─────────────────────
 // @tauri-apps/api is an optional peer dependency. These interfaces describe

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-03-01
+
+### Fixed
+- Internal ESM relative imports in `webtau` now use explicit `.js` specifiers, fixing Node consumer imports that failed with `ERR_MODULE_NOT_FOUND` in `0.5.0` (`import("webtau")` path). See [#109](https://github.com/devallibus/gametau/issues/109).
+
+### Changed
+- Workspace, crate, npm package, and template dependency versions moved to `0.5.1`.
+
 ## [0.5.0] - 2026-03-01
 
 ### Added

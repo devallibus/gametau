@@ -8,7 +8,7 @@
  * route all event operations through an alternative runtime.
  */
 
-import type { EventAdapter } from "./provider";
+import type { EventAdapter } from "./provider.js";
 
 export interface Event<T> {
   event: string;

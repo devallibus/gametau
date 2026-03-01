@@ -8,7 +8,7 @@
  * all filesystem operations through an alternative runtime.
  */
 
-import type { FsAdapter } from "./provider";
+import type { FsAdapter } from "./provider.js";
 
 let fsAdapter: FsAdapter | null = null;
 

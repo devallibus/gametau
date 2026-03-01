@@ -12,12 +12,12 @@
  * is true, Tauri auto-registers itself on first invoke().
  */
 
-import { WebtauError } from "./diagnostics";
-import type { CoreProvider } from "./provider";
+import { WebtauError } from "./diagnostics.js";
+import type { CoreProvider } from "./provider.js";
 
 export type { CoreProvider };
-export type { DiagnosticCode, DiagnosticEnvelope } from "./diagnostics";
-export { WebtauError } from "./diagnostics";
+export type { DiagnosticCode, DiagnosticEnvelope } from "./diagnostics.js";
+export { WebtauError } from "./diagnostics.js";
 
 // biome-ignore lint/suspicious/noExplicitAny: WASM modules have dynamic signatures that cannot be statically typed
 type WasmModule = Record<string, (...args: any[]) => any>;
