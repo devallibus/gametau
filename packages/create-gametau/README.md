@@ -2,7 +2,7 @@
 
 Scaffold a Rust game project for the stable Web (WASM) + Tauri desktop path from one codebase.
 
-Electrobun is available as an experimental opt-in track and tracked via [Issue #75](https://github.com/devallibus/gametau/issues/75) and [Milestone v0.5.0 Complex Game Readiness](https://github.com/devallibus/gametau/milestone/10).
+Electrobun is available as an experimental opt-in track and tracked in [Milestone v0.5.0 Complex Game Readiness](https://github.com/devallibus/gametau/milestone/10).
 
 > Repository note: `docs/` is intentionally local-only and not published in remote history.
 
@@ -16,9 +16,9 @@ bun run dev
 ```
 
 For project status and rollout context, see:
+
 - [Milestones](https://github.com/devallibus/gametau/milestones)
-- [Issue #75 (runtime flag gate)](https://github.com/devallibus/gametau/issues/75)
-- [Issue #84 (example/platform validation evidence)](https://github.com/devallibus/gametau/issues/84)
+- [Milestone v0.5.0 Complex Game Readiness](https://github.com/devallibus/gametau/milestone/10)
 
 ## Templates
 
@@ -50,11 +50,16 @@ bunx create-gametau my-game --template vanilla
 
 The scaffolded base template now ships a small service architecture instead of a single command wrapper:
 
-- `src/services/backend.ts` - typed `invoke()` wrappers for gameplay commands
+- `src/services/backend.ts` - typed `invoke()` wrappers for gameplay commands plus long-running task lifecycle seams (`startWorldProcessing`, `pollWorldTask`, `cancelWorldTask`)
 - `src/services/settings.ts` - runtime settings persistence via `webtau/path` + `webtau/fs`
 - `src/services/session.ts` - mission/session snapshot persistence via `webtau/path` + `webtau/fs`
 - `src/services/comms.ts` - typed alert/comms channel over `webtau/event`
 - `src/services/contracts.ts` - interfaces/types for settings, session snapshots, and alerts
+
+Runtime bootstrap is explicit in scaffolded `src/index.ts`:
+
+- Tauri path: `bootstrapTauri()` from `webtau/adapters/tauri`
+- Web path: `configure({ loadWasm })` from `webtau`
 
 This keeps the generated project lightweight while giving contributors clear extension points for production features.
 

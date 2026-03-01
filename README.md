@@ -30,8 +30,7 @@ You write your game logic once in a plain Rust crate. gametau gives you:
 
 **Experimental (opt-in)**
 - **Desktop (Electrobun)** — under evaluation, not the default scaffolder/runtime path
-- Trial tracking: [Issue #84](https://github.com/devallibus/gametau/issues/84)
-- Decision/release track: [Milestone v0.5.0 Complex Game Readiness](https://github.com/devallibus/gametau/milestone/10)
+- Trial and release track: [Milestone v0.5.0 Complex Game Readiness](https://github.com/devallibus/gametau/milestone/10)
 
 ---
 
@@ -51,7 +50,11 @@ bun run dev                              # localhost:1420 — hot-reload in Chro
 
 Need current onboarding/release context? See [repository milestones](https://github.com/devallibus/gametau/milestones).
 
-For the experimental Electrobun runtime gate, see [Issue #75](https://github.com/devallibus/gametau/issues/75).
+Integration-readiness gate references:
+- `RUNTIME-PORTABILITY-READINESS.md`
+- `INTEGRATION-PROXY-VALIDATION.md`
+
+For the experimental Electrobun runtime gate, see [Milestone v0.5.0 Complex Game Readiness](https://github.com/devallibus/gametau/milestone/10).
 
 ### API docs
 
@@ -87,7 +90,7 @@ Then follow [Migrating an Existing Tauri Game](#migrating-an-existing-tauri-game
 | **Dev** | `bun run dev` | `localhost:1420` — hot-reload, no Tauri needed |
 | **Web** | `bun run build:web` | Static files for itch.io, Cloudflare Workers static assets, any host |
 | **Desktop (Stable)** | `bun run build:desktop` | Steam-ready `.exe` / `.dmg` / `.AppImage` via Tauri |
-| **Desktop (Experimental)** | See [Issue #75](https://github.com/devallibus/gametau/issues/75) | Electrobun trial path (opt-in, not default) |
+| **Desktop (Experimental)** | See [Milestone v0.5.0 Complex Game Readiness](https://github.com/devallibus/gametau/milestone/10) | Electrobun trial path (opt-in, not default) |
 
 ### Prerequisites
 
@@ -95,7 +98,7 @@ Then follow [Migrating an Existing Tauri Game](#migrating-an-existing-tauri-game
 - [wasm-pack](https://rustwasm.github.io/wasm-pack/installer/) (required for fresh Rust/WASM builds and Rust watch rebuilds)
 - [Bun](https://bun.sh/) (or Node.js 18+)
 - [Tauri CLI](https://v2.tauri.app/start/create-project/) (stable desktop builds)
-- Electrobun tooling (experimental path only; see [Issue #75](https://github.com/devallibus/gametau/issues/75))
+- Electrobun tooling (experimental path only; see [Milestone v0.5.0 Complex Game Readiness](https://github.com/devallibus/gametau/milestone/10))
 
 ```bash
 rustup target add wasm32-unknown-unknown
@@ -222,6 +225,7 @@ In web mode, args are passed as a **single object** to the WASM export (matching
 | `invoke()` before `configure()` | Includes exact `configure()` call pattern to fix it |
 | WASM export not found | Lists all available exported function names |
 | WASM module fails to load | Calls `onLoadError` callback, then rethrows — next `invoke()` retries the load |
+| Command/provider execution failure | Throws `WebtauError` with `code`, `runtime`, `command`, `message`, `hint` |
 
 Loading is deduplicated: concurrent `invoke()` calls while the WASM module is still loading share the same promise. After a load failure, the promise is cleared so subsequent calls can retry.
 
@@ -366,6 +370,25 @@ For parity status context, see [roadmap issue #6](https://github.com/devallibus/
 | `once(event, cb)` | Auto-unlisten after first callback |
 | `emit(event, payload)` | `window.dispatchEvent(new CustomEvent(...))` |
 | `emitTo(target, event, payload)` | Web-mode alias of `emit` |
+
+**`webtau/adapters/tauri`** — Optional Tauri bootstrap helpers for explicit provider + event wiring.
+
+| API | Purpose |
+|---|---|
+| `bootstrapTauri()` | Registers Tauri core provider + event adapter in one call |
+| `createTauriCoreProvider()` | Returns a `CoreProvider` wrapper around `@tauri-apps/api/core` |
+| `createTauriEventAdapter()` | Returns an `EventAdapter` wrapper around `@tauri-apps/api/event` |
+
+**`webtau/task`** — Non-blocking lifecycle helpers for long-running backend work.
+
+| API | Purpose |
+|---|---|
+| `startTask(command, args, options?)` | Starts work and returns `taskId` immediately |
+| `pollTask(taskId)` | Returns current state (`running`, `completed`, `cancelled`, `failed`) |
+| `cancelTask(taskId)` | Cancels task state and triggers `options.onCancel` when provided |
+| `updateTaskProgress(taskId, progress)` | Provider/test helper for progress updates |
+
+Task cancellation is cooperative. Provide `onCancel` in `startTask(..., { onCancel })` to propagate cancellation to backend work.
 
 **`webtau/app`** — Web shim for `@tauri-apps/api/app`.
 

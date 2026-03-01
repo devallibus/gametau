@@ -144,3 +144,64 @@ describe("setEventAdapter", () => {
     expect(received).toEqual(["hello"]);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Backend event parity contract — default CustomEvent bridge
+// ---------------------------------------------------------------------------
+
+describe("default event bridge — parity guarantees", () => {
+  // beforeEach/afterEach from outer scope sets up window with EventTarget
+
+  test("ordered delivery: events arrive in emission order", async () => {
+    const received: number[] = [];
+    const unlisten = await listen<{ seq: number }>("parity:order:dom", (e) => {
+      received.push(e.payload.seq);
+    });
+
+    await emit("parity:order:dom", { seq: 1 });
+    await emit("parity:order:dom", { seq: 2 });
+    await emit("parity:order:dom", { seq: 3 });
+    unlisten();
+
+    expect(received).toEqual([1, 2, 3]);
+  });
+
+  test("multi-listener consistency: all listeners receive same payload", async () => {
+    const resultsA: number[] = [];
+    const resultsB: number[] = [];
+
+    const unlistenA = await listen<{ v: number }>("parity:multi:dom", (e) => {
+      resultsA.push(e.payload.v);
+    });
+    const unlistenB = await listen<{ v: number }>("parity:multi:dom", (e) => {
+      resultsB.push(e.payload.v);
+    });
+
+    await emit("parity:multi:dom", { v: 99 });
+    unlistenA();
+    unlistenB();
+
+    expect(resultsA).toEqual([99]);
+    expect(resultsB).toEqual([99]);
+  });
+
+  test("unlisten precision: removing one listener does not affect others", async () => {
+    const a: number[] = [];
+    const b: number[] = [];
+
+    const unlistenA = await listen<{ n: number }>("parity:precision:dom", (e) => {
+      a.push(e.payload.n);
+    });
+    const unlistenB = await listen<{ n: number }>("parity:precision:dom", (e) => {
+      b.push(e.payload.n);
+    });
+
+    await emit("parity:precision:dom", { n: 1 });
+    unlistenA();
+    await emit("parity:precision:dom", { n: 2 });
+    unlistenB();
+
+    expect(a).toEqual([1]);
+    expect(b).toEqual([1, 2]);
+  });
+});

@@ -306,4 +306,56 @@ describe("create-gametau CLI", () => {
       "already exists",
     );
   });
+
+  test("backend seam exposes typed task lifecycle API (webtau/task)", () => {
+    const dir = freshDir();
+    scaffold({ projectName: "task-seam-game", template: "three" }, dir);
+    const projectDir = join(dir, "task-seam-game");
+
+    const backendTs = readFileSync(
+      join(projectDir, "src", "services", "backend.ts"),
+      "utf-8",
+    );
+
+    // Task seam imports must be present
+    expect(backendTs).toContain("webtau/task");
+    expect(backendTs).toContain("startTask");
+    expect(backendTs).toContain("pollTask");
+    expect(backendTs).toContain("cancelTask");
+    // Typed task state must be referenced
+    expect(backendTs).toContain("TaskState");
+    // The reference long-running flow functions must be exported
+    expect(backendTs).toContain("startWorldProcessing");
+    expect(backendTs).toContain("pollWorldTask");
+    expect(backendTs).toContain("cancelWorldTask");
+  });
+
+  test("entry point auto-bootstraps Tauri event/provider parity", () => {
+    const dir = freshDir();
+    scaffold({ projectName: "bootstrap-game", template: "three" }, dir);
+    const projectDir = join(dir, "bootstrap-game");
+
+    const indexTs = readFileSync(join(projectDir, "src", "index.ts"), "utf-8");
+
+    // bootstrapTauri must be imported and called in Tauri path
+    expect(indexTs).toContain("bootstrapTauri");
+    expect(indexTs).toContain("webtau/adapters/tauri");
+    // Must branch on isTauri() so parity is automatic
+    expect(indexTs).toContain("isTauri()");
+  });
+
+  test("backend seam exposes typed event subscription via comms service", () => {
+    const dir = freshDir();
+    scaffold({ projectName: "event-seam-game", template: "three" }, dir);
+    const projectDir = join(dir, "event-seam-game");
+
+    const commsTs = readFileSync(
+      join(projectDir, "src", "services", "comms.ts"),
+      "utf-8",
+    );
+
+    // Event parity shim must be wired through webtau/event
+    expect(commsTs).toContain("webtau/event");
+    expect(commsTs).toContain("listen");
+  });
 });

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- `webtau/task` lifecycle surface (`startTask`, `pollTask`, `cancelTask`, progress helpers) with deterministic state transition tests.
+- `webtau/adapters/tauri` adapter bootstrap surface (`bootstrapTauri`, `createTauriCoreProvider`, `createTauriEventAdapter`) for explicit desktop parity wiring.
+- Structured diagnostics envelope support in `webtau` (`WebtauError` with `code`, `runtime`, `command`, `message`, `hint`) plus non-panicking Rust/WASM bridge behavior.
+
+### Changed
+- `create-gametau` base scaffold now wires `bootstrapTauri()` in desktop mode and ships task lifecycle backend seams in `src/services/backend.ts`.
+- Release/readiness docs now reference only public tracked artifacts for gate evidence and integration validation.
+- API docs generation now includes all public `webtau` entrypoints from the export map, including `task`, `provider`, and `adapters/*`.
+
 ## [0.5.0-alpha.2] - 2026-02-28
 
 ### Added
@@ -23,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Provider registry APIs in `webtau/core` (`registerProvider`, `getProvider`, `resetProvider`) with lazy Tauri provider self-registration
 - Adapter override hooks in `webtau/window`, `webtau/event`, `webtau/fs`, and `webtau/dialog`
 - Dedicated lazy Tauri auto-registration test coverage in `webtau/src/core.test.ts`
-- Experimental trial status tracked in [issue #84](https://github.com/devallibus/gametau/issues/84) and [milestone v0.5.0 Complex Game Readiness](https://github.com/devallibus/gametau/milestone/10)
+- Experimental trial status tracked in [milestone v0.5.0 Complex Game Readiness](https://github.com/devallibus/gametau/milestone/10)
 - Isolated `examples/electrobun-counter` trial path with provider-based Electrobun bridge wiring
 
 ### Changed

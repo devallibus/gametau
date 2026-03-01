@@ -1,4 +1,5 @@
 import { configure, isTauri } from "webtau";
+import { bootstrapTauri } from "webtau/adapters/tauri";
 import { startGameLoop } from "./game/loop";
 import { createSnapshotQueue } from "./game/snapshot-queue";
 import { initScene, updateScene } from "./game/scene";
@@ -25,8 +26,10 @@ function updateHud(view: WorldView, settings: RuntimeSettings): void {
 }
 
 async function main() {
-  // Configure webtau for web mode (no-op in Tauri)
-  if (!isTauri()) {
+  // Bootstrap runtime: Tauri (desktop) or WASM (web).
+  if (isTauri()) {
+    await bootstrapTauri();
+  } else {
     configure({
       loadWasm: async () => {
         const wasm = await import("./wasm/{{PROJECT_NAME}}_wasm");

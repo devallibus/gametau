@@ -75,6 +75,28 @@ macro_rules! wasm_state {
                 f(state)
             })
         }
+
+        /// Read-only access to the game state. Returns `None` if not initialized.
+        fn try_with_state<__F, __R>(f: __F) -> Option<__R>
+        where
+            __F: FnOnce(&$T) -> __R,
+        {
+            __WEBTAU_STATE.with(|cell| {
+                let borrow = cell.borrow();
+                borrow.as_ref().map(f)
+            })
+        }
+
+        /// Mutable access to the game state. Returns `None` if not initialized.
+        fn try_with_state_mut<__F, __R>(f: __F) -> Option<__R>
+        where
+            __F: FnOnce(&mut $T) -> __R,
+        {
+            __WEBTAU_STATE.with(|cell| {
+                let mut borrow = cell.borrow_mut();
+                borrow.as_mut().map(f)
+            })
+        }
     };
 }
 
@@ -110,5 +132,32 @@ mod tests {
         struct Uninitialized;
         wasm_state!(Uninitialized);
         with_state(|_| {});
+    }
+
+    #[test]
+    fn try_with_state_returns_none_before_init() {
+        struct Sentinel;
+        wasm_state!(Sentinel);
+        let result = try_with_state(|_| 99u32);
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn try_with_state_returns_some_after_init() {
+        struct Value {
+            n: i32,
+        }
+        wasm_state!(Value);
+        set_state(Value { n: 7 });
+        let result = try_with_state(|v| v.n);
+        assert_eq!(result, Some(7));
+    }
+
+    #[test]
+    fn try_with_state_mut_returns_none_before_init() {
+        struct Tracker;
+        wasm_state!(Tracker);
+        let result = try_with_state_mut(|_| 42u32);
+        assert_eq!(result, None);
     }
 }

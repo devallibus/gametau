@@ -254,15 +254,16 @@ fn generate_native(def: &CommandDef) -> TokenStream2 {
         .map(|(_, id, _)| quote! { #id })
         .collect();
 
-    // Use `__webtau_` prefix to avoid collisions with user arg names
+    // Use `__webtau_` prefix to avoid collisions with user arg names.
+    // unwrap_or_else recovers from a poisoned mutex rather than panicking.
     let (lock, state_ref) = if def.state_mut {
         (
-            quote! { let mut __webtau_guard = __webtau_tauri_state.lock().unwrap(); },
+            quote! { let mut __webtau_guard = __webtau_tauri_state.lock().unwrap_or_else(|p| p.into_inner()); },
             quote! { &mut __webtau_guard },
         )
     } else {
         (
-            quote! { let __webtau_guard = __webtau_tauri_state.lock().unwrap(); },
+            quote! { let __webtau_guard = __webtau_tauri_state.lock().unwrap_or_else(|p| p.into_inner()); },
             quote! { &__webtau_guard },
         )
     };
@@ -288,10 +289,10 @@ fn generate_wasm(def: &CommandDef) -> TokenStream2 {
     let inner_name = format_ident!("__webtau_{}", def.name);
     let has_extra = !def.extra_params.is_empty();
 
-    let state_accessor = if def.state_mut {
-        quote! { with_state_mut }
+    let try_state_accessor = if def.state_mut {
+        quote! { try_with_state_mut }
     } else {
-        quote! { with_state }
+        quote! { try_with_state }
     };
 
     // ── Args handling ──
@@ -315,7 +316,8 @@ fn generate_wasm(def: &CommandDef) -> TokenStream2 {
                 #[derive(::serde::Deserialize)]
                 struct #struct_name { #(#field_defs,)* }
                 let __args: #struct_name =
-                    ::serde_wasm_bindgen::from_value(args).unwrap();
+                    ::serde_wasm_bindgen::from_value(args)
+                        .map_err(|e| ::wasm_bindgen::JsError::new(&e.to_string()))?;
             },
             field_refs,
         )
@@ -324,33 +326,53 @@ fn generate_wasm(def: &CommandDef) -> TokenStream2 {
     };
 
     // ── Return handling ──
+    // All WASM wrappers now return Result<_, JsError> so that args deserialization
+    // failures, serialization failures, and uninitialized-state errors surface as
+    // recoverable JsErrors instead of panics.
     let (wasm_ret, body_expr) = match &def.ret {
         ReturnShape::Unit => (
-            quote! {},
+            quote! { -> ::std::result::Result<(), ::wasm_bindgen::JsError> },
             quote! {
-                #state_accessor(|state| {
+                match #try_state_accessor(|state| {
                     #inner_name(state, #(#call_args),*);
-                })
+                }) {
+                    None => Err(::wasm_bindgen::JsError::new(
+                        "webtau: state not initialized — call set_state() first",
+                    )),
+                    Some(_) => Ok(()),
+                }
             },
         ),
         ReturnShape::Plain(_) => (
-            quote! { -> ::wasm_bindgen::JsValue },
+            quote! { -> ::std::result::Result<::wasm_bindgen::JsValue, ::wasm_bindgen::JsError> },
             quote! {
-                #state_accessor(|state| {
+                match #try_state_accessor(|state| {
                     let __result = #inner_name(state, #(#call_args),*);
-                    ::serde_wasm_bindgen::to_value(&__result).unwrap()
-                })
+                    ::serde_wasm_bindgen::to_value(&__result)
+                        .map_err(|e| ::wasm_bindgen::JsError::new(&e.to_string()))
+                }) {
+                    None => Err(::wasm_bindgen::JsError::new(
+                        "webtau: state not initialized — call set_state() first",
+                    )),
+                    Some(inner) => inner,
+                }
             },
         ),
         ReturnShape::Result { .. } => (
             quote! { -> ::std::result::Result<::wasm_bindgen::JsValue, ::wasm_bindgen::JsError> },
             quote! {
-                #state_accessor(|state| {
+                match #try_state_accessor(|state| {
                     match #inner_name(state, #(#call_args),*) {
-                        Ok(__val) => Ok(::serde_wasm_bindgen::to_value(&__val).unwrap()),
+                        Ok(__val) => ::serde_wasm_bindgen::to_value(&__val)
+                            .map_err(|e| ::wasm_bindgen::JsError::new(&e.to_string())),
                         Err(__err) => Err(::wasm_bindgen::JsError::new(&__err.to_string())),
                     }
-                })
+                }) {
+                    None => Err(::wasm_bindgen::JsError::new(
+                        "webtau: state not initialized — call set_state() first",
+                    )),
+                    Some(inner) => inner,
+                }
             },
         ),
     };
