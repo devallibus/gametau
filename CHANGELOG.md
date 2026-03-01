@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Changed
 - Workspace, crate, npm package, and template dependency versions moved to `0.5.1`.
 
+### Release Evidence
+- Publish workflow (`v0.5.1`) Green: [actions run](https://github.com/devallibus/gametau/actions/runs/22550637914)
+- Fix commit: [`d12eb55`](https://github.com/devallibus/gametau/commit/d12eb55)
+- Incident closure note: [issue comment](https://github.com/devallibus/gametau/issues/109#issuecomment-3980839013)
+
 ## [0.5.0] - 2026-03-01
 
 ### Added

@@ -35,6 +35,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - name: Node ESM consumer smoke (packed webtau)
+        run: |
+          cd packages/webtau
+          npm run smoke:esm-consumer
       - name: Resolve npm dist-tag
         run: |
           version="${GITHUB_REF_NAME#v}"

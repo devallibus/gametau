@@ -312,6 +312,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - name: Node ESM consumer smoke (packed webtau)
+        run: |
+          echo "Expected output: webtau import succeeds from packed local tarball in a clean Node consumer project."
+          cd packages/webtau
+          npm run smoke:esm-consumer
       - name: npm pack dry-run (webtau)
         run: |
           echo "Expected output: tarball metadata + file list and exit code 0."

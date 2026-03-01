@@ -81,6 +81,7 @@
   "scripts": {
     "build": "tsc",
     "lint": "biome check src",
+    "smoke:esm-consumer": "node ../../scripts/smoke-webtau-esm-consumer.mjs",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
   },

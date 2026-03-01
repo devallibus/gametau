@@ -59,6 +59,7 @@ Use this as the canonical gate artifact for `0.3.0+` releases. It complements
 ### G4: Release Reliability
 
 - [ ] `cargo publish --dry-run` succeeds for `webtau-macros`; for `webtau`, preflight either succeeds with dry-run or uses the CI-approved prerelease fallback (`cargo check -p webtau`) when crates index propagation causes dependency mismatch
+- [ ] Node ESM consumer smoke passes from packed local artifact: `npm run smoke:esm-consumer` in `packages/webtau`
 - [ ] `npm pack --dry-run` succeeds for `webtau`, `webtau-vite`, `create-gametau`
 - [ ] CI `publish-preflight` job is Green on the release commit
 
@@ -85,6 +86,13 @@ For each release, capture these references in the release issue/roadmap update:
 - [ ] Release evidence artifact or pasted summary showing `publish-npm`, `publish-crate`, `verify-publish`, and `consumer-smoke` outcomes
 - [ ] Tag URL and GitHub release URL (when the release is created)
 - [ ] Any follow-up risk/mitigation notes
+
+### Latest Snapshot (v0.5.1)
+
+- Tag URL: [`v0.5.1`](https://github.com/devallibus/gametau/tree/v0.5.1)
+- Publish workflow run: [actions run](https://github.com/devallibus/gametau/actions/runs/22550637914)
+- Incident/fix issue: [#109](https://github.com/devallibus/gametau/issues/109)
+- Incident closure evidence: [issue comment](https://github.com/devallibus/gametau/issues/109#issuecomment-3980839013)
 
 ## 4) Post-Publish Gate
 

@@ -100,6 +100,12 @@ After each S1 or S2 incident:
 3. Add a regression test targeting the exact failure path.
 4. Record the incident in the release notes of the fix release.
 
+### Latest Incident Reference (S1)
+
+- Incident: `webtau@0.5.0` Node ESM import failure (`ERR_MODULE_NOT_FOUND`) tracked in [#109](https://github.com/devallibus/gametau/issues/109).
+- Fix-forward release: `v0.5.1` with explicit `.js` internal ESM specifiers.
+- Corrective publish run (Green): [actions run](https://github.com/devallibus/gametau/actions/runs/22550637914)
+
 ## Verification Checklist Before Next Tag
 
 - `CI` on `master` is green.
