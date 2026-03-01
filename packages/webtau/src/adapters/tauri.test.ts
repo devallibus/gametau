@@ -1,8 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { setEventAdapter } from "../event";
-import { listen, emit } from "../event";
-import type { EventAdapter } from "../provider";
 import type { EventCallback } from "../event";
+import { emit, listen, setEventAdapter } from "../event";
+import type { EventAdapter } from "../provider";
 
 // ---------------------------------------------------------------------------
 // In-memory adapter for parity contract testing
