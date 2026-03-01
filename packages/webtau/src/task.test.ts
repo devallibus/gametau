@@ -219,6 +219,65 @@ describe("cancelTask", () => {
     expect(status.state).toBe("cancelled");
   });
 
+  test("onCancel callback is invoked when cancelTask fires", async () => {
+    let cancelCalled = false;
+
+    registerProvider({
+      id: "mock",
+      invoke: () => new Promise(() => {}),
+      convertFileSrc: (p) => p,
+    });
+
+    const taskId = await startTask("slow_op", undefined, {
+      onCancel: () => { cancelCalled = true; },
+    });
+
+    expect(cancelCalled).toBe(false);
+    await cancelTask(taskId);
+    expect(cancelCalled).toBe(true);
+  });
+
+  test("onCancel is not called on second cancel (idempotent)", async () => {
+    let cancelCount = 0;
+
+    registerProvider({
+      id: "mock",
+      invoke: () => new Promise(() => {}),
+      convertFileSrc: (p) => p,
+    });
+
+    const taskId = await startTask("slow_op", undefined, {
+      onCancel: () => { cancelCount++; },
+    });
+
+    await cancelTask(taskId);
+    await cancelTask(taskId);
+    expect(cancelCount).toBe(1);
+  });
+
+  test("onCancel async callback is awaited", async () => {
+    const order: string[] = [];
+
+    registerProvider({
+      id: "mock",
+      invoke: () => new Promise(() => {}),
+      convertFileSrc: (p) => p,
+    });
+
+    const taskId = await startTask("slow_op", undefined, {
+      onCancel: async () => {
+        await new Promise<void>((r) => setTimeout(r, 10));
+        order.push("cancel-done");
+      },
+    });
+
+    await cancelTask(taskId);
+    order.push("after-cancel");
+
+    // cancel-done should come before after-cancel because cancelTask awaits onCancel
+    expect(order).toEqual(["cancel-done", "after-cancel"]);
+  });
+
   test("cancelling an already-completed task is a no-op", async () => {
     let resolve!: (v: number) => void;
     const promise = new Promise<number>((res) => { resolve = res; });

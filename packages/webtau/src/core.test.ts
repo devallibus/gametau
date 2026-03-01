@@ -410,14 +410,49 @@ describe("provider registry", () => {
     expect(result).toBe("pong");
   });
 
-  test("provider invoke rejection propagates to caller", async () => {
+  test("provider invoke rejection is wrapped in WebtauError with PROVIDER_ERROR code", async () => {
     registerProvider({
       id: "failing",
       invoke: async () => { throw new Error("provider error"); },
       convertFileSrc: (p) => p,
     });
 
-    await expect(invoke("any_cmd")).rejects.toThrow("provider error");
+    try {
+      await invoke("any_cmd");
+      throw new Error("should have thrown");
+    } catch (err) {
+      expect(err).toBeInstanceOf(WebtauError);
+      const e = err as WebtauError;
+      expect(e.code).toBe("PROVIDER_ERROR");
+      expect(e.runtime).toBe("failing");
+      expect(e.command).toBe("any_cmd");
+      expect(e.message).toContain("provider error");
+      expect(e.hint).toContain("failing");
+    }
+  });
+
+  test("provider WebtauError passthrough is not double-wrapped", async () => {
+    const original = new WebtauError({
+      code: "PROVIDER_MISSING",
+      runtime: "custom",
+      command: "test_cmd",
+      message: "already structured",
+      hint: "do nothing",
+    });
+
+    registerProvider({
+      id: "structured",
+      invoke: async () => { throw original; },
+      convertFileSrc: (p) => p,
+    });
+
+    try {
+      await invoke("test_cmd");
+      throw new Error("should have thrown");
+    } catch (err) {
+      expect(err).toBe(original);
+      expect((err as WebtauError).code).toBe("PROVIDER_MISSING");
+    }
   });
 
   test("re-registration replaces previous provider", async () => {
@@ -495,6 +530,46 @@ describe("WebtauError envelope shape", () => {
       expect(webtauErr.message).toContain("network unavailable");
       expect(typeof webtauErr.hint).toBe("string");
       expect(webtauErr.hint.length).toBeGreaterThan(0);
+    }
+  });
+
+  test("WASM command execution error is wrapped in WebtauError", async () => {
+    configure({
+      loadWasm: async () => ({
+        exploding_cmd: () => { throw new Error("rust panic simulation"); },
+      }),
+    });
+
+    try {
+      await invoke("exploding_cmd");
+      throw new Error("should have thrown");
+    } catch (err) {
+      expect(err).toBeInstanceOf(WebtauError);
+      const e = err as WebtauError;
+      expect(e.code).toBe("PROVIDER_ERROR");
+      expect(e.runtime).toBe("wasm");
+      expect(e.command).toBe("exploding_cmd");
+      expect(e.message).toContain("rust panic simulation");
+    }
+  });
+
+  test("async WASM command rejection is wrapped in WebtauError", async () => {
+    configure({
+      loadWasm: async () => ({
+        async_fail: async () => { throw new Error("async wasm error"); },
+      }),
+    });
+
+    try {
+      await invoke("async_fail");
+      throw new Error("should have thrown");
+    } catch (err) {
+      expect(err).toBeInstanceOf(WebtauError);
+      const e = err as WebtauError;
+      expect(e.code).toBe("PROVIDER_ERROR");
+      expect(e.runtime).toBe("wasm");
+      expect(e.command).toBe("async_fail");
+      expect(e.message).toContain("async wasm error");
     }
   });
 

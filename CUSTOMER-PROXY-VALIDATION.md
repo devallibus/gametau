@@ -115,16 +115,6 @@ Trigger controlled failures (invalid args, missing command, uninitialized state)
 For each proxy validation run, store:
 
 1. Run metadata: date, branch, commit SHA, operator.
-2. Scenario results: CPV-1..CPV-5 pass/fail with notes.
-3. Logs and screenshots links.
-4. Known limits encountered and mitigations.
-5. Follow-up issue links for unresolved friction.
-
-## Evidence Bundle Template
-
-For each proxy validation run, store:
-
-1. Run metadata: date, branch, commit SHA, operator.
 2. Scenario results: CPV-1..CPV-8 pass/fail with notes.
 3. Logs and screenshots links.
 4. Known limits encountered and mitigations.

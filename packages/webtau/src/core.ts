@@ -172,7 +172,18 @@ export async function invoke<T = unknown>(
 ): Promise<T> {
   // 1. Explicit provider — delegate immediately.
   if (registeredProvider) {
-    return registeredProvider.invoke<T>(command, args);
+    try {
+      return await registeredProvider.invoke<T>(command, args);
+    } catch (err) {
+      if (err instanceof WebtauError) throw err;
+      throw new WebtauError({
+        code: "PROVIDER_ERROR",
+        runtime: registeredProvider.id,
+        command,
+        message: err instanceof Error ? err.message : String(err),
+        hint: `Provider "${registeredProvider.id}" threw while invoking "${command}". Check the provider implementation.`,
+      });
+    }
   }
 
   // 2. Auto-detect Tauri — lazily register a Tauri provider, then delegate.
@@ -206,10 +217,36 @@ export async function invoke<T = unknown>(
     });
   }
 
-  const result = args ? fn(args) : fn();
+  try {
+    const result = args ? fn(args) : fn();
 
-  // wasm_bindgen can return plain values or promises
-  return result instanceof Promise ? result : (result as T);
+    // wasm_bindgen can return plain values or promises
+    if (result instanceof Promise) {
+      try {
+        return await result;
+      } catch (asyncErr) {
+        if (asyncErr instanceof WebtauError) throw asyncErr;
+        throw new WebtauError({
+          code: "PROVIDER_ERROR",
+          runtime: "wasm",
+          command,
+          message: asyncErr instanceof Error ? asyncErr.message : String(asyncErr),
+          hint: `WASM command "${command}" rejected. Check the Rust implementation for errors.`,
+        });
+      }
+    }
+
+    return result as T;
+  } catch (execErr) {
+    if (execErr instanceof WebtauError) throw execErr;
+    throw new WebtauError({
+      code: "PROVIDER_ERROR",
+      runtime: "wasm",
+      command,
+      message: execErr instanceof Error ? execErr.message : String(execErr),
+      hint: `WASM command "${command}" threw an error. Check the Rust implementation.`,
+    });
+  }
 }
 
 /**

@@ -330,6 +330,20 @@ describe("create-gametau CLI", () => {
     expect(backendTs).toContain("cancelWorldTask");
   });
 
+  test("entry point auto-bootstraps Tauri event/provider parity", () => {
+    const dir = freshDir();
+    scaffold({ projectName: "bootstrap-game", template: "three" }, dir);
+    const projectDir = join(dir, "bootstrap-game");
+
+    const indexTs = readFileSync(join(projectDir, "src", "index.ts"), "utf-8");
+
+    // bootstrapTauri must be imported and called in Tauri path
+    expect(indexTs).toContain("bootstrapTauri");
+    expect(indexTs).toContain("webtau/adapters/tauri");
+    // Must branch on isTauri() so parity is automatic
+    expect(indexTs).toContain("isTauri()");
+  });
+
   test("backend seam exposes typed event subscription via comms service", () => {
     const dir = freshDir();
     scaffold({ projectName: "event-seam-game", template: "three" }, dir);
