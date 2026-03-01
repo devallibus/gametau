@@ -15,12 +15,14 @@ For normal release gating before/after tag cut, use `.github/release/RELEASE-GAT
 
 ## S1 — Broken Published Artifact
 
-### Detection signals
+### Detection signals (S1)
+
 - CI consumer smoke fails on a previously green tag.
 - User reports scaffolded project fails `bun install` or `bun run dev`.
 - npm install of `webtau` or `create-gametau` fails or produces type errors.
 
-### Response steps
+### Response steps (S1)
+
 1. Open a `severity:S1` issue referencing the broken version.
 2. Pull the broken tag from npm if consumer impact is confirmed: `npm deprecate webtau@X.Y.Z "broken: see #ISSUE"`.
 3. Prepare a patch on `development`, fast-track through CI.
@@ -29,31 +31,34 @@ For normal release gating before/after tag cut, use `.github/release/RELEASE-GAT
 
 ## S2 — Single Runtime Failure
 
-### Detection signals
+### Detection signals (S2)
+
 - Tauri desktop path works but web/WASM path panics (or vice versa).
 - A P0 gate is discovered to be Red post-release (task lifecycle, event parity, or diagnostics).
 
-### Response steps
+### Response steps (S2)
+
 1. Open a `severity:S2` issue with reproduction steps and affected runtime.
-2. Add a known-limits note to `SOLAR-TYCOON-GODOT-PORT-READINESS.md`.
+2. Add a known-limits note to the runtime portability readiness document (`RUNTIME-PORTABILITY-READINESS.md`).
 3. Prepare a fix on `development`, gate through P0 closure tests for the affected runtime.
 4. Tag a patch release after CI is Green.
 
 ## S3 — Non-Blocking Degradation
 
 1. Open a `severity:S3` issue.
-2. Add to the `SOLAR-TYCOON-GODOT-PORT-BACKLOG.md` P1 or P2 backlog.
+2. Add to the roadmap tracking issue/milestone P1 or P2 backlog.
 3. Include a workaround in the issue description.
 
 ## Publish Workflow Stages
 
 Current `Publish` workflow stages:
 
-- `ci` (baseline validation)
+- `ci` (baseline validation; skipped for `workflow_dispatch`)
 - `publish-npm` (npm publish)
 - `publish-crate` (crates.io publish)
 - `verify-publish` (registry installability/importability checks)
 - `consumer-smoke` (scaffold/install/build end-user flow)
+- `release-evidence` (evidence bundle artifact + run summary)
 
 Treat the first failing stage as the primary fault domain, but check downstream stages for secondary regressions.
 
@@ -98,7 +103,7 @@ After each S1 or S2 incident:
 ## Verification Checklist Before Next Tag
 
 - `CI` on `master` is green.
-- `Publish Preflight` checks pass (`cargo publish --dry-run`, `npm pack --dry-run`).
+- `Publish Preflight` checks pass (`cargo publish --dry-run` for `webtau-macros`; `webtau` dry-run or CI-approved fallback `cargo check -p webtau`; `npm pack --dry-run` for npm packages).
 - `.github/release/RELEASE-GATE-CHECKLIST.md` pre-tag items are complete.
 - Release tracking issues are updated with:
   - failing run reference
@@ -109,5 +114,5 @@ After each S1 or S2 incident:
 
 ## Contacts
 
-- Maintainer on-call: see `CODEOWNERS`.
+- Maintainer on-call: release PR assignee or latest release author.
 - Escalation: open a GitHub issue tagged `severity:S1` — maintainers are notified by email.
