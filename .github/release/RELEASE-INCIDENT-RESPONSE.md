@@ -3,6 +3,8 @@
 Runbook for `gametau` release incidents. Use this when a release is broken
 in production, a publish fails mid-flight, or a gate is discovered post-merge.
 
+For normal release gating before/after tag cut, use `.github/release/RELEASE-GATE-CHECKLIST.md`.
+
 ## Severity Levels
 
 | Level | Definition | Response time |
@@ -43,6 +45,47 @@ in production, a publish fails mid-flight, or a gate is discovered post-merge.
 2. Add to the `SOLAR-TYCOON-GODOT-PORT-BACKLOG.md` P1 or P2 backlog.
 3. Include a workaround in the issue description.
 
+## Publish Workflow Stages
+
+Current `Publish` workflow stages:
+
+- `ci` (baseline validation)
+- `publish-npm` (npm publish)
+- `publish-crate` (crates.io publish)
+- `verify-publish` (registry installability/importability checks)
+- `consumer-smoke` (scaffold/install/build end-user flow)
+
+Treat the first failing stage as the primary fault domain, but check downstream stages for secondary regressions.
+
+## Corrective Strategy
+
+- **No artifacts published:** fix forward on `master`, then publish next patch release.
+- **Partial artifacts published:** fix forward on `master`, bump patch version, publish next patch release, then deprecate superseded npm versions if needed.
+- **Never retag an existing release version.** Always issue a new patch tag (`vX.Y.Z+1` in semantic terms).
+
+## Implementing the Hotfix
+
+- Keep changes minimal and scoped to the failing stage.
+- Add or strengthen CI coverage so the same class of failure is caught before tag-time publish.
+- Validate locally where practical (build/tests/scaffold paths).
+- Commit with explicit intent (`fix(...)`, then `chore(release): prepare vX.Y.Z`).
+
+## Publishing the Corrective Release
+
+- Push hotfix commits to `master`.
+- Create and push a new tag.
+- Create a GitHub release for the new tag with clear incident/fix notes.
+
+## npm Deprecation for Superseded Versions
+
+If broken npm artifacts were already published, deprecate those versions with an upgrade message:
+
+```sh
+npm deprecate "create-gametau@<broken-version>" "Superseded by create-gametau@<fixed-version>. Please upgrade."
+```
+
+Apply this to each superseded version that should no longer be installed by users.
+
 ## Post-Incident Review
 
 After each S1 or S2 incident:
@@ -51,6 +94,18 @@ After each S1 or S2 incident:
 2. Update the release gate checklist with a new item if the incident exposed a gap.
 3. Add a regression test targeting the exact failure path.
 4. Record the incident in the release notes of the fix release.
+
+## Verification Checklist Before Next Tag
+
+- `CI` on `master` is green.
+- `Publish Preflight` checks pass (`cargo publish --dry-run`, `npm pack --dry-run`).
+- `.github/release/RELEASE-GATE-CHECKLIST.md` pre-tag items are complete.
+- Release tracking issues are updated with:
+  - failing run reference
+  - fix commits
+  - successful corrective run reference
+- Registry verification confirms expected published versions for npm and crates.io.
+- Roadmap/incident issues are closed or moved with explicit next actions.
 
 ## Contacts
 

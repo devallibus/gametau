@@ -13,29 +13,29 @@
  */
 
 import { invoke, registerProvider } from "../core";
-import type { CoreProvider } from "../provider";
 import type {
-  DialogAdapter,
-  EventAdapter,
-  FsAdapter,
-  WindowAdapter,
-} from "../provider";
+  MessageDialogOptions,
+  OpenDialogOptions,
+  SaveDialogOptions,
+} from "../dialog";
+import { setDialogAdapter } from "../dialog";
 import type { EventCallback, UnlistenFn } from "../event";
+import { setEventAdapter } from "../event";
 import type {
   CreateDirOptions,
   FsEntry,
   ReadDirOptions,
   RemoveOptions,
 } from "../fs";
-import type {
-  MessageDialogOptions,
-  OpenDialogOptions,
-  SaveDialogOptions,
-} from "../dialog";
-import { setWindowAdapter } from "../window";
-import { setEventAdapter } from "../event";
 import { setFsAdapter } from "../fs";
-import { setDialogAdapter } from "../dialog";
+import type {
+  CoreProvider,
+  DialogAdapter,
+  EventAdapter,
+  FsAdapter,
+  WindowAdapter,
+} from "../provider";
+import { setWindowAdapter } from "../window";
 
 // ── Window Adapter ──────────────────────────────────────────────────────────
 // Supported: isFullscreen, setFullscreen, innerSize, outerSize, setSize,
@@ -334,7 +334,7 @@ export function createElectrobunCoreProvider(): CoreProvider {
     id: "electrobun",
     invoke: async <T = unknown>(
       command: string,
-      args?: Record<string, unknown>,
+      _args?: Record<string, unknown>,
     ): Promise<T> => {
       // In a real Electrobun integration, this would delegate to
       // electrobun.ipc.invoke(). For now, we throw to indicate

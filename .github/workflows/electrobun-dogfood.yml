@@ -1,0 +1,102 @@
+name: Electrobun Dogfood
+
+on:
+  workflow_dispatch:
+    inputs:
+      electrobun_ref:
+        description: "Electrobun version/ref to test against"
+        required: false
+        type: string
+      verbose:
+        description: "Enable verbose logging"
+        required: false
+        default: false
+        type: boolean
+  schedule:
+    - cron: "0 6 * * 1" # Monday 6 AM UTC
+
+permissions:
+  contents: read
+
+jobs:
+  dogfood:
+    name: Dogfood (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.9
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run webtau package tests
+        id: webtau-tests
+        run: |
+          cd packages/webtau
+          bun run test 2>&1 | tee ../../webtau-test-results.log
+        env:
+          VERBOSE: ${{ inputs.verbose && '1' || '' }}
+
+      - name: Run adapter tests (experimental)
+        id: adapter-tests
+        continue-on-error: true
+        run: |
+          cd packages/webtau
+          if compgen -G "src/adapters/*.test.ts" > /dev/null 2>&1; then
+            bun test src/adapters/ 2>&1 | tee ../../adapter-test-results.log
+          else
+            echo "No adapter test files found, skipping." | tee ../../adapter-test-results.log
+          fi
+        shell: bash
+        env:
+          VERBOSE: ${{ inputs.verbose && '1' || '' }}
+
+      - name: Run Electrobun counter example smoke (experimental)
+        id: electrobun-smoke
+        continue-on-error: true
+        run: |
+          if [ -d examples/electrobun-counter ]; then
+            cd examples/electrobun-counter
+            bun install
+            bun run build:web 2>&1 | tee ../../electrobun-smoke-results.log
+          else
+            echo "Electrobun counter example not found, skipping." | tee electrobun-smoke-results.log
+          fi
+        shell: bash
+        env:
+          VERBOSE: ${{ inputs.verbose && '1' || '' }}
+
+      - name: Collect diagnostic info
+        if: always()
+        run: |
+          echo "=== Environment ===" > diagnostic-info.log
+          echo "OS: ${{ matrix.os }}" >> diagnostic-info.log
+          echo "Bun version:" >> diagnostic-info.log
+          bun --version >> diagnostic-info.log 2>&1
+          echo "Electrobun ref input: ${{ inputs.electrobun_ref || 'not specified' }}" >> diagnostic-info.log
+          echo "Verbose: ${{ inputs.verbose }}" >> diagnostic-info.log
+          echo "" >> diagnostic-info.log
+          echo "=== Step Outcomes ===" >> diagnostic-info.log
+          echo "webtau-tests: ${{ steps.webtau-tests.outcome }}" >> diagnostic-info.log
+          echo "adapter-tests: ${{ steps.adapter-tests.outcome }}" >> diagnostic-info.log
+          echo "electrobun-smoke: ${{ steps.electrobun-smoke.outcome }}" >> diagnostic-info.log
+        shell: bash
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dogfood-results-${{ matrix.os }}
+          path: |
+            webtau-test-results.log
+            adapter-test-results.log
+            electrobun-smoke-results.log
+            diagnostic-info.log
+          if-no-files-found: ignore

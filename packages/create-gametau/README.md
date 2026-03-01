@@ -1,6 +1,10 @@
 # create-gametau
 
-Scaffold a Rust game project that runs both as a native Tauri app and as a web build (WASM) from one codebase.
+Scaffold a Rust game project for the stable Web (WASM) + Tauri desktop path from one codebase.
+
+Electrobun is available as an experimental opt-in track and tracked via [Issue #75](https://github.com/devallibus/gametau/issues/75) and [Milestone v0.5.0 Complex Game Readiness](https://github.com/devallibus/gametau/milestone/10).
+
+> Repository note: `docs/` is intentionally local-only and not published in remote history.
 
 ## Quick Start
 
@@ -11,8 +15,10 @@ bun install
 bun run dev
 ```
 
-For a step-by-step scaffold-to-playable tutorial (browser and Tauri), see:
-[`docs/GETTING-STARTED.md`](../../docs/GETTING-STARTED.md)
+For project status and rollout context, see:
+- [Milestones](https://github.com/devallibus/gametau/milestones)
+- [Issue #75 (runtime flag gate)](https://github.com/devallibus/gametau/issues/75)
+- [Issue #84 (example/platform validation evidence)](https://github.com/devallibus/gametau/issues/84)
 
 ## Templates
 
@@ -35,7 +41,7 @@ bunx create-gametau my-game --template vanilla
 
 - `src-tauri/core` - pure Rust game logic
 - `src-tauri/commands` - shared command definitions for desktop + web
-- `src-tauri/app` - Tauri desktop shell
+- `src-tauri/app` - Tauri desktop shell (stable default desktop runtime)
 - `src-tauri/wasm` - WASM entry crate
 - `src` - frontend app wired to `webtau` and `webtau-vite`
 - `src/services` - production-ready service seams for backend invoke calls, persistence/settings, mission session snapshots, and event-driven comms
