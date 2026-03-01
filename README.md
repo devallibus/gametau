@@ -31,7 +31,7 @@ You write your game logic once in a plain Rust crate. gametau gives you:
 **Experimental (opt-in)**
 - **Desktop (Electrobun)** — under evaluation, not the default scaffolder/runtime path
 - Trial tracking: [Issue #84](https://github.com/devallibus/gametau/issues/84)
-- Decision/release track: [Milestone v0.5.0-alpha](https://github.com/devallibus/gametau/milestone/8)
+- Decision/release track: [Milestone v0.5.0 Complex Game Readiness](https://github.com/devallibus/gametau/milestone/10)
 
 ---
 

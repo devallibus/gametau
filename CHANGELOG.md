@@ -23,11 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Provider registry APIs in `webtau/core` (`registerProvider`, `getProvider`, `resetProvider`) with lazy Tauri provider self-registration
 - Adapter override hooks in `webtau/window`, `webtau/event`, `webtau/fs`, and `webtau/dialog`
 - Dedicated lazy Tauri auto-registration test coverage in `webtau/src/core.test.ts`
-- Experimental trial status tracked in [issue #84](https://github.com/devallibus/gametau/issues/84) and [milestone v0.5.0-alpha](https://github.com/devallibus/gametau/milestone/8)
+- Experimental trial status tracked in [issue #84](https://github.com/devallibus/gametau/issues/84) and [milestone v0.5.0 Complex Game Readiness](https://github.com/devallibus/gametau/milestone/10)
 - Isolated `examples/electrobun-counter` trial path with provider-based Electrobun bridge wiring
 
 ### Changed
-- Runtime support messaging now explicitly distinguishes Stable (Web + Tauri) vs Experimental (Electrobun) in `README.md` and `packages/create-gametau/README.md`, with rollout tracked in [milestone v0.5.0-alpha](https://github.com/devallibus/gametau/milestone/8)
+- Runtime support messaging now explicitly distinguishes Stable (Web + Tauri) vs Experimental (Electrobun) in `README.md` and `packages/create-gametau/README.md`, with rollout tracked in [milestone v0.5.0 Complex Game Readiness](https://github.com/devallibus/gametau/milestone/10)
 - Workspace, crate, npm package, and template dependency versions moved to `0.5.0-alpha.1`
 
 ### Experimental
