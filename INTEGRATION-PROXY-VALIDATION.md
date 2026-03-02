@@ -1,44 +1,41 @@
-# Integration Proxy Validation Track
+# Integration Validation Runbook
 
-Use this runbook to validate `gametau` integration readiness using only public repository assets.
+Use this runbook to validate that gametau's core workflows function end-to-end using only public repository assets. Run it before a release or when onboarding a new integration.
 
-## Purpose
+## What this covers
 
-- Validate integration workflows end-to-end using only public repo assets.
-- Stress the same seams downstream games and apps will use (`commands.rs`, typed frontend wrappers, runtime bridge, persistence/eventing).
-- Produce an evidence bundle that release gates can consume.
+- Scaffold boot and project structure
+- Adding new commands and calling them from the frontend
+- Persistence, events, task lifecycle, and diagnostics
+- Installing and using published artifacts in a clean consumer environment
 
-## Scope Boundaries
+Validation is intentionally limited to gametau's own products (runtime bridge, templates, docs) using the public repo. App-specific code in downstream projects is out of scope.
 
-- Requirements are derived from public contract surfaces and shipped API behavior.
-- Validation target is `gametau` products: runtime bridge, templates, docs, and release process.
-- App-specific implementation details outside this repository are intentionally out of scope.
+## Validation assets
 
-## Validation Assets
-
-- Open showcase baseline: `examples/battlestation`
+- Showcase baseline: `examples/battlestation`
 - Fresh scaffold baseline: `bunx create-gametau integration-proxy`
-- Template seams under direct test:
+- Template seams under test:
   - `packages/create-gametau/templates/base/src/index.ts`
   - `packages/create-gametau/templates/base/src/services/backend.ts`
   - `packages/create-gametau/templates/base/src-tauri/commands/src/commands.rs`
 
-## Scenario Matrix
+## Scenario matrix
 
 | Scenario | Goal | Required evidence |
 | --- | --- | --- |
-| CPV-1: Scaffold boot | Fresh scaffold runs in web and desktop modes without architecture rewrites | Terminal logs/screenshots for `bun run dev` and `bun run dev:tauri` |
-| CPV-2: Command extension seam | Add one new typed command from Rust to frontend UI path | Patch/diff summary, command test output, UI invocation proof |
-| CPV-3: Persistence + eventing | Persist and reload state; emit/listen app event in both targets | Round-trip output logs and event callback verification |
-| CPV-4: Diagnostics quality | Trigger one known failure (for example missing command export) and verify error clarity | Captured error output + remediation steps applied |
-| CPV-5: Release-consumer smoke | Validate install/use from published artifacts path | Workflow links and smoke script output |
-| CPV-6: Long-running task lifecycle | Validate non-blocking `start/poll/cancel` behavior for heavy operations | Task status trace, cancellation proof, UI responsiveness capture |
-| CPV-7: Backend event parity | Validate ordered backend progress/state events and listener lifecycle | Ordered event log, multi-listener output, unlisten proof |
-| CPV-8: Structured diagnostics envelope | Validate error payload shape for invalid args/state-init/missing command paths | Error snapshot asserting `code/runtime/command/message/hint` fields |
+| CPV-1: Scaffold boot | A freshly scaffolded project starts in both web and Tauri modes without any changes to the generated structure | Startup logs and one screenshot per target |
+| CPV-2: Command extension | Add one typed command in Rust and call it from the TypeScript frontend — proving the seam works end-to-end | Diff, command test output, UI invocation screenshot |
+| CPV-3: Persistence + eventing | Write and reload a small state payload with `webtau/fs`; emit and receive an event with `webtau/event` — both in web and desktop | Round-trip logs, event callback output |
+| CPV-4: Diagnostics quality | Trigger a controlled failure (for example, call a missing command) and confirm the error output points clearly to a fix | Captured error output plus corrected re-run |
+| CPV-5: Release consumer smoke | Install and use gametau from published npm/crates.io artifacts in a clean environment | Workflow links and smoke script output |
+| CPV-6: Long-running task lifecycle | Use `startTask`/`pollTask`/`cancelTask` for a slow operation and verify the UI stays responsive throughout | Task status trace, cancellation proof, responsiveness capture |
+| CPV-7: Backend event parity | Emit ordered progress events from the backend and verify delivery order, multi-listener behavior, and clean unlisten | Ordered event log, multi-listener output, unlisten proof |
+| CPV-8: Structured diagnostics envelope | Trigger three failure modes (invalid args, missing command, uninitialized state) and assert the full error shape | Error snapshots asserting `code`, `runtime`, `command`, `message`, `hint` |
 
-## Step-by-Step Procedure
+## Step-by-step procedure
 
-### 1) Run scaffold baseline
+### 1. Run the scaffold baseline (CPV-1)
 
 ```bash
 bunx create-gametau integration-proxy
@@ -50,101 +47,84 @@ bun run dev:tauri
 
 Record startup logs and one screenshot per target.
 
-### 2) Validate command extension seam
+### 2. Extend with a new command (CPV-2)
 
-Add one command in scaffolded `src-tauri/commands/src/commands.rs`, add a typed wrapper in `src/services/backend.ts`, and call it from the UI.
+Add one command to `src-tauri/commands/src/commands.rs`, a typed wrapper to `src/services/backend.ts`, and call it from the UI.
 
-Expected outcome:
+Expected: the command compiles for both desktop and `wasm32`, and the frontend call resolves in both runtimes.
 
-- Command compiles for desktop + wasm.
-- Frontend call succeeds in both web and Tauri runtime.
+### 3. Validate persistence and eventing (CPV-3)
 
-### 3) Validate persistence and eventing
+Use `webtau/fs` and `webtau/path` to write and read a small profile payload. Use `webtau/event` to emit a test event and receive it in a listener.
 
-Use `webtau/fs` + `webtau/path` to write/read a small profile payload, and `webtau/event` to emit/listen a test event.
+Expected: data survives a round-trip without shape drift; the event callback fires in both web and Tauri.
 
-Expected outcome:
+### 4. Validate diagnostics (CPV-4)
 
-- Data round-trips without shape drift.
-- Event callback receives payload in both runtime targets.
+Call a command that does not exist. Confirm the error output includes a clear remediation (for example, a list of available exports or a `configure()` call pattern).
 
-### 4) Validate diagnostics path
+Expected: error is actionable; a corrected run succeeds without additional hidden setup.
 
-Introduce one controlled failure (for example call a non-existent command) and confirm the error points to a clear fix path.
+### 5. Validate published artifacts (CPV-5)
 
-Expected outcome:
+Install `webtau` and `create-gametau` from the published npm/crates.io artifacts in a clean directory (not the monorepo). Scaffold a project and confirm it builds.
 
-- Error includes actionable guidance.
-- A corrected run succeeds without additional hidden setup.
+Expected: published artifacts install and run; any issue is documented with a mitigation.
 
-### 5) Capture release-consumer smoke
+### 6. Validate task lifecycle (CPV-6)
 
-Run consumer smoke using published artifact expectations from release workflows. Capture URLs and logs in the evidence bundle.
+Start a synthetic slow command with `startTask`, poll with `pollTask`, and cancel with `cancelTask`. Assert:
 
-Expected outcome:
+- The UI render loop stays responsive while the task is running.
+- Progress increments monotonically.
+- Cancellation stops further state mutation when `startTask(..., { onCancel })` is wired to backend logic.
 
-- Published artifacts install and run in a clean consumer environment.
-- Any issue is documented with mitigation or fix-forward note.
+### 7. Validate backend event parity (CPV-7)
 
-### 6) Validate long-running task lifecycle
+Run a backend path that emits ordered progress events. Assert:
 
-Run one synthetic heavy command through `start/poll/cancel` and assert:
+- Events arrive in order.
+- Two independent listeners receive consistent payloads.
+- After `unlisten()`, no further callbacks fire.
 
-- UI/render loop remains responsive.
-- Progress moves monotonically.
-- Cancellation stops further state mutation (when `startTask(..., { onCancel })` is wired to backend cancellation).
+### 8. Validate diagnostics envelope shape (CPV-8)
 
-### 7) Validate backend event parity
+Trigger three controlled failures and assert each error payload contains `code`, `runtime`, `command`, `message`, and `hint`:
 
-Run one progress-emitting backend path and assert:
+| Failure | Expected `code` | Expected `hint` |
+|---|---|---|
+| Call a missing command | `UNKNOWN_COMMAND` | Lists available exports |
+| WASM module load failure | `LOAD_FAILED` | Contains the original error message |
+| `invoke()` before `configure()` | `NO_WASM_CONFIGURED` | Shows the correct `configure()` call pattern |
 
-- Event order is preserved.
-- Multiple listeners receive consistent payloads.
-- Unlisten prevents further callbacks.
+## Evidence bundle
 
-### 8) Validate structured diagnostics envelope
+For each validation run, record:
 
-Trigger controlled failures (invalid args, missing command, uninitialized state) and assert:
+1. Run metadata: date, branch, commit SHA, and who ran it.
+2. CPV-1..CPV-8 results: pass or fail, with notes on any failures.
+3. Links to logs, screenshots, or CI run output.
+4. Known gaps or friction encountered, with mitigations or follow-up issues.
 
-- No panic crash behavior.
-- Error payload contains `code`, `runtime`, `command`, `message`, and `hint`.
-- Docs remediation steps resolve each failure path.
+### CPV-6 artifacts
 
-## Evidence Bundle Template
+- `task.test.ts` output confirming all lifecycle tests pass.
+- Cancellation proof: `cancelTask()` transitions state to `"cancelled"`; subsequent `pollTask()` returns `{ state: "cancelled" }`.
+- Evidence that the render loop was not blocked during a simulated heavy task.
 
-For each proxy validation run, store:
+### CPV-7 artifacts
 
-1. Run metadata: date, branch, commit SHA, operator.
-2. Scenario results: CPV-1..CPV-8 pass/fail with notes.
-3. Logs and screenshots links.
-4. Known limits encountered and mitigations.
-5. Follow-up issue links for unresolved friction.
+- `tauri.test.ts` parity contract output (ordered delivery, multi-listener, unlisten precision).
+- `event.test.ts` DOM bridge parity output (same contract on web).
+- Multi-listener log showing both listeners received identical payloads.
+- Unlisten proof: listener count drops to zero; no further callbacks.
 
-### CPV-6 Evidence Artifacts (Long-Running Task Lifecycle)
+### CPV-8 artifacts
 
-- `task.test.ts` output confirming all 20 lifecycle tests pass.
-- Cancellation proof: `cancelTask()` transitions state to "cancelled" and subsequent `pollTask()` returns `{ state: "cancelled" }`.
-- UI responsiveness capture: render loop remains unblocked during a simulated heavy `startTask()` call.
+- `core.test.ts` `WebtauError` envelope shape test output (all passing).
+- Error snapshots for each of the three failure modes above, asserting all five envelope fields are present.
 
-### CPV-7 Evidence Artifacts (Backend Event Parity)
+## Pass criteria
 
-- `tauri.test.ts` parity contract output (ordered delivery, multi-listener, unlisten precision — all pass).
-- `event.test.ts` DOM bridge parity output (same contract on web path).
-- Multi-listener log showing both listeners receive identical payloads.
-- Unlisten proof: listener count drops to 0 after `unlisten()`, no further callbacks.
-
-### CPV-8 Evidence Artifacts (Structured Diagnostics Envelope)
-
-- `core.test.ts` WebtauError envelope shape test output (all pass).
-- Error snapshot asserting presence of `code`, `runtime`, `command`, `message`, `hint` for each of:
-  - Missing command: `code: "UNKNOWN_COMMAND"`, `hint` lists available exports.
-  - Load failure: `code: "LOAD_FAILED"`, `message` contains original error.
-  - No WASM configured: `code: "NO_WASM_CONFIGURED"`, `hint` points to `configure()`.
-
-## Pass Criteria
-
-- CPV-1..CPV-8 pass, or open failures have accepted mitigations and owners.
-- Required docs remain accurate after the run:
-  - `README.md`
-  - `.github/release/RELEASE-GATE-CHECKLIST.md`
-  - `.github/release/RELEASE-INCIDENT-RESPONSE.md`
+- CPV-1..CPV-8 pass, or any failures have documented mitigations and assigned owners.
+- These docs remain accurate after the run: `README.md`, `.github/release/RELEASE-GATE-CHECKLIST.md`, `.github/release/RELEASE-INCIDENT-RESPONSE.md`.

@@ -10,300 +10,110 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [0.5.2] - 2026-03-01
 
 ### Added
-- Reusable Node ESM consumer smoke script (`scripts/smoke-webtau-esm-consumer.mjs`) to validate `webtau` importability from packed tarballs in clean environments.
+- Node ESM consumer smoke script (`scripts/smoke-webtau-esm-consumer.mjs`) to validate `webtau` importability from packed tarballs in clean environments.
 - Package-level smoke hook in `webtau`: `npm run smoke:esm-consumer`.
 
 ### Changed
-- CI `publish-preflight` and tag-time publish flow now run Node ESM consumer smoke before npm pack/publish steps.
-- Release gate docs now include explicit Node ESM consumer smoke as a release reliability requirement.
-- Workspace, crate, npm package, and template dependency versions moved to `0.5.2`.
-
-### Release Evidence
-- Publish workflow (`v0.5.2`) Green: [actions run](https://github.com/devallibus/gametau/actions/runs/22551613028)
-- Release commit: [`ee5ac65`](https://github.com/devallibus/gametau/commit/ee5ac65)
-- Release notes: [v0.5.2](https://github.com/devallibus/gametau/releases/tag/v0.5.2)
+- CI publish preflight and tag-time publish flow now run Node ESM consumer smoke before npm pack/publish steps.
 
 ## [0.5.1] - 2026-03-01
 
 ### Fixed
-- Internal ESM relative imports in `webtau` now use explicit `.js` specifiers, fixing Node consumer imports that failed with `ERR_MODULE_NOT_FOUND` in `0.5.0` (`import("webtau")` path). See [#109](https://github.com/devallibus/gametau/issues/109).
-
-### Changed
-- Workspace, crate, npm package, and template dependency versions moved to `0.5.1`.
-
-### Release Evidence
-- Publish workflow (`v0.5.1`) Green: [actions run](https://github.com/devallibus/gametau/actions/runs/22550637914)
-- Fix commit: [`d12eb55`](https://github.com/devallibus/gametau/commit/d12eb55)
-- Incident closure note: [issue comment](https://github.com/devallibus/gametau/issues/109#issuecomment-3980839013)
+- Internal ESM relative imports in `webtau` now use explicit `.js` specifiers, fixing `ERR_MODULE_NOT_FOUND` when consuming `webtau` from Node in `0.5.0`. See [#109](https://github.com/devallibus/gametau/issues/109).
 
 ## [0.5.0] - 2026-03-01
 
 ### Added
-- `webtau/task` lifecycle surface (`startTask`, `pollTask`, `cancelTask`, progress helpers) with deterministic state transition tests.
-- `webtau/adapters/tauri` adapter bootstrap surface (`bootstrapTauri`, `createTauriCoreProvider`, `createTauriEventAdapter`) for explicit desktop parity wiring.
-- Structured diagnostics envelope support in `webtau` (`WebtauError` with `code`, `runtime`, `command`, `message`, `hint`) plus non-panicking Rust/WASM bridge behavior.
+- `webtau/task` lifecycle surface: `startTask`, `pollTask`, `cancelTask`, and progress helpers for non-blocking long-running operations.
+- `webtau/adapters/tauri` adapter bootstrap: `bootstrapTauri()`, `createTauriCoreProvider()`, `createTauriEventAdapter()` for explicit Tauri event and invoke wiring.
+- Structured diagnostics envelope (`WebtauError` with `code`, `runtime`, `command`, `message`, `hint`) throughout the runtime bridge and WASM command wrappers.
+- Runtime provider contracts in `webtau/provider`: `CoreProvider`, `WindowAdapter`, `EventAdapter`, `FsAdapter`, `DialogAdapter`.
+- Provider registry APIs in `webtau/core`: `registerProvider`, `getProvider`, `resetProvider` with lazy Tauri auto-registration.
+- Adapter override hooks in `webtau/window`, `webtau/event`, `webtau/fs`, and `webtau/dialog`.
+- Experimental Electrobun runtime as an opt-in trial path (install with `webtau@alpha`; not the default scaffold target). See `examples/electrobun-counter` and [active milestones](https://github.com/devallibus/gametau/milestones).
 
 ### Changed
-- `create-gametau` base scaffold now wires `bootstrapTauri()` in desktop mode and ships task lifecycle backend seams in `src/services/backend.ts`.
-- Release/readiness docs now reference only public tracked artifacts for gate evidence and integration validation.
-- API docs generation now includes all public `webtau` entrypoints from the export map, including `task`, `provider`, and `adapters/*`.
-- Workspace, crate, npm package, and template dependency versions moved to `0.5.0`.
-- Stale milestone/issue tracking links in READMEs replaced with durable `/milestones` and `/issues` URLs.
-- `webtau/path` docs corrected: `delimiter` shipped in 0.4.0, only `resolveResource` remains unimplemented.
-
-### Version Coherence
-- `webtau` npm package jumps from `0.4.0` → `0.5.0` (aligning with `webtau-vite` and `create-gametau` on a stable line).
-- Template dependency pins for `three` and `pixi` jump from `^0.4.0` → `^0.5.0` to match.
-- Template `wasm/Cargo.toml` pin jumps from `0.4.0` → `0.5.0` to match.
-
-## [0.5.0-alpha.2] - 2026-02-28
-
-### Added
-- Dedicated `Electrobun Counter Smoke` CI job in `.github/workflows/ci.yml` that validates `examples/electrobun-counter` with both `build:web` and `build:electrobun`.
-- Failure artifact upload for Electrobun smoke outputs (`dist` and `build`) to speed up CI triage.
-
-### Changed
-- Workspace, crate, npm package, and template dependency versions moved to `0.5.0-alpha.2`.
-
-## [0.5.0-alpha.1] - 2026-02-28
-
-### Added
-- Runtime provider contracts in `webtau/provider` (`CoreProvider`, `WindowAdapter`, `EventAdapter`, `FsAdapter`, `DialogAdapter`)
-- Provider registry APIs in `webtau/core` (`registerProvider`, `getProvider`, `resetProvider`) with lazy Tauri provider self-registration
-- Adapter override hooks in `webtau/window`, `webtau/event`, `webtau/fs`, and `webtau/dialog`
-- Dedicated lazy Tauri auto-registration test coverage in `webtau/src/core.test.ts`
-- Experimental trial status tracked in [milestone v0.5.0 Complex Game Readiness](https://github.com/devallibus/gametau/milestone/10)
-- Isolated `examples/electrobun-counter` trial path with provider-based Electrobun bridge wiring
-
-### Changed
-- Runtime support messaging now explicitly distinguishes Stable (Web + Tauri) vs Experimental (Electrobun) in `README.md` and `packages/create-gametau/README.md`, with rollout tracked in [milestone v0.5.0 Complex Game Readiness](https://github.com/devallibus/gametau/milestone/10)
-- Workspace, crate, npm package, and template dependency versions moved to `0.5.0-alpha.1`
-
-### Experimental
-- Electrobun support remains opt-in and is distributed on the `alpha` line so `latest` stable users are unaffected.
-- Install alpha packages explicitly for trials:
-  - `npm install webtau@alpha webtau-vite@alpha create-gametau@alpha`
+- `create-gametau` base scaffold now wires `bootstrapTauri()` in desktop mode and ships task lifecycle seams in `src/services/backend.ts`.
+- API docs generation now covers all public `webtau` entrypoints including `task`, `provider`, and `adapters/*`.
+- `webtau/path` docs corrected: `delimiter` shipped in `0.4.0`; only `resolveResource` remains unimplemented.
 
 ## [0.4.0] - 2026-02-27
 
 ### Added
-- `convertFileSrc()` web shim in `webtau/core` for asset URL passthrough
-- `delimiter()`, `cacheDir()`, `configDir()`, `dataDir()`, `localDataDir()` web shims in `webtau/path`
-- `getIdentifier()` / `setAppIdentifier()` web shim in `webtau/app`
-- `copyFile()` and `rename()` virtual filesystem operations in `webtau/fs`
-- Workspace lint baseline with Biome plus CI lint enforcement
-- Expanded contract and edge-case test coverage across `webtau`, `webtau-vite`, and `webtau-macros`
-- Battlestation scenario smoke coverage in CI for gameplay success/failure assertions
-
-### Changed
-- Workspace, crate, npm package, and template dependency versions bumped to `0.4.0`
-- Generated artifact hygiene policy now enforced for local logs and Tauri schema outputs
-- Battlestation A130 design/showcase docs aligned with shipped command contract and combat semantics
+- `convertFileSrc()` web shim in `webtau/core` for asset URL passthrough.
+- `delimiter()`, `cacheDir()`, `configDir()`, `dataDir()`, `localDataDir()` web shims in `webtau/path`.
+- `getIdentifier()` / `setAppIdentifier()` web shim in `webtau/app`.
+- `copyFile()` and `rename()` virtual filesystem operations in `webtau/fs`.
+- Workspace lint baseline with Biome plus CI enforcement.
+- Battlestation scenario smoke coverage in CI.
 
 ### Fixed
-- API docs and release evidence artifact uploads now validate outputs and include hidden directories, preventing false-green publish runs
+- API docs artifact uploads now validate outputs and include hidden directories, preventing false-green publish runs.
 
 ## [0.3.1] - 2026-02-27
 
 ### Added
-- Site stack now includes Tailwind CSS v4 with Vite pipeline wiring
-- Battlestation radar renderer migrated from Canvas2D to Three.js with phase-2 visual polish
+- Battlestation radar renderer migrated from Canvas2D to Three.js with improved visual polish.
 
 ### Changed
-- Battlestation now uses responsive layout and DPR-aware canvas sizing for sharper rendering across viewport sizes
-- Workspace, crate, npm package, and template dependency versions bumped to `0.3.1`
+- Battlestation now uses responsive layout and DPR-aware canvas sizing for sharper rendering across viewport sizes.
 
 ### Fixed
-- `webtau-vite` now supports graceful fallback: when `wasm-pack` is unavailable and valid prebuilt artifacts exist, web builds/dev startup reuse them instead of hard-failing
-- `webtau-vite` fallback validation is stricter (paired `*_bg.wasm` + loader `.js` output) and fails fast when reusable artifacts are missing or incomplete
-- `webtau-vite` dev Rust watch rebuilds now clearly disable in fallback mode; `wasm-pack` remains required for fresh Rust/WASM builds and rebuild loops
+- `webtau-vite` now falls back gracefully when `wasm-pack` is unavailable but valid prebuilt artifacts exist in `wasmOutDir`, allowing web builds and dev startup to continue without a fresh compile.
+- Fallback validation is stricter: requires a paired `*_bg.wasm` and loader `.js`; fails fast when reusable artifacts are missing or incomplete.
+- Rust watch rebuilds are clearly disabled in fallback mode; `wasm-pack` remains required for fresh WASM builds and the hot-reload loop.
 
 ## [0.3.0] - 2026-02-27
 
 ### Added
-- Battlestation flagship showcase example (`examples/battlestation`) covering the full module story (`input`, `audio`, `assets`, `fs/path`, `event`, `app`) across web + desktop
-- Battlestation design/reuse rollout tracked in [roadmap issue #6](https://github.com/devallibus/gametau/issues/6)
-- Canonical stable release gate artifact in `.github/release/RELEASE-GATE-CHECKLIST.md` plus publish-time `Release Evidence Bundle` workflow artifact
-
-### Changed
-- Workspace, crate, npm package, and template dependency versions moved from prerelease to stable `0.3.0`
-- `create-gametau` templates now ship a production-oriented service layer (`settings`, `session`, `comms`, shared contracts) as default extension seams
-- CI wasm codegen checks now include `examples/battlestation`
-- README/Getting Started examples list now positions battlestation as flagship showcase
-
-### Stabilized
-- `app/path` parity shims, parity matrix docs, and release evidence discipline from the `0.3.0-alpha.2` line are now part of stable `0.3.0`
-
-## [0.3.0-alpha.2] - 2026-02-27
-
-### Added
-- Runtime parity shims for `@tauri-apps/api/app` and `@tauri-apps/api/path` (`webtau/app`, `webtau/path`)
-- `webtau-vite` alias coverage for `@tauri-apps/api/app` and `@tauri-apps/api/path`
-- Function-level parity rollout tracked in [roadmap issue #6](https://github.com/devallibus/gametau/issues/6)
-
-### Fixed
-- Prerelease version alignment so tag-triggered publish uses unreleased `0.3.0-alpha.2` manifests instead of previously published `0.2.1` versions
-- `webtau/app` setter signatures now accept `null` reset values without type-unsafe casts in tests
-
-### Changed
-- Workspace, crate, and npm package versions bumped to `0.3.0-alpha.2`
-- `create-gametau` template dependencies now target `webtau`/`webtau-vite` `^0.3.0-alpha.2` and Rust `webtau = "0.3.0-alpha.2"`
+- Battlestation flagship showcase (`examples/battlestation`) — full module coverage (`input`, `audio`, `assets`, `fs/path`, `event`, `app`) running across web and desktop.
+- `webtau/app` and `webtau/path` runtime parity shims, plus `webtau-vite` alias coverage for both.
+- `create-gametau` templates now include a production-oriented service layer (`settings`, `session`, `comms`, and shared contracts) as extension seams.
 
 ## [0.2.1] - 2026-02-26
 
 ### Added
-- New onboarding and operations docs: scaffold-to-playable tutorial, release incident response checklist, and automated API docs publication path
-- Web parity shims for `@tauri-apps/api` modules: `fs`, `dialog`, and `event`
-- Gameplay foundation modules in `webtau`: `input`, `audio`, and `assets`
-- Pong example integration path that exercises input, audio, and asset loading together
+- Web parity shims for `@tauri-apps/api` modules: `fs`, `dialog`, and `event`.
+- Gameplay foundation modules: `webtau/input`, `webtau/audio`, and `webtau/assets`.
+- Pong example exercising input, audio, and asset loading together.
 
 ### Fixed
-- PR-time scaffold smoke now rewrites scaffolded Rust `webtau` dependencies to the local workspace crate so CI can validate unreleased lines before crates.io publish
-
-### Changed
-- `create-gametau` templates now target `webtau`/`webtau-vite` `^0.2.0` and Rust `webtau = "0.2"` for scaffolded projects
-- README roadmap now reflects `0.2.x` as the current stable line
-- Release versions bumped to `0.2.1` for `webtau`, `webtau-vite`, `create-gametau`, `webtau`, and `webtau-macros`
+- PR-time scaffold smoke now rewrites scaffolded Rust `webtau` dependencies to the local workspace crate so CI validates unreleased lines before crates.io publish.
 
 ## [0.1.4] - 2026-02-26
 
 ### Fixed
-- Hyphenated scaffold names now generate valid Rust module identifiers in templates (e.g. `my-game` → `my_game`) for commands/app/wasm imports
-- Consumer smoke builds now work with the existing `smoke-game` scaffold target name
-
-### Changed
-- Scaffolder now applies Rust identifier normalization for `{{PROJECT_NAME}}_` template usages while preserving display/package names
-- Release versions bumped to `0.1.4` for `webtau`, `webtau-vite`, `create-gametau`, `webtau`, and `webtau-macros`
+- Hyphenated scaffold names now generate valid Rust module identifiers in templates (e.g. `my-game` → `my_game`).
 
 ## [0.1.3] - 2026-02-26
 
 ### Fixed
-- Scaffolded template Rust builds no longer fail on `wasm32-unknown-unknown` due to `getrandom` feature gating from `rand` defaults
-- Consumer smoke now progresses through scaffold/install/build for newly published `create-gametau` templates
-
-### Changed
-- Template `rand` dependency now disables default features and enables only `std` + `std_rng`
-- Release versions bumped to `0.1.3` for `webtau`, `webtau-vite`, `create-gametau`, `webtau`, and `webtau-macros`
+- Scaffolded template Rust builds no longer fail on `wasm32-unknown-unknown` due to `getrandom` feature gating.
+- Consumer smoke now completes scaffold, install, and build steps for newly published `create-gametau` templates.
 
 ## [0.1.2] - 2026-02-26
 
 ### Fixed
-- `create-gametau` now executes correctly when launched through npm-style `node_modules/.bin` shims (previously it could no-op and exit `0`)
-- Release verification now asserts CLI version output and fails if `create-gametau` does not actually execute
-- Consumer smoke scaffolding now verifies the scaffolded directory exists immediately after CLI invocation
-
-### Changed
-- Release versions bumped to `0.1.2` for `webtau`, `webtau-vite`, `create-gametau`, `webtau`, and `webtau-macros`
+- `create-gametau` now executes correctly when launched through `node_modules/.bin` shims (previously could silently exit `0`).
+- Release verification now asserts CLI version output and fails if `create-gametau` does not execute.
+- Consumer smoke now verifies the scaffolded directory exists immediately after CLI invocation.
 
 ## [0.1.1] - 2026-02-26
 
 ### Added
-- CI now enforces MSRV `1.77` with a dedicated `MSRV (1.77)` workflow job
-- Publish workflow now verifies npm/crates.io artifacts after release before declaring success
-- Publish workflow now includes a registry consumer smoke test and manual `workflow_dispatch` verification path
-
-### Changed
-- `webtau` and `webtau-macros` now inherit `rust-version` from workspace metadata for published crate manifests
-- Release versions bumped to `0.1.1` for `webtau`, `webtau-vite`, `create-gametau`, `webtau`, and `webtau-macros`
+- CI now enforces MSRV `1.77` with a dedicated workflow job.
+- Publish workflow verifies npm and crates.io artifacts after release before declaring success.
+- Publish workflow includes a registry consumer smoke test and manual `workflow_dispatch` verification path.
 
 ## [0.1.0] - 2026-02-26
 
-First stable release. Deploy Tauri games to web + desktop from one codebase.
-
-### Highlights
-- **`webtau` npm package** — `invoke()` universal router with automatic Tauri/WASM detection, `isTauri()` runtime check, window shims, and DPI utilities
-- **`webtau-vite` npm package** — Vite plugin with wasm-pack automation, Rust file watching, `@tauri-apps/api` import aliasing, and optional wasm-opt
-- **`create-gametau` CLI** — project scaffolder with Three.js, PixiJS, and vanilla Canvas2D templates
-- **`webtau` Rust crate** — `#[webtau::command]` proc macro (generates `#[tauri::command]` + `#[wasm_bindgen]` from one function) and `wasm_state!` macro for WASM thread-local state
-- **`webtau-macros` Rust crate** — proc macro internals for `#[webtau::command]`
-
-### Published Artifacts
-- npm: `webtau`, `webtau-vite`, `create-gametau` (all `0.1.0`)
-- crates.io: `webtau`, `webtau-macros` (both `0.1.0`)
-
-### Changed
-- All template dependency pins switched from prerelease to stable (`^0.1.0` for npm, `0.1` for Cargo)
-
-## [0.1.0-alpha.5] - 2026-02-26
-
-### Fixed
-- `create-gametau` now ships a dotless `gitignore` file so `npm pack` includes it
-- Packaged CLI regressions guarded with smoke tests
-- `dist/` test guard skips tests when dist is not built
+First stable release. Deploy Tauri games to web and desktop from one codebase.
 
 ### Added
-- Hardened packaged CLI smoke checks in CI
-- README logo
-
-### Removed
-- Unused `minimal-game` test fixture
-
-### Changed
-- Release versions bumped to `0.1.0-alpha.5` across all artifacts
-
-## [0.1.0-alpha.4] - 2026-02-26
-
-### Fixed
-- Retry guard quoting in `webtau` crate publish workflow
-- Already-published crates now treated as success instead of failing the pipeline
-- Retry logic for `webtau` publish on crates.io index propagation lag
-
-### Changed
-- Release versions bumped to `0.1.0-alpha.4` across all artifacts
-
-## [0.1.0-alpha.3] - 2026-02-26
-
-### Added
-- CI publish preflight job with Rust/npm dry-run checks (`cargo publish --dry-run`, `npm pack --dry-run`)
-- Contributor guidance for prerelease template pinning and stable-switch policy
-
-### Changed
-- Release versions bumped to `0.1.0-alpha.3` across workspace crates, npm packages, and scaffolder templates
-- Smoke CI step names were clarified for faster diagnostics
-- Web crate preflight logic now handles prerelease dependency checks safely during CI
-
-### Release Proof
-- Tag: `v0.1.0-alpha.3`
-- Publish workflow run: https://github.com/devallibus/gametau/actions/runs/22446985795
-- Published npm packages:
-  - `webtau@0.1.0-alpha.3`
-  - `webtau-vite@0.1.0-alpha.3`
-  - `create-gametau@0.1.0-alpha.3`
-- Published crates:
-  - `webtau-macros 0.1.0-alpha.3`
-  - `webtau 0.1.0-alpha.3`
-- Note: workflow publish partially failed due registry-side trusted publisher auth mismatch for `webtau-vite` and `webtau-macros`; missing artifacts were published manually and verified.
-
-## [0.1.0-alpha.2] - 2026-02-26
-
-### Added
-- `#[webtau::command]` v2 proc macro — generates both `#[tauri::command]` and `#[wasm_bindgen]` wrappers from a single function definition
-- Scaffolder now generates v2 4-crate structure (core, commands, app, wasm)
-
-### Fixed
-- Landing page template flag corrected from `threejs` to `three` to match CLI behavior
-- Contributor docs updated to reflect v2 architecture and command flow
-
-### Changed
-- Rust publish workflow now handles `webtau-macros` before `webtau` for correct dependency order
-- Rust publish workflow now polls crates.io index propagation before publishing dependent crates
-- `webtau-macros` crate is now publishable to crates.io
-- npm publish workflow now uses `--tag alpha` for prerelease releases
-- CI now includes scaffold and web build smoke checks on pull requests
-- All package versions aligned to `0.1.0-alpha.2` (npm + crates.io)
-- Scaffolder templates now pin Rust `webtau` dependency to `0.1.0-alpha.2`
-- Added `.claude/`, `.cursor/plans/`, `.instance/` to `.gitignore` for cleaner local status
-
-## [0.1.0-alpha.1] - 2025-06-14
-
-### Added
-- `webtau` npm package: `invoke()` universal router with automatic Tauri/WASM detection, `isTauri()` runtime check, WASM module deduplication and retry logic
-- `webtau/window`: `WebWindow` shim for `@tauri-apps/api/window` (fullscreen, size, title, monitor, scale factor, decorations, center)
-- `webtau/dpi`: `LogicalSize`, `PhysicalSize`, `LogicalPosition`, `PhysicalPosition` with conversion methods
-- `webtau-vite` npm package: Vite plugin with wasm-pack automation, Rust file watching, `@tauri-apps/api` import aliasing, optional wasm-opt
-- `create-gametau` npm package: project scaffolder CLI with Three.js, PixiJS, and vanilla Canvas2D templates
-- `webtau` Rust crate: `wasm_state!` macro for WASM thread-local state management (`set_state`, `with_state`, `with_state_mut`)
-- `examples/counter`: end-to-end working demo (browser WASM + Tauri desktop)
-- `examples/pong`: two-player Pong with Rust physics, PixiJS rendering, and keyboard input
-- GitHub CI: Rust (clippy + tests) and TypeScript (bun test + tsc) pipelines
-- Apache-2.0 license with optional commercial license for high-revenue games
+- **`webtau` npm package** — `invoke()` universal router with automatic Tauri/WASM detection, `isTauri()` runtime check, window shims, and DPI utilities.
+- **`webtau-vite` npm package** — Vite plugin with wasm-pack automation, Rust file watching, `@tauri-apps/api` import aliasing, and optional wasm-opt.
+- **`create-gametau` CLI** — project scaffolder with Three.js, PixiJS, and vanilla Canvas2D templates; generates a ready-to-run 4-crate Rust workspace (`core`, `commands`, `app`, `wasm`).
+- **`webtau` Rust crate** — `#[webtau::command]` proc macro generating both `#[tauri::command]` and `#[wasm_bindgen]` wrappers from a single function, and `wasm_state!` macro for WASM thread-local state.
+- **`webtau-macros` Rust crate** — proc macro internals for `#[webtau::command]`.
+- `examples/counter` — minimal end-to-end demo (browser WASM + Tauri desktop).
+- `examples/pong` — two-player Pong with Rust physics, PixiJS rendering, and keyboard input.
