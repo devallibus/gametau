@@ -443,6 +443,14 @@ Expands to:
 | `createTauriCoreProvider()` | `CoreProvider` wrapper around `@tauri-apps/api/core` |
 | `createTauriEventAdapter()` | `EventAdapter` wrapper around `@tauri-apps/api/event` |
 
+**`webtau/adapters/electrobun`** — Electrobun desktop bootstrap helpers (experimental).
+
+| API | Purpose |
+|---|---|
+| `bootstrapElectrobun(coreProvider?)` | Register window, event, fs, and dialog adapters in one call |
+| `createElectrobunCoreProvider()` | `CoreProvider` wrapper for Electrobun IPC (`electrobun://asset/` URLs) |
+| `dispatchElectrobunEvent(event, payload)` | Dispatch backend events to registered frontend listeners |
+
 **`webtau/task`** — non-blocking lifecycle helpers for long-running backend work.
 
 | API | Purpose |
@@ -647,19 +655,44 @@ Expected sizes:
 |---|---|
 | Web (WASM) | Stable |
 | Desktop (Tauri) | Stable |
-| Desktop (Electrobun) | Experimental — opt-in via `webtau@alpha` |
+| Desktop (Electrobun) | Experimental |
 
-See [`RUNTIME-PORTABILITY-READINESS.md`](./RUNTIME-PORTABILITY-READINESS.md) for the full capability matrix and known gaps.
+### Electrobun support (experimental)
+
+Electrobun is available as an alternative desktop runtime. The adapter surface is fully implemented and tested — what makes it experimental is that the default scaffold and example templates don't yet auto-detect the Electrobun runtime at startup (they fall back to WASM).
+
+**What's shipped:**
+- Full adapter implementations: window (14 methods), event (listen/emit/unlisten), filesystem (11 operations), dialog (message/ask/open/save)
+- `bootstrapElectrobun()` — one-call registration of all adapters
+- 66 passing tests covering every adapter method and error path
+- Three examples with Electrobun configs and build scripts: counter, pong, battlestation
+- Multi-platform CI dogfood workflow (Ubuntu, macOS, Windows)
+- Public export: `import { bootstrapElectrobun } from "webtau/adapters/electrobun"`
+
+**What's not yet done:**
+- Automatic Electrobun runtime detection in example and scaffold templates (they check `isTauri()` but not `window.__ELECTROBUN__`)
+- `create-gametau` template option for Electrobun
+- Renderer validation in a real game template (only CLI/build smoke tested, not full Three.js boot under Electrobun runtime)
+
+See [ELECTROBUN-SHOWCASE.md](./ELECTROBUN-SHOWCASE.md) for the integration walkthrough and [`RUNTIME-PORTABILITY-READINESS.md`](./RUNTIME-PORTABILITY-READINESS.md) for the full capability matrix and known gaps.
 
 ---
 
 ## Roadmap
 
-- **Electrobun** — promote from experimental to stable once the trial track meets the same CI and smoke bar as Tauri
-- **Electrobun scaffolder integration** — make Electrobun a first-class template option in `create-gametau`
-- **Additional shim coverage** — fill remaining `webtau/path` gaps (`resolveResource`) and expand `webtau/window`
-- **Performance baselines** — published benchmarks for WASM vs native vs JS for common game workloads
-- **Advanced examples** — multiplayer server reusing the `core/` crate, plugin architecture examples
+**Electrobun (shipped → next steps):**
+- ✅ Full adapter surface: window, event, filesystem, dialog — with 66 tests and CI dogfood
+- ✅ `bootstrapElectrobun()` and provider registry pattern
+- ✅ Three examples with Electrobun build configs (counter, pong, battlestation)
+- ⬜ Auto-detect Electrobun runtime in templates (check `window.__ELECTROBUN__` alongside `isTauri()`)
+- ⬜ `create-gametau --template electrobun` scaffolder integration
+- ⬜ Renderer validation: confirm Three.js/PixiJS boot under Electrobun runtime (not just web fallback)
+- ⬜ Promote from experimental to stable once the above are complete
+
+**General:**
+- Additional shim coverage — fill remaining `webtau/path` gaps (`resolveResource`) and expand `webtau/window`
+- Performance baselines — published benchmarks for WASM vs native vs JS for common game workloads
+- Advanced examples — multiplayer server reusing the `core/` crate, plugin architecture examples
 
 Active work is tracked in [repository milestones](https://github.com/devallibus/gametau/milestones).
 
