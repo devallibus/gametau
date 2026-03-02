@@ -1,27 +1,23 @@
-# Contributing to Gametau
+# Contributing to gametau
 
-Thanks for your interest in contributing! This guide will get you oriented quickly.
+Thanks for your interest in contributing!
 
-## Architecture Primer
+## How the codebase is organized
 
-Gametau follows a 4-crate model (v2) that enforces clean separation between game logic, shared command definitions, and platform bindings.
+gametau uses a 4-crate model that keeps game logic, command definitions, and platform bindings in separate layers.
 
 ```
 core/       Pure game logic. No framework deps, no Tauri, no WASM.
 commands/   Shared command definitions. #[webtau::command] generates both targets.
 app/        Tauri desktop shell. Imports commands, registers with generate_handler!.
-wasm/       WASM entry point. Links commands crate (exports auto-wired).
+wasm/       WASM entry point. Links the commands crate (exports auto-wired).
 ```
 
-The **dual-target constraint** is the key design rule: every command must work through both Tauri IPC (native desktop) and direct WASM call (browser). The `#[webtau::command]` proc macro generates both `#[tauri::command]` and `#[wasm_bindgen]` wrappers from a single function definition, so you write each command once in `commands/`.
+**The dual-target constraint** is the key design rule: every command must work through both Tauri IPC (native desktop) and direct WASM call (browser). The `#[webtau::command]` proc macro generates both `#[tauri::command]` and `#[wasm_bindgen]` wrappers from a single function, so you write each command once in `commands/`.
 
 If your change touches the command surface, make sure it compiles for both native and `wasm32-unknown-unknown` targets.
 
-## Minimum Supported Rust Version (MSRV)
-
-The workspace MSRV is **1.77**. CI enforces this with a dedicated check job. Run `cargo +1.77 check --workspace` before bumping any dependency to verify MSRV compatibility.
-
-## Dev Setup
+## Dev setup
 
 ### Prerequisites
 
@@ -29,7 +25,7 @@ The workspace MSRV is **1.77**. CI enforces this with a dedicated check job. Run
   ```sh
   rustup target add wasm32-unknown-unknown
   ```
-- **wasm-pack**
+- **wasm-pack** — required for WASM builds and the dev hot-reload loop
 - **Bun** (recommended) or Node 18+
 - **Tauri CLI** (only needed for desktop builds)
 
@@ -52,83 +48,90 @@ cargo test --workspace
 cargo clippy --workspace -- -D warnings
 ```
 
-### Run the Example
+### Run an example
 
 ```sh
 cd examples/counter && bun run dev
 ```
 
-## What We Welcome
+## What we welcome
 
-- Bug fixes
-- Window/DPI shim improvements
-- New scaffolder templates
-- Documentation improvements
-- Test coverage expansion
+Good places to start:
 
-## What Needs Discussion First
+- **Bug fixes** — especially in the shims (`webtau/fs`, `webtau/dialog`, `webtau/window`) where browser API coverage is still expanding
+- **New shim methods** — fill gaps in `webtau/path`, `webtau/app`, `webtau/window` to improve parity with Tauri's API surface
+- **New scaffolder templates** — additional renderer or framework templates alongside Three.js, PixiJS, and Canvas2D
+- **Test coverage** — unit tests for edge cases in `invoke()`, `wasm_state!`, or the shims
+- **Documentation improvements** — clearer examples, fixed typos, better explanations of tricky concepts
 
-Please open an issue before submitting a PR for any of the following:
+## What needs discussion first
+
+Please open an issue before submitting a PR for:
 
 - Breaking API changes to `invoke()` or `configure()`
-- New core dependencies
+- New core dependencies (npm or Cargo)
 - Changes to the `#[webtau::command]` proc macro in `webtau-macros`
 
-## PR Process
+## Making a PR
 
-1. **Open an issue first** for non-trivial changes.
-2. **All CI must pass** — Rust clippy + tests, TypeScript tests + type checks.
-3. **Use conventional commits**: `feat:`, `fix:`, `chore:`, `docs:`, etc.
-4. **Keep PRs focused** — one concern per PR.
+1. Open an issue first for non-trivial changes.
+2. All CI must pass — Rust clippy + tests, TypeScript tests + type checks.
+3. Use conventional commits: `feat:`, `fix:`, `chore:`, `docs:`, etc.
+4. Keep PRs focused — one concern per PR.
 
-## Branch and deployment flow
+## Minimum Supported Rust Version (MSRV)
 
-- `feature/*` branches target `development`.
-- `development` is staging and deploys to Worker `gametau-dev` (`dev.gametau.devallibus.com`).
-- `master` is production and deploys to Worker `gametau-prod` (`gametau.devallibus.com`).
-- Promote from `development` to `master` only after staging smoke checks pass.
+The workspace MSRV is **1.77**. CI enforces this with a dedicated check job. Run `cargo +1.77 check --workspace` before bumping any dependency to verify MSRV compatibility.
 
-Workers deploy workflows require repository secrets:
+## Environments and deployment
 
-- `CLOUDFLARE_ACCOUNT_ID`
-- `CLOUDFLARE_API_TOKEN`
+The repo uses two long-lived branches:
 
-## CI Publish Preflight Expectations
+| Branch | Role | URL |
+|---|---|---|
+| `master` | Production | `gametau.devallibus.com` (Worker: `gametau-prod`) |
+| `development` | Staging | `dev.gametau.devallibus.com` (Worker: `gametau-dev`) |
+
+Feature branches target `development`. Promote from `development` to `master` only after staging smoke checks pass.
+
+The site and API docs are deployed via Cloudflare Workers. Deploy workflows:
+
+- `.github/workflows/deploy-workers-prod.yml`
+- `.github/workflows/deploy-workers-staging.yml`
+
+Required repository secrets for deployment: `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`.
+
+## Release process
+
+### CI publish preflight
 
 The CI workflow includes a **Publish Preflight** job to catch release regressions before tags are pushed.
 
-- Rust checks:
-  - `cargo publish -p webtau-macros --dry-run`
-  - `cargo publish -p webtau --dry-run`
-  - Expected signal: packaging + verification logs and exit code `0`.
-- npm checks:
-  - `npm pack --dry-run` in:
-    - `packages/webtau`
-    - `packages/webtau-vite`
-    - `packages/create-gametau`
-  - Expected signal: tarball metadata/file-list output and exit code `0`.
+Rust checks:
+- `cargo publish -p webtau-macros --dry-run`
+- `cargo publish -p webtau --dry-run`
 
-Any non-zero exit or missing package/tarball metadata should be treated as a release blocker.
+npm checks (`npm pack --dry-run` in each):
+- `packages/webtau`
+- `packages/webtau-vite`
+- `packages/create-gametau`
 
-## Release Incident Response
+Any non-zero exit or missing tarball metadata is a release blocker.
 
-If a tag-triggered release fails (or partially publishes), follow the canonical checklist:
+### Tagging and publishing
 
-- `.github/release/RELEASE-INCIDENT-RESPONSE.md`
+Full release gate requirements and sign-off checklist: [`.github/release/RELEASE-GATE-CHECKLIST.md`](.github/release/RELEASE-GATE-CHECKLIST.md).
 
-## Template Dependency Versioning Policy
+If a release fails or partially publishes, follow the incident runbook: [`.github/release/RELEASE-INCIDENT-RESPONSE.md`](.github/release/RELEASE-INCIDENT-RESPONSE.md).
 
-Templates should target the current stable line by default.
+## Template dependency versioning
 
-- JS template references: `packages/create-gametau/templates/base/package.json`
+Templates target the current stable line by default.
+
+- JS template reference: `packages/create-gametau/templates/base/package.json`
 - Rust template reference: `packages/create-gametau/templates/base/src-tauri/commands/Cargo.toml`
 
-During prerelease (`alpha`, `beta`, `rc`) development for an upcoming release:
-
-- Pin template dependencies to the in-flight prerelease line so smoke coverage is deterministic.
-- Before cutting the corresponding stable tag, switch template dependency ranges back to the stable syntax for that release line.
-
-Track versioning policy changes in the active release milestone/issues rather than legacy release follow-ups.
+During prerelease development for an upcoming release, pin template dependencies to the in-flight prerelease line for deterministic smoke coverage. Switch back to stable syntax before cutting the corresponding stable tag.
 
 ## CLA
 
