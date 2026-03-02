@@ -672,7 +672,8 @@ Electrobun is available as an alternative desktop runtime. The adapter surface i
 **What's not yet done:**
 - Automatic Electrobun runtime detection in example and scaffold templates (they check `isTauri()` but not `window.__ELECTROBUN__`)
 - `create-gametau` template option for Electrobun
-- Renderer validation in a real game template (only CLI/build smoke tested, not full Three.js boot under Electrobun runtime)
+- Game logic bridge for Electrobun (same `core/` crate, compiled to work with Electrobun's runtime like it does with Tauri)
+- GPUWindow integration — Electrobun's native GPU rendering with a Three.js-compatible API (when it ships upstream)
 
 See [ELECTROBUN-SHOWCASE.md](./ELECTROBUN-SHOWCASE.md) for the integration walkthrough and [`RUNTIME-PORTABILITY-READINESS.md`](./RUNTIME-PORTABILITY-READINESS.md) for the full capability matrix and known gaps.
 
@@ -686,7 +687,9 @@ See [ELECTROBUN-SHOWCASE.md](./ELECTROBUN-SHOWCASE.md) for the integration walkt
 - ✅ Three examples with Electrobun build configs (counter, pong, battlestation)
 - ⬜ Auto-detect Electrobun runtime in templates (check `window.__ELECTROBUN__` alongside `isTauri()`)
 - ⬜ `create-gametau --template electrobun` scaffolder integration
-- ⬜ Renderer validation: confirm Three.js/PixiJS boot under Electrobun runtime (not just web fallback)
+- ⬜ Game logic bridge — compile the same `core/` crate to work with Electrobun's runtime
+- ⬜ Bridge Electrobun's GPUWindow — native GPU rendering with a Three.js-compatible API (when it ships upstream)
+- ⬜ JS framework support for both runtime paths (React, Solid, Vue, Svelte)
 - ⬜ Promote from experimental to stable once the above are complete
 
 **General:**
