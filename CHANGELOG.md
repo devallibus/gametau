@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- `webtau-macros` now generates `#[tauri::command(rename_all = "snake_case")]` for `#[webtau::command]` native wrappers, aligning Tauri IPC argument keys with WASM serde snake_case behavior.
+
 ## [0.5.2] - 2026-03-01
 
 ### Added

@@ -124,7 +124,7 @@ pub use commands::{init, get_world_view, tick_world};
 
 **Command contract:**
 - First parameter is a reference to your state type: `&T` (read-only) or `&mut T` (mutable). Any name works.
-- Additional parameters become named args on the JS side.
+- Additional parameters become named args on the JS side; pass those keys in snake_case for cross-runtime consistency.
 - Return `T` (serialized), `Result<T, E>` (errors surface to JS), or `()`.
 
 **What the macro generates** (you never write this):
