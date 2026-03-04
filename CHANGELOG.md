@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-03-04
+
+### Breaking
+- `#[webtau::command]` generated native wrappers now apply `#[tauri::command(rename_all = "snake_case")]`, so desktop IPC argument keys must be snake_case.
+- Migration: update Tauri `invoke()` payload keys from camelCase to snake_case (for example, `{ numSamples: 16 }` -> `{ num_samples: 16 }`).
+
 ### Fixed
 - `webtau-macros` now generates `#[tauri::command(rename_all = "snake_case")]` for `#[webtau::command]` native wrappers, aligning Tauri IPC argument keys with WASM serde snake_case behavior.
 

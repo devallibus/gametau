@@ -127,6 +127,8 @@ pub use commands::{init, get_world_view, tick_world};
 - Additional parameters become named args on the JS side; pass those keys in snake_case for cross-runtime consistency.
 - Return `T` (serialized), `Result<T, E>` (errors surface to JS), or `()`.
 
+> **Breaking change in 0.6.0:** native Tauri wrappers now enforce snake_case IPC argument keys. If you previously passed camelCase keys to `invoke()`, update them to snake_case.
+
 **What the macro generates** (you never write this):
 - `#[cfg(not(wasm32))]` — a `#[tauri::command]` wrapper with `State<Mutex<T>>`
 - `#[cfg(wasm32)]` — a `#[wasm_bindgen]` wrapper that deserializes a single args object via `serde_wasm_bindgen`
