@@ -272,7 +272,7 @@ fn generate_native(def: &CommandDef) -> TokenStream2 {
 
     quote! {
         #[cfg(not(target_arch = "wasm32"))]
-        #[::tauri::command]
+        #[::tauri::command(rename_all = "snake_case")]
         pub fn #pub_name(
             #(#extra_defs,)*
             __webtau_tauri_state: ::tauri::State<'_, ::std::sync::Mutex<#state_ty>>
