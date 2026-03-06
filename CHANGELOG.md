@@ -49,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Runtime provider contracts in `webtau/provider`: `CoreProvider`, `WindowAdapter`, `EventAdapter`, `FsAdapter`, `DialogAdapter`.
 - Provider registry APIs in `webtau/core`: `registerProvider`, `getProvider`, `resetProvider` with lazy Tauri auto-registration.
 - Adapter override hooks in `webtau/window`, `webtau/event`, `webtau/fs`, and `webtau/dialog`.
-- Experimental Electrobun runtime as an opt-in trial path (install with `webtau@alpha`; not the default scaffold target). See `examples/electrobun-counter` and [active milestones](https://github.com/devallibus/gametau/milestones).
+- Initial Electrobun runtime spike as an opt-in alpha path (via `webtau@alpha` at the time, and not yet a scaffold target). That baseline was later expanded by the `v0.7.0` milestone into explicit shell scaffolding, runtime auto-detection, and GPUWindow smoke coverage.
 
 ### Changed
 - `create-gametau` base scaffold now wires `bootstrapTauri()` in desktop mode and ships task lifecycle seams in `src/services/backend.ts`.
