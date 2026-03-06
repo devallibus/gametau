@@ -267,7 +267,9 @@ describe("create-gametau CLI", () => {
     const pkg = JSON.parse(readFileSync(join(projectDir, "package.json"), "utf-8"));
     expect(pkg.dependencies.electrobun).toBe("^1.15.1");
     expect(pkg.devDependencies["cross-env"]).toBeDefined();
-    expect(pkg.scripts["dev:electrobun:browser"]).toContain("electrobun dev");
+    expect(pkg.scripts["dev:electrobun:browser"]).toContain(
+      "node ./node_modules/electrobun/bin/electrobun.cjs dev",
+    );
     expect(pkg.scripts["dev:electrobun:gpu"]).toContain("GAMETAU_ELECTROBUN_RENDER_MODE=gpu");
     expect(pkg.scripts["build:electrobun:gpu"]).toContain("GAMETAU_ELECTROBUN_RENDER_MODE=gpu");
     expect(existsSync(join(projectDir, "electrobun.config.ts"))).toBe(true);
