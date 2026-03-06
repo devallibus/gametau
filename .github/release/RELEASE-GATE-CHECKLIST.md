@@ -34,7 +34,7 @@ Use this as the canonical gate artifact for `0.3.0+` releases. It complements
 
 - [ ] Candidate was promoted from `development` after successful staging deploy (`gametau-dev`) and smoke checks.
 - [ ] Scope issues are closed (or explicitly deferred with notes).
-- [ ] `CI` run on `master` is green for all required jobs (`MSRV`, `Rust`, `TypeScript`, `Lint`, `API Docs`, `Scaffold & Build Smoke`, `Electrobun Browser + GPU Smoke`, `Publish Preflight`, `Release Gate Contract`).
+- [ ] `CI` run on `master` is green for all required jobs (`MSRV`, `Rust`, `TypeScript`, `Lint`, `API Docs`, `Scaffold & Build Smoke`, `Electrobun Hybrid + GPU Smoke`, `Publish Preflight`, `Release Gate Contract`).
 - [ ] `create-gametau` template architecture checks pass (service seams + scaffold tests).
 - [ ] `CHANGELOG.md`, `README.md`, and docs reflect the release narrative and compatibility notes.
 - [ ] Version manifests are aligned across workspace crates, npm packages, and templates.

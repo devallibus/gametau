@@ -6,7 +6,7 @@ This is the quickest way to try gametau running in Electrobun after the upstream
 
 gametau now supports two Electrobun shell shapes:
 
-- `BrowserWindow` for the current web-first app path
+- `BrowserWindow` + embedded `<electrobun-wgpu>` for the hybrid path
 - `GpuWindow` for a native WGPU shell that still reuses the shared Rust/WASM backend loop
 
 The fastest reference example is [`examples/electrobun-counter`](./examples/electrobun-counter).
@@ -21,10 +21,10 @@ bun run --cwd packages/webtau build
 bun run --cwd packages/webtau-vite build
 ```
 
-Launch the BrowserWindow path:
+Launch the hybrid BrowserWindow path:
 
 ```bash
-bun run --cwd examples/electrobun-counter dev:electrobun:browser
+bun run --cwd examples/electrobun-counter dev:electrobun:hybrid
 ```
 
 Launch the GPUWindow path:
@@ -35,8 +35,16 @@ bun run --cwd examples/electrobun-counter dev:electrobun:gpu
 
 What you should see:
 
-- Browser mode: a native Electrobun window loads the Vite app and the counter UI works normally.
+- Hybrid mode: a native Electrobun window loads the Vite app, the counter UI works normally, and an embedded native WGPU surface runs inside the same BrowserWindow.
 - GPU mode: a native `GpuWindow` opens and the shared counter state advances through the WASM-backed game loop.
+
+## Why hybrid first
+
+This path is sequenced before pure `GpuWindow` because it proves the render/UI split with lower risk:
+
+- existing DOM HUD and controls stay intact
+- native WGPU rendering is exercised in the same app shell
+- resize, masking, passthrough, and overlay behavior can be validated before broader renderer refactors
 
 ## Scaffold a project
 
@@ -55,7 +63,7 @@ The generated scaffold keeps the web/Tauri path intact and adds:
 ## Build desktop packages
 
 ```bash
-bun run --cwd examples/electrobun-counter build:electrobun:browser
+bun run --cwd examples/electrobun-counter build:electrobun:hybrid
 bun run --cwd examples/electrobun-counter build:electrobun:gpu
 ```
 

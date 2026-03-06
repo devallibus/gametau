@@ -66,7 +66,7 @@ jobs:
             cd examples/electrobun-counter
             bun install
             bun run build:web 2>&1 | tee ../../electrobun-smoke-results.log
-            bun run build:electrobun:browser 2>&1 | tee -a ../../electrobun-smoke-results.log
+            bun run build:electrobun:hybrid 2>&1 | tee -a ../../electrobun-smoke-results.log
             bun run build:electrobun:gpu 2>&1 | tee -a ../../electrobun-smoke-results.log
           else
             echo "Electrobun counter example not found, skipping." | tee electrobun-smoke-results.log

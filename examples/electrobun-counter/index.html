@@ -3,74 +3,227 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Electrobun Counter — gametau experimental example</title>
+    <title>Electrobun Counter - gametau hybrid showcase</title>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
+      :root {
+        color-scheme: dark;
+        --bg: #08101d;
+        --card: rgba(12, 20, 34, 0.92);
+        --line: rgba(100, 225, 255, 0.18);
+        --accent: #69f0d4;
+        --accent-2: #8cd7ff;
+        --text: #edf6ff;
+        --muted: #90a8be;
+        --button-bg: rgba(105, 240, 212, 0.08);
+      }
       body {
         font-family: system-ui, sans-serif;
-        background: #1a1a2e;
-        color: #e0e0e0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        background:
+          radial-gradient(circle at top right, rgba(105, 240, 212, 0.12), transparent 30%),
+          radial-gradient(circle at bottom left, rgba(140, 215, 255, 0.14), transparent 40%),
+          var(--bg);
+        color: var(--text);
         min-height: 100vh;
+        padding: 2rem;
       }
-      .container {
-        text-align: center;
+      .shell {
+        width: min(1120px, 100%);
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: minmax(280px, 360px) minmax(360px, 1fr);
+        gap: 1.5rem;
+        align-items: start;
+      }
+      .panel {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        padding: 1.5rem;
+        box-shadow: 0 22px 60px rgba(0, 0, 0, 0.28);
+        backdrop-filter: blur(18px);
+      }
+      .eyebrow {
+        font-size: 0.78rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
       }
       h1 {
-        font-size: 1.5rem;
-        margin-bottom: 2rem;
-        color: #00d4aa;
+        font-size: 1.55rem;
+        line-height: 1.15;
+        margin-bottom: 0.75rem;
+      }
+      p {
+        color: var(--muted);
+        line-height: 1.45;
       }
       .counter {
-        font-size: 6rem;
-        font-weight: bold;
-        margin: 1rem 0;
+        font-size: clamp(4.5rem, 15vw, 6rem);
+        font-weight: 700;
+        margin: 1rem 0 0.5rem;
         font-variant-numeric: tabular-nums;
       }
-      .buttons {
+      .buttons,
+      .hybrid-controls {
         display: flex;
-        gap: 1rem;
-        justify-content: center;
-        margin-top: 2rem;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.25rem;
       }
       button {
-        padding: 0.75rem 2rem;
-        font-size: 1.25rem;
-        border: 2px solid #00d4aa;
-        background: transparent;
-        color: #00d4aa;
-        border-radius: 8px;
+        padding: 0.8rem 1rem;
+        font-size: 0.95rem;
+        border: 1px solid var(--line);
+        background: var(--button-bg);
+        color: var(--text);
+        border-radius: 999px;
         cursor: pointer;
-        transition: background 0.15s;
+        transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
       }
       button:hover {
-        background: #00d4aa22;
-      }
-      button:active {
-        background: #00d4aa44;
+        transform: translateY(-1px);
+        border-color: rgba(105, 240, 212, 0.45);
+        background: rgba(105, 240, 212, 0.14);
       }
       .meta {
-        margin-top: 2rem;
-        font-size: 0.85rem;
-        color: #666;
+        margin-top: 1rem;
+        font-size: 0.88rem;
+      }
+      .hybrid-panel[hidden] {
+        display: none;
+      }
+      .surface-shell {
+        position: relative;
+        margin-top: 1rem;
+        min-height: 320px;
+        border-radius: 18px;
+        overflow: hidden;
+        border: 1px solid rgba(140, 215, 255, 0.16);
+        background: linear-gradient(180deg, rgba(10, 18, 30, 0.92), rgba(6, 11, 19, 0.98));
+      }
+      electrobun-wgpu {
+        display: block;
+        width: 100%;
+        height: 320px;
+      }
+      .hybrid-overlay {
+        position: absolute;
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.9rem 1rem;
+        border-radius: 14px;
+        background: rgba(7, 14, 25, 0.78);
+        border: 1px solid rgba(140, 215, 255, 0.12);
+        pointer-events: none;
+      }
+      .hybrid-overlay strong {
+        display: block;
+        color: var(--accent-2);
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+      }
+      .hybrid-overlay span {
+        color: var(--muted);
+        font-size: 0.84rem;
+      }
+      .wgpu-mask {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        width: 124px;
+        height: 52px;
+        display: grid;
+        place-items: center;
+        border-radius: 999px;
+        background: rgba(7, 14, 25, 0.9);
+        border: 1px solid rgba(105, 240, 212, 0.22);
+        color: var(--accent);
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .hybrid-status {
+        margin-top: 1rem;
+        font-size: 0.88rem;
+        color: var(--accent-2);
+      }
+      @media (max-width: 900px) {
+        body {
+          padding: 1rem;
+        }
+        .shell {
+          grid-template-columns: 1fr;
+        }
+        .surface-shell,
+        electrobun-wgpu {
+          min-height: 260px;
+          height: 260px;
+        }
+        .hybrid-overlay {
+          flex-direction: column;
+        }
       }
     </style>
   </head>
   <body>
-    <div class="container">
-      <h1>gametau electrobun counter (experimental)</h1>
-      <div class="counter" id="value">0</div>
-      <div class="buttons">
-        <button id="dec">-</button>
-        <button id="reset">Reset</button>
-        <button id="inc">+</button>
-      </div>
-      <p class="meta">
-        Rust logic via <span id="mode">...</span>
-      </p>
-    </div>
+    <main class="shell">
+      <section class="panel">
+        <p class="eyebrow">Counter</p>
+        <h1>gametau x Electrobun hybrid showcase</h1>
+        <p>
+          The counter UI stays in HTML while the native WGPU surface is embedded
+          in the same BrowserWindow.
+        </p>
+        <div class="counter" id="value">0</div>
+        <div class="buttons">
+          <button id="dec">Decrement</button>
+          <button id="reset">Reset</button>
+          <button id="inc">Increment</button>
+        </div>
+        <p class="meta">
+          Rust logic via <span id="mode">...</span>
+        </p>
+      </section>
+
+      <section class="panel hybrid-panel" id="hybrid-panel" hidden>
+        <p class="eyebrow">Hybrid WGPU</p>
+        <h1>BrowserWindow + native render surface</h1>
+        <p>
+          This is the bridge step before full GPU-only windows: keep DOM UI and
+          overlays, move heavy rendering into an embedded native WGPU view.
+        </p>
+
+        <div class="surface-shell">
+          <electrobun-wgpu id="wgpu-surface" masks="#wgpu-mask"></electrobun-wgpu>
+          <div class="wgpu-mask" id="wgpu-mask">HUD mask</div>
+          <div class="hybrid-overlay">
+            <div>
+              <strong>DOM overlay</strong>
+              <span>Buttons and HUD still live in the webview layer.</span>
+            </div>
+            <div>
+              <strong>Native surface</strong>
+              <span>Run the built-in WGPU test to verify resize and masking.</span>
+            </div>
+          </div>
+        </div>
+
+        <p class="hybrid-status" id="hybrid-status">Waiting for Electrobun WGPU surface</p>
+        <div class="hybrid-controls">
+          <button id="hybrid-run">Run native test</button>
+          <button id="hybrid-transparent">Transparent surface</button>
+          <button id="hybrid-passthrough">Passthrough clicks</button>
+          <button id="hybrid-mask">Hide HTML mask</button>
+        </div>
+      </section>
+    </main>
+
     <script type="module" src="/src/index.ts"></script>
   </body>
 </html>
