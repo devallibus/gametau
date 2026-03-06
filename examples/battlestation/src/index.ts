@@ -1,76 +1,14 @@
-import { configure, isTauri } from "webtau";
+import { configure, getRuntimeInfo, isTauri } from "webtau";
+import { bootstrapElectrobunFromWindowBridge } from "webtau/adapters/electrobun";
 import { getName, getTauriVersion, getVersion, setAppName, setAppVersion } from "webtau/app";
 import { createAssetLoader } from "webtau/assets";
 import { createAudioController } from "webtau/audio";
 import { createInputController, type TouchPoint } from "webtau/input";
-import { createDefenseScene, type SceneTheme } from "./game/scene";
-import {
-  cycleTarget,
-  fireAt,
-  fireShot,
-  getMissionView,
-  tickMission,
-  type MissionView,
-} from "./services/backend";
-import { publishAlert, subscribeAlerts, type AlertLevel } from "./services/comms";
-import {
-  loadOperatorProfile,
-  recordMissionOutcome,
-  saveOperatorProfile,
-  type OperatorProfile,
-} from "./services/profile";
+import { FALLBACK_MISSION, FALLBACK_THEME, type MissionStubConfig, type ThemeConfig } from "./game/config";
+import { startBattlestationRuntime } from "./game/runtime";
+import { createDefenseScene } from "./game/scene";
 
-interface MissionStubConfig {
-  callsign: string;
-  sector: string;
-  objective: string;
-  intel: string;
-  tacticalProtocol: string[];
-}
-
-interface ThemeConfig {
-  scene: SceneTheme;
-  audio: {
-    hitHz: number;
-    killConfirmHz: number;
-    missHz: number;
-    integrityLossHz: number;
-    criticalAlertHz: number;
-  };
-  ui: {
-    criticalIntegrityThreshold: number;
-  };
-}
-
-const FALLBACK_MISSION: MissionStubConfig = {
-  callsign: "LANCE-130",
-  sector: "Outer Grid Delta-7",
-  objective: "Defend friendly cluster from approaching hostiles.",
-  intel: "No mission config found. Using fallback profile.",
-  tacticalProtocol: [],
-};
-
-const FALLBACK_THEME: ThemeConfig = {
-  scene: {
-    background: "#030608",
-    grid: "#1a3040",
-    selected: "#ffe680",
-    shipColor: "#00e5ff",
-    friendlyColor: "#22cc44",
-  },
-  audio: {
-    hitHz: 660,
-    killConfirmHz: 880,
-    missHz: 220,
-    integrityLossHz: 160,
-    criticalAlertHz: 120,
-  },
-  ui: {
-    criticalIntegrityThreshold: 25,
-  },
-};
-
-function updateHud(view: MissionView): void {
+function updateHud(view: import("./services/backend").MissionView): void {
   document.getElementById("mission")!.textContent = view.mission_state;
   document.getElementById("integrity")!.textContent = String(view.integrity);
   document.getElementById("score")!.textContent = String(view.score);
@@ -81,7 +19,7 @@ function updateHud(view: MissionView): void {
     view.selected_contact_id === null ? "NONE" : `#${view.selected_contact_id}`;
 }
 
-function updateProfileHud(profile: OperatorProfile): void {
+function updateProfileHud(profile: import("./services/profile").OperatorProfile): void {
   document.getElementById("profile")!.textContent =
     `runs ${profile.missionsRun} / best ${profile.bestScore}`;
   document.getElementById("audio-state")!.textContent = profile.muted ? "MUTED" : "ACTIVE";
@@ -117,7 +55,10 @@ async function main() {
   const alertLogEl = document.getElementById("alert-log")!;
   const canvas = document.getElementById("radar") as HTMLCanvasElement;
 
-  if (!isTauri()) {
+  if (bootstrapElectrobunFromWindowBridge()) {
+    const runtime = getRuntimeInfo();
+    modeEl.textContent = `Electrobun (${runtime.capabilities.renderMode ?? "browser"})`;
+  } else if (!isTauri()) {
     modeEl.textContent = "WASM (web)";
     configure({
       loadWasm: async () => {
@@ -143,9 +84,7 @@ async function main() {
 
   const assets = createAssetLoader();
   const [mission, theme] = await Promise.all([
-    assets
-      .loadJson<MissionStubConfig>("assets/mission-stub.json")
-      .catch(() => FALLBACK_MISSION),
+    assets.loadJson<MissionStubConfig>("assets/mission-stub.json").catch(() => FALLBACK_MISSION),
     assets.loadJson<ThemeConfig>("assets/battlestation-theme.json").catch(() => FALLBACK_THEME),
   ]);
   objectiveEl.textContent = `${mission.callsign} • ${mission.objective}`;
@@ -154,42 +93,12 @@ async function main() {
   const input = createInputController();
   const audio = createAudioController();
 
-  let profile = await loadOperatorProfile();
-  audio.setMasterVolume(profile.masterVolume);
-  audio.setMuted(profile.muted);
-  updateProfileHud(profile);
-
   const unlockAudio = () => {
     void audio.resume();
   };
   window.addEventListener("keydown", unlockAudio, { once: true });
   window.addEventListener("pointerdown", unlockAudio, { once: true });
 
-  const alertLog: string[] = [];
-  const renderAlertLog = () => {
-    alertLogEl.textContent = alertLog.join("\n");
-  };
-  const unlistenAlerts = await subscribeAlerts((alert) => {
-    alertEl.textContent = `[${alert.level.toUpperCase()}] ${alert.message}`;
-    alertLog.unshift(`T${alert.tick}: ${alert.message}`);
-    alertLog.splice(6);
-    renderAlertLog();
-  });
-
-  await publishAlert({
-    level: "info",
-    tick: 0,
-    message: `${mission.callsign} online in ${mission.sector}.`,
-  });
-
-  let view = await getMissionView();
-  let lastIntegrity = view.integrity;
-  let criticalAlertRaised = false;
-  let missionRecorded = false;
-  updateHud(view);
-  scene.render(view);
-
-  // --- Screen → logical coordinate mapping (640×640 world) ---
   function screenToLogical(clientX: number, clientY: number): { x: number; y: number } {
     const rect = canvas.getBoundingClientRect();
     return {
@@ -198,173 +107,62 @@ async function main() {
     };
   }
 
-  // --- Mouse click-to-fire queue ---
-  const pendingFires: { x: number; y: number }[] = [];
-
+  const pendingFires: Array<{ x: number; y: number }> = [];
   canvas.style.cursor = "crosshair";
-  canvas.addEventListener("pointerdown", (e) => {
-    if (e.button === 0) {
-      pendingFires.push(screenToLogical(e.clientX, e.clientY));
+  canvas.addEventListener("pointerdown", (event) => {
+    if (event.button === 0) {
+      pendingFires.push(screenToLogical(event.clientX, event.clientY));
     }
   });
 
-  // --- Process a single fire-at-position ---
-  async function handleFireAt(x: number, y: number): Promise<void> {
-    scene.addProjectile({ x, y });
-    const outcome = await fireAt(x, y);
-    if (outcome.killed) {
-      const level: AlertLevel = "info";
-      await publishAlert({ level, tick: view.tick, message: outcome.summary });
-      void audio.playTone(theme.audio.killConfirmHz, 120, { type: "triangle", gain: 0.15 });
-      scene.addExplosion(x, y, "kill");
-    } else if (outcome.hit) {
-      const level: AlertLevel = "info";
-      await publishAlert({ level, tick: view.tick, message: outcome.summary });
-      void audio.playTone(theme.audio.hitHz, 80, { type: "triangle", gain: 0.12 });
-      scene.addExplosion(x, y, "hit");
-    } else {
-      const level: AlertLevel = "warning";
-      await publishAlert({ level, tick: view.tick, message: outcome.summary });
-      void audio.playTone(theme.audio.missHz, 140, { type: "sawtooth", gain: 0.17 });
-    }
-  }
-
-  const actions: Array<"left" | "right" | "fire"> = [];
-  let selectionLatchTime = 0;
-  let fireLatch = false;
-  let muteLatch = false;
-  let inFlight = false;
-
-  const step = async () => {
-    if (inFlight) return;
-    inFlight = true;
-    try {
-      const now = performance.now();
-      const bounds = canvas.getBoundingClientRect();
-      const touches = input.touches();
-      const selectionDirection = resolveSelectionDirection(
-        input.keyAxis(["ArrowLeft", "a", "A"], ["ArrowRight", "d", "D"]),
-        input.gamepadAxis(0, { deadzone: 0.35 }),
-        touchSelectionAxis(touches, bounds),
-      );
-      if (selectionDirection !== 0 && now - selectionLatchTime > 220) {
-        actions.push(selectionDirection < 0 ? "left" : "right");
-        selectionLatchTime = now;
-      }
-
-      // Keyboard/gamepad fire (touch/click fire goes through pointerdown -> pendingFires)
-      const firePressed =
-        input.isPressed(" ") ||
-        input.isPressed("Enter") ||
-        input.gamepadAxis(5, { deadzone: 0.4 }) > 0.5;
-      if (firePressed && !fireLatch) {
-        actions.push("fire");
-      }
-      fireLatch = firePressed;
-
-      const mutePressed = input.isPressed("m") || input.isPressed("M");
-      if (mutePressed && !muteLatch) {
-        profile = { ...profile, muted: !profile.muted };
-        audio.setMuted(profile.muted);
-        await saveOperatorProfile(profile);
-        updateProfileHud(profile);
-        await publishAlert({
-          level: "info",
-          tick: view.tick,
-          message: profile.muted ? "Audio muted." : "Audio restored.",
-        });
-      }
-      muteLatch = mutePressed;
-
-      // --- Process mouse/touch positional fires ---
-      while (pendingFires.length > 0) {
-        const target = pendingFires.shift()!;
-        await handleFireAt(target.x, target.y);
-      }
-
-      // --- Process keyboard/gamepad actions ---
-      while (actions.length > 0) {
-        const action = actions.shift();
-        if (!action) continue;
-
-        if (action === "left") {
-          view = await cycleTarget(-1);
-        } else if (action === "right") {
-          view = await cycleTarget(1);
-        } else {
-          // Keyboard fire: use selected target position
-          const selected = view.contacts.find((c) => c.selected);
-          if (selected) {
-            await handleFireAt(selected.x, selected.y);
-          } else {
-            const outcome = await fireShot();
-            await publishAlert({
-              level: "warning",
-              tick: view.tick,
-              message: outcome.summary,
-            });
-          }
-        }
-      }
-
-      view = await tickMission(0.1);
-      if (view.integrity < lastIntegrity) {
-        await publishAlert({
-          level: "warning",
-          tick: view.tick,
-          message: "Integrity damage — enemy breached defense perimeter.",
-        });
-        void audio.playTone(theme.audio.integrityLossHz, 180, { type: "square", gain: 0.16 });
-        scene.addExplosion(320, 320, "breach");
-      }
-      lastIntegrity = view.integrity;
-
-      if (view.integrity <= theme.ui.criticalIntegrityThreshold && !criticalAlertRaised) {
-        criticalAlertRaised = true;
-        await publishAlert({
-          level: "critical",
-          tick: view.tick,
-          message: "Defense integrity entering critical threshold.",
-        });
-        void audio.playTone(theme.audio.criticalAlertHz, 260, { type: "square", gain: 0.2 });
-      } else if (view.integrity > theme.ui.criticalIntegrityThreshold) {
-        criticalAlertRaised = false;
-      }
-
-      if (view.mission_state === "FAILED" && !missionRecorded) {
-        missionRecorded = true;
-        profile = await recordMissionOutcome(profile, view);
-        updateProfileHud(profile);
-        await publishAlert({
-          level: "critical",
-          tick: view.tick,
-          message: "Mission failed. Reload to run a new operation.",
-        });
-      }
-
-      updateHud(view);
-      scene.render(view);
-    } catch (error) {
-      alertEl.textContent = `Simulation error: ${String(error)}`;
-    } finally {
-      inFlight = false;
-    }
-  };
-
-  // Emit mission protocol guidance once the event pipeline is live.
-  for (const line of mission.tacticalProtocol.slice(0, 2)) {
-    await publishAlert({ level: "info", tick: view.tick, message: line });
-  }
-
-  const timer = setInterval(() => {
-    void step();
-  }, 100);
+  const stop = await startBattlestationRuntime({
+    mission,
+    theme,
+    scene,
+    audio,
+    controls: {
+      getSelectionAxis() {
+        const bounds = canvas.getBoundingClientRect();
+        return resolveSelectionDirection(
+          input.keyAxis(["ArrowLeft", "a", "A"], ["ArrowRight", "d", "D"]),
+          input.gamepadAxis(0, { deadzone: 0.35 }),
+          touchSelectionAxis(input.touches(), bounds),
+        );
+      },
+      getFirePressed() {
+        return (
+          input.isPressed(" ")
+          || input.isPressed("Enter")
+          || input.gamepadAxis(5, { deadzone: 0.4 }) > 0.5
+        );
+      },
+      getMutePressed() {
+        return input.isPressed("m") || input.isPressed("M");
+      },
+      drainPointerTargets() {
+        return pendingFires.splice(0, pendingFires.length);
+      },
+      dispose() {
+        input.destroy();
+      },
+    },
+    hud: {
+      updateMission: updateHud,
+      updateProfile: updateProfileHud,
+      setAlert(text) {
+        alertEl.textContent = text;
+      },
+      setAlertLog(lines) {
+        alertLogEl.textContent = lines.join("\n");
+      },
+      setStatus() {
+        // Browser/Tauri path already exposes a richer HUD overlay.
+      },
+    },
+  });
 
   window.addEventListener("beforeunload", () => {
-    clearInterval(timer);
-    unlistenAlerts();
-    input.destroy();
-    scene.dispose();
+    stop();
   });
 }
 

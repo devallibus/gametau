@@ -14,16 +14,25 @@ import {
   Vector3,
   WebGLRenderer,
 } from "three";
+import type { SceneTheme } from "./config";
 import type { EnemyType, MissionView } from "../services/backend";
 
-export interface SceneTheme {
-  background: string;
-  grid: string;
-  selected: string;
-  shipColor: string;
-  friendlyColor: string;
-  contactPulseSpeed?: number;
-  contactPulseAmount?: number;
+interface DefenseViewport {
+  width: number;
+  height: number;
+  getBoundingClientRect(): {
+    left?: number;
+    top?: number;
+    width: number;
+    height: number;
+  };
+}
+
+interface DefenseRenderer {
+  setClearColor(color: Color, alpha: number): void;
+  setSize(width: number, height: number, updateStyle?: boolean): void;
+  render(scene: Scene, camera: OrthographicCamera): void;
+  dispose(): void;
 }
 
 const DEFAULT_THEME: SceneTheme = {
@@ -116,7 +125,12 @@ function makeCircleGeometry(r: number, segments: number): BufferGeometry {
   return geo;
 }
 
-export function createDefenseScene(canvas: HTMLCanvasElement, theme: Partial<SceneTheme> = {}) {
+export function createDefenseSceneWithRenderer(
+  viewport: DefenseViewport,
+  renderer: DefenseRenderer,
+  theme: Partial<SceneTheme> = {},
+  getDevicePixelRatio: () => number = () => 1,
+) {
   const colors = { ...DEFAULT_THEME, ...theme };
   const pulse = {
     contactPulseSpeed: theme.contactPulseSpeed ?? PULSE_DEFAULTS.contactPulseSpeed,
@@ -128,24 +142,18 @@ export function createDefenseScene(canvas: HTMLCanvasElement, theme: Partial<Sce
   const centerX = LOGICAL_W / 2;
   const centerY = LOGICAL_H / 2;
 
-  // --- Renderer ---
-  const renderer = new WebGLRenderer({ canvas, antialias: true });
   renderer.setClearColor(new Color(colors.background), 1);
 
   function syncRendererSize(): void {
-    const rect = canvas.getBoundingClientRect();
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const rect = viewport.getBoundingClientRect();
+    const dpr = Math.min(getDevicePixelRatio(), 2);
     const bufferW = Math.round(rect.width * dpr);
     const bufferH = Math.round(rect.height * dpr);
     if (bufferW === 0 || bufferH === 0) return;
-    if (canvas.width !== bufferW || canvas.height !== bufferH) {
-      renderer.setSize(bufferW, bufferH, false);
-    }
+    renderer.setSize(bufferW, bufferH, false);
   }
 
   syncRendererSize();
-  const resizeObserver = new ResizeObserver(() => syncRendererSize());
-  resizeObserver.observe(canvas);
 
   // --- Camera (top-down, Y-flipped to match Canvas2D coords) ---
   const camera = new OrthographicCamera(-centerX, centerX, -centerY, centerY, 0.1, 200);
@@ -320,6 +328,7 @@ export function createDefenseScene(canvas: HTMLCanvasElement, theme: Partial<Sce
 
   function render(view: MissionView): void {
     const now = performance.now();
+    syncRendererSize();
 
     // --- Update friendly cubes based on integrity ---
     const integrityFrac = view.integrity / 100;
@@ -488,7 +497,6 @@ export function createDefenseScene(canvas: HTMLCanvasElement, theme: Partial<Sce
   }
 
   function dispose(): void {
-    resizeObserver.disconnect();
     scene.traverse((obj) => {
       const o = obj as Mesh | Line;
       if (o.geometry) o.geometry.dispose();
@@ -502,4 +510,14 @@ export function createDefenseScene(canvas: HTMLCanvasElement, theme: Partial<Sce
   }
 
   return { render, addProjectile, addExplosion, dispose };
+}
+
+export function createDefenseScene(canvas: HTMLCanvasElement, theme: Partial<SceneTheme> = {}) {
+  const renderer = new WebGLRenderer({ canvas, antialias: true });
+  return createDefenseSceneWithRenderer(
+    canvas,
+    renderer,
+    theme,
+    () => window.devicePixelRatio || 1,
+  );
 }
