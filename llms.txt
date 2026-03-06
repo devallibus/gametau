@@ -1,0 +1,56 @@
+# gametau
+
+> A toolkit for building games in Rust that run in the browser (WASM) and on desktop (Tauri) from one codebase. Write Rust game logic once; gametau compiles it to both a native binary and a WASM module, routing `invoke("command")` calls to whichever is available at runtime.
+
+Three packages work together:
+- `webtau` (npm + Rust crate) — runtime bridge routing invoke() to Tauri IPC or WASM
+- `webtau-vite` — Vite plugin compiling Rust to WASM on save with hot-reload
+- `create-gametau` — project scaffolder
+
+## Core Concepts
+
+- [README](https://github.com/devallibus/gametau/blob/master/README.md): Full documentation with architecture, getting started, API reference, and migration guide
+- [CLAUDE.md](https://github.com/devallibus/gametau/blob/master/CLAUDE.md): Project conventions and quick reference for AI assistants
+
+## TypeScript API (webtau npm package)
+
+- [core.ts](https://github.com/devallibus/gametau/blob/master/packages/webtau/src/core.ts): invoke(), configure(), isTauri(), getRuntimeInfo(), registerProvider(), convertFileSrc()
+- [event.ts](https://github.com/devallibus/gametau/blob/master/packages/webtau/src/event.ts): listen(), once(), emit(), emitTo() — CustomEvent bridge for web, adapter-based for desktop
+- [task.ts](https://github.com/devallibus/gametau/blob/master/packages/webtau/src/task.ts): startTask(), pollTask(), cancelTask(), updateTaskProgress() — non-blocking task lifecycle
+- [window.ts](https://github.com/devallibus/gametau/blob/master/packages/webtau/src/window.ts): getCurrentWindow() — fullscreen, size, title, minimize, maximize, close
+- [fs.ts](https://github.com/devallibus/gametau/blob/master/packages/webtau/src/fs.ts): writeTextFile, readTextFile, writeFile, readFile, exists, mkdir, readDir, remove — IndexedDB-backed
+- [dialog.ts](https://github.com/devallibus/gametau/blob/master/packages/webtau/src/dialog.ts): message(), ask(), open(), save() — HTML dialog fallbacks
+- [path.ts](https://github.com/devallibus/gametau/blob/master/packages/webtau/src/path.ts): appDataDir, join, basename, dirname, extname, normalize — virtual POSIX paths
+- [input.ts](https://github.com/devallibus/gametau/blob/master/packages/webtau/src/input.ts): createInputController() — keyboard, gamepad, touch, pointer-lock
+- [audio.ts](https://github.com/devallibus/gametau/blob/master/packages/webtau/src/audio.ts): resume, suspend, setMuted, setMasterVolume, playTone — Web Audio wrapper
+- [assets.ts](https://github.com/devallibus/gametau/blob/master/packages/webtau/src/assets.ts): loadText, loadJson, loadBytes, loadImage, clear — cached asset loading
+- [app.ts](https://github.com/devallibus/gametau/blob/master/packages/webtau/src/app.ts): getName, getVersion, getTauriVersion — app metadata
+- [dpi.ts](https://github.com/devallibus/gametau/blob/master/packages/webtau/src/dpi.ts): LogicalSize, PhysicalSize, LogicalPosition, PhysicalPosition
+- [provider.ts](https://github.com/devallibus/gametau/blob/master/packages/webtau/src/provider.ts): CoreProvider, WindowAdapter, EventAdapter, FsAdapter, DialogAdapter interfaces
+- [diagnostics.ts](https://github.com/devallibus/gametau/blob/master/packages/webtau/src/diagnostics.ts): WebtauError, DiagnosticCode, DiagnosticEnvelope
+
+## Rust API (webtau crate)
+
+- [lib.rs](https://github.com/devallibus/gametau/blob/master/crates/webtau/src/lib.rs): wasm_state!(T) macro — generates set_state, with_state, with_state_mut, try_with_state, try_with_state_mut
+- [macros/lib.rs](https://github.com/devallibus/gametau/blob/master/crates/webtau-macros/src/lib.rs): #[webtau::command] proc macro — dual-target codegen for Tauri + WASM from one function
+
+## Adapters
+
+- [adapters/tauri.ts](https://github.com/devallibus/gametau/blob/master/packages/webtau/src/adapters/tauri.ts): bootstrapTauri(), createTauriCoreProvider(), createTauriEventAdapter()
+- [adapters/electrobun.ts](https://github.com/devallibus/gametau/blob/master/packages/webtau/src/adapters/electrobun.ts): bootstrapElectrobun(), isElectrobun(), getElectrobunCapabilities()
+
+## Project Structure
+
+- [Scaffolded layout](https://github.com/devallibus/gametau/blob/master/README.md#scaffolded-project-structure): src-tauri/{core, commands, app, wasm} + src/{services, game}
+
+## Examples
+
+- [counter](https://github.com/devallibus/gametau/tree/master/examples/counter): Simplest gametau project — WASM + desktop
+- [pong](https://github.com/devallibus/gametau/tree/master/examples/pong): Two-player Pong with Rust physics and PixiJS
+- [battlestation](https://github.com/devallibus/gametau/tree/master/examples/battlestation): Flagship — full module surface with persistent state and events
+
+## Optional
+
+- [llms-full.txt](https://github.com/devallibus/gametau/blob/master/llms-full.txt): Expanded API reference with full signatures, code examples, and error handling details
+- [CONTRIBUTING.md](https://github.com/devallibus/gametau/blob/master/CONTRIBUTING.md): Contribution guide
+- [ELECTROBUN-SHOWCASE.md](https://github.com/devallibus/gametau/blob/master/ELECTROBUN-SHOWCASE.md): Electrobun integration walkthrough

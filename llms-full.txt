@@ -1,0 +1,329 @@
+# gametau — Full API Reference
+
+> A toolkit for building games in Rust that run in the browser (WASM) and on desktop (Tauri) from one codebase. Write Rust game logic once; gametau compiles it to both a native binary and a WASM module, routing `invoke("command")` calls to whichever is available at runtime.
+
+## Architecture
+
+Your frontend calls `invoke("command_name")` everywhere. At runtime:
+- Inside Tauri → routes through Tauri IPC at native speed
+- In a browser → calls the WASM export directly
+- With a registered provider → routes through the provider (e.g. Electrobun)
+
+Three packages:
+- `webtau` (npm) — TypeScript runtime bridge with Tauri API shims
+- `webtau` (crate) — Rust `wasm_state!` macro + `#[webtau::command]`
+- `webtau-vite` — Vite plugin: compiles Rust to WASM, watches, hot-reloads, aliases imports
+- `create-gametau` — project scaffolder
+
+## Getting Started
+
+```bash
+bunx create-gametau my-game       # Three.js (default), -t pixi, -t vanilla
+cd my-game && bun install && bun run dev
+```
+
+Prerequisites: Rust with wasm32-unknown-unknown target, wasm-pack, Bun (or Node 18+).
+
+## TypeScript API — webtau (npm)
+
+### webtau/core (default export)
+
+```typescript
+import { invoke, configure, isTauri, getRuntimeInfo, registerProvider, convertFileSrc } from "webtau";
+```
+
+**`invoke<T>(command: string, args?: Record<string, unknown>): Promise<T>`**
+Universal IPC. Routes to Tauri IPC, WASM export, or registered provider. Args use snake_case keys.
+
+**`configure(config: WebtauConfig): void`**
+```typescript
+configure({
+  loadWasm: async () => { const w = await import("./wasm/my_game"); await w.default(); w.init(); return w; },
+  onLoadError: (err) => console.error(err),  // optional
+});
+```
+Required before invoke() in web mode. No-op inside Tauri.
+
+**`isTauri(): boolean`** — true when `window.__TAURI_INTERNALS__` exists.
+
+**`getRuntimeInfo(): RuntimeInfo`** — returns `{ id, platform, capabilities }`.
+
+**`registerProvider(provider: CoreProvider): void`** — register a custom runtime backend.
+
+**`convertFileSrc(filePath: string, protocol?: string): string`** — convert file path to loadable URL.
+
+### webtau/event
+
+```typescript
+import { listen, once, emit, emitTo } from "webtau/event";
+```
+
+**`listen<T>(event: string, handler: EventCallback<T>): Promise<UnlistenFn>`**
+Subscribe to events. Web: CustomEvent bridge. Desktop: adapter-based.
+
+**`once<T>(event: string, handler: EventCallback<T>): Promise<UnlistenFn>`**
+Listen for one event then auto-unlisten.
+
+**`emit<T>(event: string, payload?: T): Promise<void>`**
+Dispatch event. Web: `window.dispatchEvent(new CustomEvent(...))`.
+
+**`emitTo<T>(target: string, event: string, payload?: T): Promise<void>`**
+Alias of emit in web mode.
+
+**Types:**
+```typescript
+interface Event<T> { event: string; id: number; payload: T; }
+type EventCallback<T> = (event: Event<T>) => void;
+type UnlistenFn = () => void;
+```
+
+### webtau/task
+
+```typescript
+import { startTask, pollTask, cancelTask, updateTaskProgress } from "webtau/task";
+```
+
+**`startTask<T>(command: string, args?, options?): Promise<string>`**
+Launch non-blocking backend work. Returns taskId immediately.
+`options.onCancel` propagates cancellation to backend.
+
+**`pollTask<T>(taskId: string): Promise<TaskState<T>>`**
+Returns: `{ state: "running", progress? }` | `{ state: "completed", result }` | `{ state: "cancelled" }` | `{ state: "failed", error }`.
+
+**`cancelTask(taskId: string): Promise<void>`** — idempotent cancellation.
+
+**`updateTaskProgress(taskId: string, progress: TaskProgress): void`** — update from provider/test.
+
+**Types:**
+```typescript
+interface TaskProgress { percent: number; message?: string; }
+type TaskState<T> = { state: "running"; progress?: TaskProgress } | { state: "completed"; result: T } | { state: "cancelled" } | { state: "failed"; error: WebtauError };
+```
+
+### webtau/window
+
+```typescript
+import { getCurrentWindow } from "webtau/window";
+const win = getCurrentWindow();
+```
+
+Methods: `isFullscreen()`, `setFullscreen(bool)`, `innerSize()`, `outerSize()`, `setSize(size)`, `maximize()`, `isMaximized()`, `title()`, `setTitle(str)`, `close()`, `minimize()`, `unminimize()`, `show()`, `hide()`, `setDecorations(bool)`, `center()`, `currentMonitor()`, `scaleFactor()`.
+
+Web: backed by Fullscreen API, document.title, screen.*. No-ops where browser doesn't support.
+
+### webtau/fs
+
+```typescript
+import { writeTextFile, readTextFile, writeFile, readFile, exists, mkdir, readDir, remove, copyFile, rename } from "webtau/fs";
+```
+
+All async. Web: backed by IndexedDB with virtual filesystem.
+
+### webtau/dialog
+
+```typescript
+import { message, ask, open, save } from "webtau/dialog";
+```
+
+Web: HTML `<dialog>` modals with alert/confirm/prompt fallbacks.
+
+### webtau/path
+
+```typescript
+import { appDataDir, appConfigDir, homeDir, join, basename, dirname, extname, normalize, resolve, isAbsolute, delimiter, sep } from "webtau/path";
+```
+
+Web: deterministic virtual `/app/*` paths. POSIX-style path utilities.
+
+### webtau/dpi
+
+```typescript
+import { LogicalSize, PhysicalSize, LogicalPosition, PhysicalPosition } from "webtau/dpi";
+```
+
+DPI-aware size/position types with `toLogical(scaleFactor)` and `toPhysical(scaleFactor)` conversion.
+
+### webtau/input
+
+```typescript
+import { createInputController } from "webtau/input";
+const input = createInputController();
+```
+
+**`isPressed(key: string): boolean`** — keyboard state.
+**`keyAxis(negative, positive): number`** — digital axis (-1, 0, 1).
+**`gamepadAxis(axisIndex, options?): number`** — analog with deadzone/invert.
+**`touches(): TouchPoint[]`** — active touch positions.
+**`requestPointerLock(element): Promise<boolean>`** — for mouse-look.
+**`consumePointerDelta(): PointerDelta`** — relative mouse delta since last frame.
+**`destroy()`** — cleanup all listeners.
+
+### webtau/audio
+
+```typescript
+import { resume, suspend, setMuted, setMasterVolume, playTone } from "webtau/audio";
+```
+
+Minimal Web Audio wrapper. `playTone(freq, durationMs, options?)` for SFX synthesis.
+
+### webtau/assets
+
+```typescript
+import { loadText, loadJson, loadBytes, loadImage, clear } from "webtau/assets";
+```
+
+Cached fetch helpers. `clear()` empties the cache.
+
+### webtau/app
+
+```typescript
+import { getName, getVersion, getTauriVersion } from "webtau/app";
+```
+
+Web: configurable name/version, `getTauriVersion()` returns `"web"` sentinel.
+
+### webtau/provider
+
+```typescript
+import type { CoreProvider, WindowAdapter, EventAdapter, FsAdapter, DialogAdapter, RuntimeCapabilities, RuntimeInfo } from "webtau/provider";
+```
+
+**CoreProvider interface:**
+```typescript
+interface CoreProvider {
+  id: string;
+  invoke<T>(command: string, args?: Record<string, unknown>): Promise<T>;
+  convertFileSrc(filePath: string, protocol?: string): string;
+  runtimeInfo?: RuntimeInfo | (() => RuntimeInfo);
+}
+```
+
+**RuntimeCapabilities:** `events`, `fs`, `dialog`, `window`, `task`, `convertFileSrc`, `renderMode?`, `hasGpuWindow?`, `hasWgpuView?`, `hasWebGpu?`.
+
+### webtau/adapters/tauri
+
+```typescript
+import { bootstrapTauri, createTauriCoreProvider, createTauriEventAdapter } from "webtau/adapters/tauri";
+bootstrapTauri(); // registers core provider + event adapter in one call
+```
+
+### webtau/adapters/electrobun
+
+```typescript
+import { bootstrapElectrobun, bootstrapElectrobunFromWindowBridge, isElectrobun, getElectrobunCapabilities, createElectrobunCoreProvider, dispatchElectrobunEvent } from "webtau/adapters/electrobun";
+```
+
+### webtau/diagnostics
+
+```typescript
+import { WebtauError } from "webtau";  // re-exported from core
+```
+
+**DiagnosticCode:** `"NO_WASM_CONFIGURED"` | `"UNKNOWN_COMMAND"` | `"LOAD_FAILED"` | `"PROVIDER_ERROR"` | `"PROVIDER_MISSING"`
+
+**WebtauError properties:** `code`, `runtime`, `command`, `message`, `hint`.
+
+| Situation | Error Code | Fix |
+|---|---|---|
+| invoke() before configure() | NO_WASM_CONFIGURED | Call configure({ loadWasm: ... }) first |
+| WASM export not found | UNKNOWN_COMMAND | Check the function is exported from WASM crate |
+| WASM module fails to load | LOAD_FAILED | Check loadWasm returns valid module, network available |
+| Command/provider throws | PROVIDER_ERROR | Check Rust implementation or provider |
+
+## Rust API — webtau crate
+
+### `wasm_state!(T)`
+
+Generates thread-local state for WASM (single-threaded). Replaces Tauri's `State<Mutex<T>>`.
+
+```rust
+use webtau::wasm_state;
+struct GameWorld { score: i32 }
+wasm_state!(GameWorld);
+```
+
+Generated API:
+- `set_state(val: T)` — initialize or replace
+- `with_state(|state: &T| -> R) -> R` — read-only (panics if uninitialized)
+- `with_state_mut(|state: &mut T| -> R) -> R` — mutable (panics if uninitialized)
+- `try_with_state(|state: &T| -> R) -> Option<R>` — read-only, None if uninitialized
+- `try_with_state_mut(|state: &mut T| -> R) -> Option<R>` — mutable, None if uninitialized
+
+### `#[webtau::command]`
+
+Write one function, get both Tauri and WASM wrappers generated.
+
+```rust
+#[webtau::command]
+pub fn get_world_view(state: &GameWorld) -> WorldView {
+    state.view()
+}
+
+#[webtau::command]
+pub fn tick_world(state: &mut GameWorld, speed: i32) -> TickResult {
+    state.tick_with_speed(speed)
+}
+```
+
+**Contract:**
+- First param: `name: &T` (read-only) or `name: &mut T` (mutable). Any identifier.
+- Additional params: named typed values → JS args object (snake_case).
+- Return: `T` (Serialize), `Result<T, E>` (errors surface to JS), or `()`.
+- **Not supported:** async, self, tuple/struct patterns, param names starting with `__webtau`.
+
+**Generated code:**
+- `#[cfg(not(wasm32))]` — `#[tauri::command(rename_all = "snake_case")]` with `State<Mutex<T>>`. Mutex uses `unwrap_or_else(|p| p.into_inner())` (non-panicking).
+- `#[cfg(wasm32)]` — `#[wasm_bindgen]` with `serde_wasm_bindgen` deserialization. Returns `Result<_, JsError>` (non-panicking). Uses `try_with_state`/`try_with_state_mut`.
+
+## Vite Plugin — webtau-vite
+
+```typescript
+import webtauVite from "webtau-vite";
+export default defineConfig({ plugins: [webtauVite()] });
+```
+
+Options (all optional): `wasmCrate`, `wasmOutDir`, `watchPaths`, `wasmOpt`.
+Auto-detects crate paths. Aliases `@tauri-apps/api/*` → `webtau/*` in web builds.
+
+## Project Structure (scaffolded)
+
+```
+my-game/
+  src-tauri/
+    Cargo.toml          # workspace: [core, commands, app, wasm]
+    core/src/lib.rs     # Pure game logic (no framework deps)
+    commands/src/        # #[webtau::command] definitions
+    app/src/lib.rs       # Tauri shell: generate_handler! + Mutex state
+    wasm/src/lib.rs      # WASM entry: links commands crate
+  src/
+    index.ts             # configure() + bootstrapTauri()
+    services/backend.ts  # Typed invoke() wrappers
+    game/scene.ts        # Renderer
+  vite.config.ts         # webtau-vite plugin
+```
+
+## Build Targets
+
+| Target | Command | Output |
+|---|---|---|
+| Dev | `bun run dev` | localhost:1420 — hot-reload, no Tauri needed |
+| Web | `bun run build:web` | Static files for any host |
+| Desktop | `bun run build:desktop` | Native .exe/.dmg/.AppImage via Tauri |
+
+## Migration from Existing Tauri Game
+
+1. Extract core logic into a `core/` crate (no Tauri deps)
+2. Create `commands/` crate with `#[webtau::command]` functions
+3. Create `wasm/` crate with `crate-type = ["cdylib"]`
+4. Update `app/` to import from `commands/`
+5. Replace `@tauri-apps/api/core` imports with `webtau`
+6. Add `configure()` for web mode
+7. Add `webtau-vite` to vite.config.ts
+
+## Supported Runtimes
+
+| Runtime | Status |
+|---|---|
+| Web (WASM) | Stable |
+| Desktop (Tauri) | Stable |
+| Desktop (Electrobun) | Supported via explicit shell selection |
