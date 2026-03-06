@@ -1,6 +1,5 @@
-import { configure, isTauri } from "webtau";
+import { configure, getRuntimeInfo, isTauri } from "webtau";
 import {
-  getElectrobunCapabilities,
   bootstrapElectrobunFromWindowBridge,
 } from "webtau/adapters/electrobun";
 import { setupElectrobunHybridWgpuWhenReady } from "./hybrid-wgpu";
@@ -12,9 +11,9 @@ async function main() {
   let hybridHandle: Awaited<ReturnType<typeof setupElectrobunHybridWgpuWhenReady>> = null;
 
   if (bootstrapElectrobunFromWindowBridge()) {
-    const capabilities = getElectrobunCapabilities();
     hybridHandle = await setupElectrobunHybridWgpuWhenReady();
-    const renderMode = hybridHandle?.renderMode ?? capabilities?.renderMode ?? "browser";
+    const runtime = getRuntimeInfo();
+    const renderMode = hybridHandle?.renderMode ?? runtime.capabilities.renderMode ?? "browser";
     modeEl.textContent = `Electrobun bridge (${renderMode})`;
   } else if (!isTauri()) {
     modeEl.textContent = "WASM (web)";

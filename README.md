@@ -336,6 +336,19 @@ if (!isTauri()) {
 
 Returns `true` when running inside Tauri (checks `window.__TAURI_INTERNALS__`).
 
+#### `getRuntimeInfo()`
+
+Returns the active runtime id plus capability flags for capability-based branching.
+
+```typescript
+import { getRuntimeInfo } from "webtau";
+
+const runtime = getRuntimeInfo();
+// { id: "wasm" | "tauri" | "electrobun" | string, platform, capabilities }
+```
+
+Use this when a template or app needs to distinguish shell/render mode without relying on ad hoc globals.
+
 #### `wasm_state!(Type)` (Rust crate)
 
 Generates thread-local state management for WASM. Replaces Tauri's `State<Mutex<T>>` for the browser target.

@@ -1,9 +1,9 @@
 /**
- * webtau/provider — Adapter interfaces for runtime providers.
+ * webtau/provider - Adapter interfaces for runtime providers.
  *
- * Types only — no runtime logic. Each interface defines the contract
- * that a runtime provider (Tauri, Electrobun, etc.) must implement
- * for the corresponding webtau module.
+ * Types only - no runtime logic. Each interface defines the contract that a
+ * runtime provider (Tauri, Electrobun, etc.) must implement for the
+ * corresponding webtau module.
  */
 
 import type {
@@ -19,10 +19,29 @@ import type {
   RemoveOptions,
 } from "./fs.js";
 
-// ── Core ──
+export interface RuntimeCapabilities {
+  events: boolean;
+  fs: boolean;
+  dialog: boolean;
+  window: boolean;
+  task: boolean;
+  convertFileSrc: boolean;
+  renderMode?: string;
+  hasGpuWindow?: boolean;
+  hasWgpuView?: boolean;
+  hasWebGpu?: boolean;
+}
+
+export interface RuntimeInfo {
+  id: string;
+  platform: "web" | "desktop";
+  capabilities: RuntimeCapabilities;
+}
+
+export type RuntimeInfoResolver = RuntimeInfo | (() => RuntimeInfo);
 
 export interface CoreProvider {
-  /** Unique identifier for this runtime (e.g. "tauri", "electrobun"). */
+  /** Unique identifier for this runtime (for example "tauri" or "electrobun"). */
   id: string;
 
   /** Invoke a command on the runtime backend. */
@@ -30,9 +49,10 @@ export interface CoreProvider {
 
   /** Convert a file path to a URL suitable for loading assets. */
   convertFileSrc(filePath: string, protocol?: string): string;
-}
 
-// ── Window ──
+  /** Optional runtime/capability metadata for capability-based branching. */
+  runtimeInfo?: RuntimeInfoResolver;
+}
 
 export interface WindowAdapter {
   isFullscreen(): Promise<boolean>;
@@ -60,14 +80,10 @@ export interface WindowAdapter {
   scaleFactor(): Promise<number>;
 }
 
-// ── Event ──
-
 export interface EventAdapter {
   listen<T>(event: string, handler: EventCallback<T>): Promise<UnlistenFn>;
   emit<T>(event: string, payload?: T): Promise<void>;
 }
-
-// ── Filesystem ──
 
 export interface FsAdapter {
   writeTextFile(path: string, contents: string): Promise<void>;
@@ -81,8 +97,6 @@ export interface FsAdapter {
   copyFile(fromPath: string, toPath: string): Promise<void>;
   rename(oldPath: string, newPath: string): Promise<void>;
 }
-
-// ── Dialog ──
 
 export interface DialogAdapter {
   message(text: string, options?: MessageDialogOptions): Promise<void>;

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 - `webtau/adapters/electrobun`: `bootstrapElectrobunFromWindowBridge()`, `createElectrobunWindowBridgeProvider()`, `isElectrobun()`, and `getElectrobunCapabilities()` for first-class Electrobun runtime detection and bridge bootstrap.
+- `webtau`: `getRuntimeInfo()` for runtime id and capability introspection across WASM, Tauri, and provider-backed runtimes.
 - `create-gametau`: `--desktop-shell electrobun` and `--electrobun-mode hybrid|native|dual`.
 - Electrobun counter example BrowserWindow and GPUWindow build lanes.
 
