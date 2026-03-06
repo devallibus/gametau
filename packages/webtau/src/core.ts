@@ -82,6 +82,9 @@ function normalizeElectrobunRenderMode(mode: string | undefined): string {
 }
 
 function getElectrobunBridgeCapabilities(): RuntimeCapabilities {
+  // Fallback capability derivation for bare provider registrations. The
+  // Electrobun adapter remains the authoritative path when runtimeInfo is
+  // supplied explicitly by the provider itself.
   const bridge = typeof window !== "undefined"
     ? (window as typeof window & { __ELECTROBUN__?: ElectrobunRuntimeBridge }).__ELECTROBUN__
     : undefined;

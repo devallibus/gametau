@@ -107,6 +107,39 @@ describe("getRuntimeInfo", () => {
     });
   });
 
+  test("resolves function-form runtimeInfo lazily", () => {
+    registerProvider({
+      id: "custom-lazy",
+      invoke: async () => null,
+      convertFileSrc: (path) => path,
+      runtimeInfo: () => ({
+        id: "custom-lazy",
+        platform: "desktop",
+        capabilities: {
+          events: true,
+          fs: false,
+          dialog: false,
+          window: false,
+          task: true,
+          convertFileSrc: true,
+        },
+      }),
+    });
+
+    expect(getRuntimeInfo()).toEqual({
+      id: "custom-lazy",
+      platform: "desktop",
+      capabilities: {
+        events: true,
+        fs: false,
+        dialog: false,
+        window: false,
+        task: true,
+        convertFileSrc: true,
+      },
+    });
+  });
+
   test("derives Electrobun render-mode info from the exposed bridge", () => {
     globalObj.window = {
       __ELECTROBUN__: {
