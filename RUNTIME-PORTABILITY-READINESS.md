@@ -4,7 +4,7 @@ This document describes which runtimes gametau supports, to what level, and how 
 
 ## Stable runtimes
 
-Both targets are production-ready and covered by CI, the publish preflight, and consumer smoke tests on every release.
+Both targets are production-ready and covered by CI, publish preflight, and consumer smoke on every release.
 
 **Web (WASM)**
 - Commands invoked directly as WASM exports
@@ -19,36 +19,51 @@ Both targets are production-ready and covered by CI, the publish preflight, and 
 - Task lifecycle seams in the default scaffold (`src/services/backend.ts`)
 - Full Tauri API passthrough (no shims required)
 
-## Experimental runtimes
+## Supported explicit shell
 
-**Desktop (Electrobun)** — opt-in only, not the default scaffold target
+**Desktop (Electrobun)** - opt-in via explicit shell selection
 
-Install explicitly to trial:
+Use one of:
 
 ```bash
-npm install webtau@alpha webtau-vite@alpha create-gametau@alpha
+bunx create-gametau my-game --desktop-shell electrobun
+bunx create-gametau my-game --desktop-shell electrobun --electrobun-mode dual
 ```
 
-See `examples/electrobun-counter` for a working trial path. Rollout is tracked in [active milestones](https://github.com/devallibus/gametau/milestones).
+Current supported shapes:
+
+- `BrowserWindow` shell for the existing web-first app structure
+- `GpuWindow` shell for native WGPU windows that still reuse the shared WASM backend loop
+
+Reference example:
+
+```bash
+bun run --cwd examples/electrobun-counter dev:electrobun:browser
+bun run --cwd examples/electrobun-counter dev:electrobun:gpu
+```
 
 ## Capability matrix
 
 | Capability | Web (WASM) | Desktop (Tauri) | Desktop (Electrobun) |
 |---|---|---|---|
-| `invoke()` | Direct WASM export | Tauri IPC | Provider bridge |
+| `invoke()` | Direct WASM export | Tauri IPC | WASM or provider bridge |
 | `listen()` / `emit()` | `CustomEvent` DOM | Tauri event bus | Provider bridge |
-| Task lifecycle | Stable | Stable | Experimental |
+| Runtime detection | `configure()` path | `isTauri()` / `bootstrapTauri()` | `bootstrapElectrobunFromWindowBridge()` |
+| Task lifecycle | Stable | Stable | Supported |
 | Structured diagnostics | `WebtauError` envelope | `WebtauError` envelope | `WebtauError` envelope |
-| Filesystem shims | IndexedDB-backed | Native via Tauri | Experimental |
-| Dialog shims | `<dialog>` element | Native via Tauri | Experimental |
-| Window shims | Browser APIs | Native via Tauri | Experimental |
+| Filesystem shims | IndexedDB-backed | Native via Tauri | Supported through adapter surface |
+| Dialog shims | `<dialog>` element | Native via Tauri | Supported through adapter surface |
+| Window control | Browser APIs | Native via Tauri | Supported through adapter surface |
+| Native WGPU shell | N/A | N/A | `GpuWindow` proof path |
 
 ## Known gaps
 
-- `resolveResource()` in `webtau/path` is not yet implemented for web mode. All other `path` functions are available. Gaps are tracked in the [issue tracker](https://github.com/devallibus/gametau/issues).
+- `resolveResource()` in `webtau/path` is not yet implemented for web mode.
+- BrowserWindow + embedded `<electrobun-wgpu>` is not yet covered by a gametau showcase.
+- The current GPUWindow proof path validates shared backend reuse, not a full renderer abstraction.
 
 ## Validating integration readiness
 
-To validate that a gametau integration works end-to-end before shipping, use the scenario runbook in [`INTEGRATION-PROXY-VALIDATION.md`](./INTEGRATION-PROXY-VALIDATION.md). It covers eight validation scenarios (scaffold boot, command extension, persistence, diagnostics, task lifecycle, event parity, and more) using only public repository assets.
+To validate that a gametau integration works end to end before shipping, use the scenario runbook in [`INTEGRATION-PROXY-VALIDATION.md`](./INTEGRATION-PROXY-VALIDATION.md). It covers eight validation scenarios (scaffold boot, command extension, persistence, diagnostics, task lifecycle, event parity, and more) using only public repository assets.
 
-Release gate requirements and enforcement are in [`.github/release/RELEASE-GATE-CHECKLIST.md`](.github/release/RELEASE-GATE-CHECKLIST.md).
+Release gate requirements and enforcement are in [`.github/release/RELEASE-GATE-CHECKLIST.md`](./.github/release/RELEASE-GATE-CHECKLIST.md).

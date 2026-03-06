@@ -3,6 +3,12 @@
     "target": "ES2022",
     "module": "ES2022",
     "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "types": ["bun"],
+    "paths": {
+      "electrobun": ["./src/types/electrobun"],
+      "electrobun/bun": ["./src/types/electrobun-bun"]
+    },
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true

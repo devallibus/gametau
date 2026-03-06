@@ -5,21 +5,27 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:electrobun": "concurrently -k -n WEB,APP \"vite\" \"electrobun dev\"",
+    "dev:electrobun": "bun run dev:electrobun:browser",
+    "dev:electrobun:browser": "concurrently -k -n WEB,APP \"vite\" \"node ./node_modules/electrobun/bin/electrobun.cjs dev\"",
+    "dev:electrobun:gpu": "concurrently -k -n WEB,APP \"vite\" \"cross-env GAMETAU_ELECTROBUN_RENDER_MODE=gpu node ./node_modules/electrobun/bin/electrobun.cjs dev\"",
     "dev:tauri": "tauri dev",
     "build:web": "vite build",
-    "build:electrobun": "bun run build:web && electrobun build",
+    "build:electrobun": "bun run build:electrobun:browser",
+    "build:electrobun:browser": "bun run build:web && node ./node_modules/electrobun/bin/electrobun.cjs build",
+    "build:electrobun:gpu": "bun run build:web && cross-env GAMETAU_ELECTROBUN_RENDER_MODE=gpu node ./node_modules/electrobun/bin/electrobun.cjs build",
     "build:desktop": "tauri build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "electrobun": "^1.14.4",
+    "electrobun": "^1.15.1",
     "webtau": "workspace:*"
   },
   "devDependencies": {
+    "@types/bun": "^1.3.9",
     "@tauri-apps/api": "^2.0.0",
     "@tauri-apps/cli": "^2.0.0",
     "concurrently": "^9.2.1",
+    "cross-env": "^7.0.3",
     "typescript": "^5.8.0",
     "vite": "^6.0.0",
     "webtau-vite": "workspace:*"

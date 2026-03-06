@@ -36,6 +36,7 @@ Three packages work together:
 bunx create-gametau my-game              # Three.js (default)
 bunx create-gametau my-game -t pixi      # PixiJS
 bunx create-gametau my-game -t vanilla   # Canvas2D
+bunx create-gametau my-game --desktop-shell electrobun
 
 cd my-game
 bun install
@@ -450,7 +451,10 @@ Expands to:
 | API | Purpose |
 |---|---|
 | `bootstrapElectrobun(coreProvider?)` | Register window, event, fs, and dialog adapters in one call |
+| `bootstrapElectrobunFromWindowBridge()` | Bootstrap from `window.__ELECTROBUN__` when a bridge is exposed |
 | `createElectrobunCoreProvider()` | `CoreProvider` wrapper for Electrobun IPC (`electrobun://asset/` URLs) |
+| `createElectrobunWindowBridgeProvider()` | Wrap a window bridge as a `CoreProvider` |
+| `isElectrobun()` / `getElectrobunCapabilities()` | Detect Electrobun and inspect render-mode capability flags |
 | `dispatchElectrobunEvent(event, payload)` | Dispatch backend events to registered frontend listeners |
 
 **`webtau/task`** — non-blocking lifecycle helpers for long-running backend work.
@@ -657,25 +661,31 @@ Expected sizes:
 |---|---|
 | Web (WASM) | Stable |
 | Desktop (Tauri) | Stable |
-| Desktop (Electrobun) | Experimental |
+| Desktop (Electrobun) | Supported via explicit shell selection |
 
-### Electrobun support (experimental)
+Update: Electrobun now ships with scaffold/runtime auto-detection for `window.__ELECTROBUN__`, an explicit `create-gametau --desktop-shell electrobun` path, and BrowserWindow/GPUWindow counter build lanes. The remaining work is around embedded `<electrobun-wgpu>` showcases, broader GPUWindow renderer abstractions, and release-gate hardening.
 
-Electrobun is available as an alternative desktop runtime. The adapter surface is fully implemented and tested — what makes it experimental is that the default scaffold and example templates don't yet auto-detect the Electrobun runtime at startup (they fall back to WASM).
+### Electrobun support
+
+Electrobun is available as an alternative desktop shell. The current supported shapes are:
+
+- `BrowserWindow` for the existing web-first app path
+- `GpuWindow` for a native WGPU shell that still reuses the shared Rust/WASM backend loop
 
 **What's shipped:**
 - Full adapter implementations: window (14 methods), event (listen/emit/unlisten), filesystem (11 operations), dialog (message/ask/open/save)
-- `bootstrapElectrobun()` — one-call registration of all adapters
-- 66 passing tests covering every adapter method and error path
-- Three examples with Electrobun configs and build scripts: counter, pong, battlestation
+- `bootstrapElectrobun()` plus `bootstrapElectrobunFromWindowBridge()`
+- `isElectrobun()` / `getElectrobunCapabilities()` for runtime and render-mode checks
+- Auto-detection of `window.__ELECTROBUN__` in scaffolded/browser entrypoints
+- `create-gametau --desktop-shell electrobun` with `--electrobun-mode hybrid|native|dual`
+- Electrobun counter example with BrowserWindow and GPUWindow build lanes
 - Multi-platform CI dogfood workflow (Ubuntu, macOS, Windows)
-- Public export: `import { bootstrapElectrobun } from "webtau/adapters/electrobun"`
+- Public exports from `webtau/adapters/electrobun`
 
 **What's not yet done:**
-- Automatic Electrobun runtime detection in example and scaffold templates (they check `isTauri()` but not `window.__ELECTROBUN__`)
-- `create-gametau` template option for Electrobun
-- Game logic bridge for Electrobun (same `core/` crate, compiled to work with Electrobun's runtime like it does with Tauri)
-- GPUWindow integration — Electrobun's native GPU rendering with a Three.js-compatible API (when it ships upstream)
+- BrowserWindow + embedded `<electrobun-wgpu>` showcase
+- Broader GPUWindow example coverage and renderer abstractions beyond the counter proof lane
+- Release-gate promotion and packaging hardening beyond smoke coverage
 
 See [ELECTROBUN-SHOWCASE.md](./ELECTROBUN-SHOWCASE.md) for the integration walkthrough and [`RUNTIME-PORTABILITY-READINESS.md`](./RUNTIME-PORTABILITY-READINESS.md) for the full capability matrix and known gaps.
 
@@ -684,15 +694,15 @@ See [ELECTROBUN-SHOWCASE.md](./ELECTROBUN-SHOWCASE.md) for the integration walkt
 ## Roadmap
 
 **Electrobun (shipped → next steps):**
-- ✅ Full adapter surface: window, event, filesystem, dialog — with 66 tests and CI dogfood
+- ✅ Full adapter surface: window, event, filesystem, dialog
 - ✅ `bootstrapElectrobun()` and provider registry pattern
-- ✅ Three examples with Electrobun build configs (counter, pong, battlestation)
-- ⬜ Auto-detect Electrobun runtime in templates (check `window.__ELECTROBUN__` alongside `isTauri()`)
-- ⬜ `create-gametau --template electrobun` scaffolder integration
-- ⬜ Game logic bridge — compile the same `core/` crate to work with Electrobun's runtime
-- ⬜ Bridge Electrobun's GPUWindow — native GPU rendering with a Three.js-compatible API (when it ships upstream)
+- ✅ Auto-detect Electrobun runtime in templates and browser entrypoints
+- ✅ `create-gametau --desktop-shell electrobun` scaffolder integration
+- ✅ Counter GPUWindow proof path backed by the shared WASM game logic loop
+- ⬜ BrowserWindow + embedded WGPU showcase
+- ⬜ Broader GPUWindow example coverage and renderer abstractions
 - ⬜ JS framework support for both runtime paths (React, Solid, Vue, Svelte)
-- ⬜ Promote from experimental to stable once the above are complete
+- ⬜ Release gate promotion and packaging hardening beyond smoke coverage
 
 **General:**
 - Additional shim coverage — fill remaining `webtau/path` gaps (`resolveResource`) and expand `webtau/window`

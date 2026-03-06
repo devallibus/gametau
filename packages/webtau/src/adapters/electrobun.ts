@@ -1,15 +1,8 @@
 /**
- * webtau/adapters/electrobun — Electrobun runtime adapter.
+ * webtau/adapters/electrobun - Electrobun runtime adapter.
  *
- * Implements WindowAdapter, EventAdapter, FsAdapter, and DialogAdapter
- * by delegating each operation to the Electrobun backend via `invoke()`.
- *
- * Usage:
- * ```ts
- * import { bootstrapElectrobun } from "webtau/adapters/electrobun";
- *
- * bootstrapElectrobun();
- * ```
+ * Implements WindowAdapter, EventAdapter, FsAdapter, and DialogAdapter by
+ * delegating each operation to the Electrobun backend via `invoke()`.
  */
 
 import { invoke, registerProvider } from "../core.js";
@@ -37,13 +30,94 @@ import type {
 } from "../provider.js";
 import { setWindowAdapter } from "../window.js";
 
-// ── Window Adapter ──────────────────────────────────────────────────────────
-// Supported: isFullscreen, setFullscreen, innerSize, outerSize, setSize,
-//            title, setTitle, close, minimize, unminimize, maximize,
-//            isMaximized, show, hide, setDecorations, scaleFactor,
-//            currentMonitor
-// Partial:   center (depends on backend window manager support)
-// Unsupported: none currently
+type InvokeArgs = Record<string, unknown> | undefined;
+
+export type ElectrobunRenderMode = "browser" | "hybrid" | "gpu" | "unknown";
+
+export interface ElectrobunCapabilities {
+  runtime: "electrobun";
+  renderMode: ElectrobunRenderMode;
+  hasGpuWindow: boolean;
+  hasWgpuView: boolean;
+  hasWebGpu: boolean;
+}
+
+export interface ElectrobunBridge {
+  invoke<T = unknown>(command: string, args?: InvokeArgs): Promise<T>;
+  convertFileSrc?: (filePath: string, protocol?: string) => string;
+  capabilities?: Partial<Omit<ElectrobunCapabilities, "runtime">>;
+  renderMode?: ElectrobunRenderMode;
+}
+
+declare global {
+  interface Window {
+    __ELECTROBUN__?: ElectrobunBridge;
+  }
+}
+
+function normalizeRenderMode(mode: string | undefined): ElectrobunRenderMode {
+  switch (mode) {
+    case "browser":
+    case "hybrid":
+    case "gpu":
+      return mode;
+    default:
+      return "unknown";
+  }
+}
+
+export function getElectrobunBridge(): ElectrobunBridge | null {
+  if (typeof window === "undefined") return null;
+
+  const bridge = window.__ELECTROBUN__;
+  return bridge && typeof bridge.invoke === "function" ? bridge : null;
+}
+
+export function isElectrobun(): boolean {
+  return getElectrobunBridge() !== null;
+}
+
+export function getElectrobunCapabilities(): ElectrobunCapabilities | null {
+  const bridge = getElectrobunBridge();
+  if (!bridge) return null;
+
+  const renderMode = normalizeRenderMode(
+    bridge.renderMode ?? bridge.capabilities?.renderMode,
+  );
+  const hasGpuWindow = bridge.capabilities?.hasGpuWindow ?? renderMode === "gpu";
+  const hasWgpuView = bridge.capabilities?.hasWgpuView
+    ?? (renderMode === "hybrid" || renderMode === "gpu");
+  const hasWebGpu = bridge.capabilities?.hasWebGpu
+    ?? (hasWgpuView || renderMode === "gpu");
+
+  return {
+    runtime: "electrobun",
+    renderMode,
+    hasGpuWindow,
+    hasWgpuView,
+    hasWebGpu,
+  };
+}
+
+export function createElectrobunWindowBridgeProvider(
+  bridge: ElectrobunBridge = getElectrobunBridge() as ElectrobunBridge,
+): CoreProvider {
+  if (!bridge || typeof bridge.invoke !== "function") {
+    throw new Error(
+      "[webtau/electrobun] No window.__ELECTROBUN__ bridge is available.",
+    );
+  }
+
+  return {
+    id: "electrobun",
+    invoke: (command, args) => bridge.invoke(command, args),
+    convertFileSrc: (filePath, protocol) => (
+      bridge.convertFileSrc
+        ? bridge.convertFileSrc(filePath, protocol)
+        : `electrobun://asset/${filePath.replace(/^\/+/, "")}`
+    ),
+  };
+}
 
 export function createElectrobunWindowAdapter(): WindowAdapter {
   return {
@@ -115,8 +189,6 @@ export function createElectrobunWindowAdapter(): WindowAdapter {
       await invoke<void>("plugin:electrobun|window_set_decorations", { decorations });
     },
 
-    // Partial: centering depends on the Electrobun backend's window
-    // manager integration. May be a no-op on some platforms.
     async center(): Promise<void> {
       await invoke<void>("plugin:electrobun|window_center");
     },
@@ -141,32 +213,20 @@ export function createElectrobunWindowAdapter(): WindowAdapter {
   };
 }
 
-// ── Event Adapter ───────────────────────────────────────────────────────────
-// Supported: listen, emit
-// Partial:   none
-// Unsupported: none currently
-//
-// Note: The event system relies on the Electrobun backend to manage event
-// subscriptions. The `listen` call returns an unlisten ID that is used to
-// remove the subscription on the backend when `unlisten()` is called.
-
 export function createElectrobunEventAdapter(): EventAdapter {
   return {
     async listen<T>(event: string, handler: EventCallback<T>): Promise<UnlistenFn> {
-      const listenerId = await invoke<number>(
-        "plugin:electrobun|event_listen",
-        { event },
-      );
+      const listenerId = await invoke<number>("plugin:electrobun|event_listen", { event });
 
-      // Register a callback bridge — in a real Electrobun integration this
-      // would wire into the IPC message channel. Here we store the handler
-      // so the backend can dispatch events to it.
-      electrobunEventHandlers.set(listenerId, { event, handler: handler as EventCallback<unknown> });
+      electrobunEventHandlers.set(listenerId, {
+        event,
+        handler: handler as EventCallback<unknown>,
+      });
 
       return () => {
         electrobunEventHandlers.delete(listenerId);
         invoke<void>("plugin:electrobun|event_unlisten", { listenerId }).catch(() => {
-          // Best-effort cleanup — ignore errors during unlisten.
+          // Best-effort cleanup.
         });
       };
     },
@@ -177,16 +237,11 @@ export function createElectrobunEventAdapter(): EventAdapter {
   };
 }
 
-/** Internal registry for event handlers keyed by listener ID. */
 const electrobunEventHandlers = new Map<
   number,
   { event: string; handler: EventCallback<unknown> }
 >();
 
-/**
- * Dispatch an event from the Electrobun backend to a registered handler.
- * Called by the IPC bridge when the backend pushes an event.
- */
 export function dispatchElectrobunEvent(
   listenerId: number,
   event: string,
@@ -197,16 +252,6 @@ export function dispatchElectrobunEvent(
     entry.handler({ event, id: listenerId, payload });
   }
 }
-
-// ── Filesystem Adapter ──────────────────────────────────────────────────────
-// Supported: writeTextFile, readTextFile, writeFile, readFile, exists,
-//            mkdir, readDir, remove, copyFile, rename
-// Partial:   none
-// Unsupported: none currently
-//
-// Note: Binary data (Uint8Array/ArrayBuffer) is serialized as a number[]
-// for JSON transport over IPC. The backend is responsible for converting
-// back to native byte buffers.
 
 export function createElectrobunFsAdapter(): FsAdapter {
   return {
@@ -222,7 +267,6 @@ export function createElectrobunFsAdapter(): FsAdapter {
       path: string,
       contents: Uint8Array | ArrayBuffer | number[] | string,
     ): Promise<void> {
-      // Serialize binary data as number[] for JSON IPC transport.
       let data: number[];
       if (contents instanceof Uint8Array) {
         data = Array.from(contents);
@@ -276,14 +320,6 @@ export function createElectrobunFsAdapter(): FsAdapter {
   };
 }
 
-// ── Dialog Adapter ──────────────────────────────────────────────────────────
-// Supported: message, ask, open, save
-// Partial:   none
-// Unsupported: none currently
-//
-// Note: Dialog appearance and behavior depend on the Electrobun backend's
-// native dialog implementation. Options are forwarded as-is.
-
 export function createElectrobunDialogAdapter(): DialogAdapter {
   return {
     async message(text: string, options?: MessageDialogOptions): Promise<void> {
@@ -321,63 +357,34 @@ export function createElectrobunDialogAdapter(): DialogAdapter {
   };
 }
 
-// ── Bootstrap ───────────────────────────────────────────────────────────────
-
-/**
- * Core provider for the Electrobun runtime.
- *
- * Provides the `invoke` and `convertFileSrc` implementations that all
- * adapters delegate through.
- */
 export function createElectrobunCoreProvider(): CoreProvider {
   return {
     id: "electrobun",
-    invoke: async <T = unknown>(
-      command: string,
-      _args?: Record<string, unknown>,
-    ): Promise<T> => {
-      // In a real Electrobun integration, this would delegate to
-      // electrobun.ipc.invoke(). For now, we throw to indicate
-      // that the actual IPC bridge must be provided at integration time.
-      //
-      // When integrating, replace this with:
-      //   return electrobun.ipc.invoke(command, args) as Promise<T>;
+    invoke: async <T = unknown>(command: string, _args?: InvokeArgs): Promise<T> => {
       throw new Error(
         `[webtau/electrobun] No IPC bridge configured. ` +
           `Cannot invoke "${command}". Wire electrobun.ipc.invoke() ` +
           `into the core provider before calling bootstrapElectrobun().`,
       );
     },
-    convertFileSrc: (filePath: string, _protocol?: string): string => {
+    convertFileSrc: (filePath: string): string => {
       return `electrobun://asset/${filePath.replace(/^\/+/, "")}`;
     },
   };
 }
 
-/**
- * Bootstrap all Electrobun adapters at once.
- *
- * Registers the core provider and sets adapters for window, event,
- * filesystem, and dialog modules. After calling this function, all
- * webtau module-level functions will delegate through Electrobun.
- *
- * An optional `coreProvider` can be passed to supply a custom IPC
- * bridge (e.g. one that delegates to `electrobun.ipc.invoke()`).
- *
- * ```ts
- * import { bootstrapElectrobun } from "webtau/adapters/electrobun";
- *
- * bootstrapElectrobun({
- *   id: "electrobun",
- *   invoke: (cmd, args) => electrobun.ipc.invoke(cmd, args),
- *   convertFileSrc: (path) => `electrobun://asset/${path}`,
- * });
- * ```
- */
 export function bootstrapElectrobun(coreProvider?: CoreProvider): void {
   registerProvider(coreProvider ?? createElectrobunCoreProvider());
   setWindowAdapter(createElectrobunWindowAdapter());
   setEventAdapter(createElectrobunEventAdapter());
   setFsAdapter(createElectrobunFsAdapter());
   setDialogAdapter(createElectrobunDialogAdapter());
+}
+
+export function bootstrapElectrobunFromWindowBridge(): boolean {
+  const bridge = getElectrobunBridge();
+  if (!bridge) return false;
+
+  bootstrapElectrobun(createElectrobunWindowBridgeProvider(bridge));
+  return true;
 }

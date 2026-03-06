@@ -1,9 +1,11 @@
-# Electrobun Counter (Experimental)
+# Electrobun Counter
 
-This example is an isolated Electrobun trial path based on `examples/counter`.
+This example is the reference Electrobun showcase for gametau.
 
-Stable defaults in gametau remain Web + Tauri. This example exists so you can
-experiment without changing scaffold behavior.
+It covers two shell shapes:
+
+- `BrowserWindow` for the web-first counter UI
+- `GpuWindow` for a native WGPU shell that still reuses the shared counter WASM backend
 
 ## Run
 
@@ -13,38 +15,28 @@ Install dependencies:
 bun install
 ```
 
-Start the Vite web app in one terminal:
+Start the BrowserWindow path:
 
 ```bash
-bun run dev
+bun run dev:electrobun:browser
 ```
 
-Start Electrobun in a second terminal:
+Start the GPUWindow path:
 
 ```bash
-bun run dev:electrobun
+bun run dev:electrobun:gpu
 ```
 
-The Electrobun window loads `http://localhost:1420` during dev.
+## Runtime behavior
 
-## Runtime Mode Behavior
-
-- If a bridge is exposed at `window.__ELECTROBUN__`, this example registers an
-  Electrobun provider and routes `invoke()` through it.
-- If no Electrobun bridge is present, it falls back to the normal WASM web path.
-
-Expected bridge shape:
-
-```ts
-window.__ELECTROBUN__ = {
-  invoke: (command: string, args?: Record<string, unknown>) => Promise<unknown>,
-  convertFileSrc?: (filePath: string, protocol?: string) => string,
-};
-```
+- Browser mode loads the normal Vite app and auto-checks for `window.__ELECTROBUN__`.
+- If no Electrobun bridge is exposed, the browser shell still falls back cleanly to the normal WASM path.
+- GPU mode configures `webtau` directly in the Bun runtime, loads the same counter WASM module, and advances the shared counter state inside a native `GpuWindow`.
 
 ## Build
 
 ```bash
 bun run build:web
-bun run build:electrobun
+bun run build:electrobun:browser
+bun run build:electrobun:gpu
 ```

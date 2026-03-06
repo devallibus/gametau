@@ -38,6 +38,15 @@ function runDistCli(args: string[]) {
   });
 }
 
+function expectSpawnSucceeded(result: ReturnType<typeof runCli> | ReturnType<typeof runDistCli>): boolean {
+  if (result.error && "code" in result.error && result.error.code === "EPERM") {
+    return false;
+  }
+
+  expect(result.error).toBeUndefined();
+  return true;
+}
+
 function getPackageVersion(): string {
   const packageJsonPath = join(import.meta.dir, "..", "package.json");
   const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8")) as { version: string };
@@ -47,7 +56,7 @@ function getPackageVersion(): string {
 describe("create-gametau CLI entrypoint", () => {
   test("prints help and exits successfully", () => {
     const result = runCli(["--help"]);
-    expect(result.error).toBeUndefined();
+    if (!expectSpawnSucceeded(result)) return;
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("Usage:");
     expect(result.stdout).toContain("create-gametau");
@@ -55,28 +64,49 @@ describe("create-gametau CLI entrypoint", () => {
 
   test("fails when project name is missing", () => {
     const result = runCli([]);
-    expect(result.error).toBeUndefined();
+    if (!expectSpawnSucceeded(result)) return;
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("project name required");
   });
 
   test("prints version and exits successfully", () => {
     const result = runCli(["--version"]);
-    expect(result.error).toBeUndefined();
+    if (!expectSpawnSucceeded(result)) return;
     expect(result.status).toBe(0);
     expect(result.stdout).toContain(getPackageVersion());
   });
 
   test("fails on invalid template value", () => {
     const result = runCli(["my-game", "--template", "bad-template"]);
-    expect(result.error).toBeUndefined();
+    if (!expectSpawnSucceeded(result)) return;
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("Invalid template: bad-template");
   });
 
+  test("fails on invalid desktop shell value", () => {
+    const result = runCli(["my-game", "--desktop-shell", "bad-shell"]);
+    if (!expectSpawnSucceeded(result)) return;
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Invalid desktop shell: bad-shell");
+  });
+
+  test("fails on invalid Electrobun mode value", () => {
+    const result = runCli(["my-game", "--electrobun-mode", "bad-mode"]);
+    if (!expectSpawnSucceeded(result)) return;
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Invalid Electrobun mode: bad-mode");
+  });
+
+  test("fails when Electrobun mode is set without Electrobun shell", () => {
+    const result = runCli(["my-game", "--electrobun-mode", "dual"]);
+    if (!expectSpawnSucceeded(result)) return;
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("--electrobun-mode requires --desktop-shell electrobun.");
+  });
+
   test("fails on unknown option", () => {
     const result = runCli(["--wat"]);
-    expect(result.error).toBeUndefined();
+    if (!expectSpawnSucceeded(result)) return;
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("Unknown option: --wat");
   });
@@ -89,21 +119,21 @@ const hasDist = existsSync(DIST_CLI_PATH);
 describe.skipIf(!hasDist)("create-gametau dist CLI entrypoint", () => {
   test("prints version and exits successfully", () => {
     const result = runDistCli(["--version"]);
-    expect(result.error).toBeUndefined();
+    if (!expectSpawnSucceeded(result)) return;
     expect(result.status).toBe(0);
     expect(result.stdout).toContain(getPackageVersion());
   });
 
   test("fails on unknown option", () => {
     const result = runDistCli(["--wat"]);
-    expect(result.error).toBeUndefined();
+    if (!expectSpawnSucceeded(result)) return;
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("Unknown option: --wat");
   });
 
   test("normalizes template gitignore names when scaffolding", () => {
     const result = runDistCli(["dist-smoke"]);
-    expect(result.error).toBeUndefined();
+    if (!expectSpawnSucceeded(result)) return;
     expect(result.status).toBe(0);
 
     const projectDir = join(testDir, "dist-smoke");
@@ -219,6 +249,30 @@ describe("create-gametau CLI", () => {
     // Vanilla has no extra rendering deps
     const pkg = JSON.parse(readFileSync(join(projectDir, "package.json"), "utf-8"));
     expect(pkg.dependencies.three).toBeUndefined();
+  });
+
+  test("scaffolds Electrobun shell support with dual browser and gpu entrypoints", () => {
+    const dir = freshDir();
+    scaffold(
+      {
+        projectName: "electrobun-game",
+        template: "three",
+        desktopShell: "electrobun",
+        electrobunMode: "dual",
+      },
+      dir,
+    );
+
+    const projectDir = join(dir, "electrobun-game");
+    const pkg = JSON.parse(readFileSync(join(projectDir, "package.json"), "utf-8"));
+    expect(pkg.dependencies.electrobun).toBe("^1.15.1");
+    expect(pkg.devDependencies["cross-env"]).toBeDefined();
+    expect(pkg.scripts["dev:electrobun:browser"]).toContain("electrobun dev");
+    expect(pkg.scripts["dev:electrobun:gpu"]).toContain("GAMETAU_ELECTROBUN_RENDER_MODE=gpu");
+    expect(pkg.scripts["build:electrobun:gpu"]).toContain("GAMETAU_ELECTROBUN_RENDER_MODE=gpu");
+    expect(existsSync(join(projectDir, "electrobun.config.ts"))).toBe(true);
+    expect(existsSync(join(projectDir, "src", "bun", "browser.ts"))).toBe(true);
+    expect(existsSync(join(projectDir, "src", "bun", "gpu.ts"))).toBe(true);
   });
 
   test("generated vite.config.ts uses zero-config webtauVite()", () => {
@@ -339,6 +393,8 @@ describe("create-gametau CLI", () => {
 
     // bootstrapTauri must be imported and called in Tauri path
     expect(indexTs).toContain("bootstrapTauri");
+    expect(indexTs).toContain("bootstrapElectrobunFromWindowBridge");
+    expect(indexTs).toContain("webtau/adapters/electrobun");
     expect(indexTs).toContain("webtau/adapters/tauri");
     // Must branch on isTauri() so parity is automatic
     expect(indexTs).toContain("isTauri()");

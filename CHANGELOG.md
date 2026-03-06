@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- `webtau/adapters/electrobun`: `bootstrapElectrobunFromWindowBridge()`, `createElectrobunWindowBridgeProvider()`, `isElectrobun()`, and `getElectrobunCapabilities()` for first-class Electrobun runtime detection and bridge bootstrap.
+- `create-gametau`: `--desktop-shell electrobun` and `--electrobun-mode hybrid|native|dual`.
+- Electrobun counter example BrowserWindow and GPUWindow build lanes.
+
+### Changed
+- Scaffolded entrypoints now auto-check for `window.__ELECTROBUN__` before falling back to Tauri or plain WASM.
+- Electrobun counter example and generated Electrobun shell files now target the WGPU-capable `electrobun@^1.15.1` line.
+
 ## [0.6.0] - 2026-03-04
 
 ### Breaking

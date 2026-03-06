@@ -1,19 +1,15 @@
 # Electrobun x gametau Showcase
 
-Welcome! This page is the easiest way to try gametau running in Electrobun.
+This is the quickest way to try gametau running in Electrobun after the upstream WGPU release.
 
-If you just want one link to share, use this branch:
+## What this covers
 
-- `electrobun/showcase`
+gametau now supports two Electrobun shell shapes:
 
-## What this is
+- `BrowserWindow` for the current web-first app path
+- `GpuWindow` for a native WGPU shell that still reuses the shared Rust/WASM backend loop
 
-gametau lets one Rust game codebase run in both:
-
-- browser (WASM)
-- desktop app shells
-
-In this branch, we wired Electrobun for a simple hands-on demo path.
+The fastest reference example is [`examples/electrobun-counter`](./examples/electrobun-counter).
 
 ## Try it in 2 minutes
 
@@ -25,65 +21,51 @@ bun run --cwd packages/webtau build
 bun run --cwd packages/webtau-vite build
 ```
 
-Now launch the Counter demo in Electrobun:
+Launch the BrowserWindow path:
 
 ```bash
-bun run --cwd examples/counter dev:electrobun
+bun run --cwd examples/electrobun-counter dev:electrobun:browser
+```
+
+Launch the GPUWindow path:
+
+```bash
+bun run --cwd examples/electrobun-counter dev:electrobun:gpu
 ```
 
 What you should see:
 
-- A native Electrobun window opens (the command starts both Vite + Electrobun).
-- Counter buttons work (increment/decrement/reset).
-- Closing the app also stops the local dev server.
+- Browser mode: a native Electrobun window loads the Vite app and the counter UI works normally.
+- GPU mode: a native `GpuWindow` opens and the shared counter state advances through the WASM-backed game loop.
 
-## More demos
-
-Run either of these the same way:
+## Scaffold a project
 
 ```bash
-bun run --cwd examples/pong dev:electrobun
-bun run --cwd examples/battlestation dev:electrobun
+bunx create-gametau my-game --desktop-shell electrobun
+bunx create-gametau my-game --desktop-shell electrobun --electrobun-mode dual
 ```
 
-## FAQ: state and database across Web + Electrobun + Tauri
+The generated scaffold keeps the web/Tauri path intact and adds:
 
-### Why are Chrome and Electrobun not auto-synced?
-
-Because they are separate app runtimes. Each one has its own in-memory game state by default.
-
-### How can I link state across all runtimes?
-
-Use one shared source of truth. The common options are:
-
-1. **Shared backend + database (recommended)**
-   - Put game/session state in a backend service.
-   - Web, Electrobun, and Tauri all read/write the same API.
-
-2. **Realtime sync server (WebSocket)**
-   - Keep one authority process for live state.
-   - All clients subscribe/publish events for instant cross-window updates.
-
-3. **Shared persistence layer**
-   - Store save/session data in one shared DB or service and reload/sync from it.
-   - Good for cross-runtime continuity, even if not fully realtime.
-
-### Quick rule of thumb
-
-- If you want **single-player local runtime only**, default isolated state is fine.
-- If you want **cross-client sync**, add an explicit shared backend/state authority.
+- `electrobun.config.ts`
+- `src/bun/browser.ts`
+- `src/bun/gpu.ts`
+- `dev:electrobun` / `build:electrobun` scripts
 
 ## Build desktop packages
 
 ```bash
-bun run --cwd examples/counter build:electrobun
-bun run --cwd examples/pong build:electrobun
-bun run --cwd examples/battlestation build:electrobun
+bun run --cwd examples/electrobun-counter build:electrobun:browser
+bun run --cwd examples/electrobun-counter build:electrobun:gpu
 ```
+
+## Shared state note
+
+Chrome, Tauri, BrowserWindow Electrobun, and GPUWindow Electrobun are separate runtimes. They do not share in-memory state automatically. If you need continuity across runtimes, use a shared backend or persistence layer.
 
 ## Useful links
 
-- Showcase PR: [#94](https://github.com/devallibus/gametau/pull/94)
-- Main Electrobun tracking issue: [#84](https://github.com/devallibus/gametau/issues/84)
-- Local dev bug report and fix thread: [#95](https://github.com/devallibus/gametau/issues/95)
-- Shared-state exploration issue: [#96](https://github.com/devallibus/gametau/issues/96)
+- Electrobun WGPU announcement: https://blackboard.sh/blog/wgpu-in-electrobun/
+- Tracking issue: [#159](https://github.com/devallibus/gametau/issues/159)
+- Hybrid showcase issue: [#160](https://github.com/devallibus/gametau/issues/160)
+- Render-mode capability issue: [#161](https://github.com/devallibus/gametau/issues/161)

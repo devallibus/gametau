@@ -66,8 +66,13 @@ let createElectrobunEventAdapter: typeof import("./electrobun").createElectrobun
 let createElectrobunFsAdapter: typeof import("./electrobun").createElectrobunFsAdapter;
 let createElectrobunDialogAdapter: typeof import("./electrobun").createElectrobunDialogAdapter;
 let bootstrapElectrobun: typeof import("./electrobun").bootstrapElectrobun;
+let bootstrapElectrobunFromWindowBridge: typeof import("./electrobun").bootstrapElectrobunFromWindowBridge;
 let dispatchElectrobunEvent: typeof import("./electrobun").dispatchElectrobunEvent;
 let createElectrobunCoreProvider: typeof import("./electrobun").createElectrobunCoreProvider;
+let createElectrobunWindowBridgeProvider: typeof import("./electrobun").createElectrobunWindowBridgeProvider;
+let getElectrobunBridge: typeof import("./electrobun").getElectrobunBridge;
+let getElectrobunCapabilities: typeof import("./electrobun").getElectrobunCapabilities;
+let isElectrobun: typeof import("./electrobun").isElectrobun;
 
 let getCurrentWindow: typeof import("../window").getCurrentWindow;
 let setWindowAdapter: typeof import("../window").setWindowAdapter;
@@ -91,8 +96,13 @@ beforeAll(async () => {
   createElectrobunFsAdapter = electrobunMod.createElectrobunFsAdapter;
   createElectrobunDialogAdapter = electrobunMod.createElectrobunDialogAdapter;
   bootstrapElectrobun = electrobunMod.bootstrapElectrobun;
+  bootstrapElectrobunFromWindowBridge = electrobunMod.bootstrapElectrobunFromWindowBridge;
   dispatchElectrobunEvent = electrobunMod.dispatchElectrobunEvent;
   createElectrobunCoreProvider = electrobunMod.createElectrobunCoreProvider;
+  createElectrobunWindowBridgeProvider = electrobunMod.createElectrobunWindowBridgeProvider;
+  getElectrobunBridge = electrobunMod.getElectrobunBridge;
+  getElectrobunCapabilities = electrobunMod.getElectrobunCapabilities;
+  isElectrobun = electrobunMod.isElectrobun;
 
   const windowMod = await import("../window");
   getCurrentWindow = windowMod.getCurrentWindow;
@@ -120,6 +130,7 @@ beforeEach(() => {
   invokeReturns.clear();
   invokeErrors.clear();
   mockInvoke.mockClear();
+  (globalThis as { window?: { __ELECTROBUN__?: unknown } }).window!.__ELECTROBUN__ = undefined;
   registerProvider(mockProvider);
 });
 
@@ -134,6 +145,80 @@ afterEach(() => {
 // ═══════════════════════════════════════════════════════════════════════════
 // Window Adapter
 // ═══════════════════════════════════════════════════════════════════════════
+
+describe("Electrobun bridge helpers", () => {
+  test("isElectrobun returns false when no bridge is exposed", () => {
+    expect(getElectrobunBridge()).toBeNull();
+    expect(isElectrobun()).toBe(false);
+    expect(getElectrobunCapabilities()).toBeNull();
+  });
+
+  test("bridge helper reads render-mode capabilities from window bridge", () => {
+    (globalThis as {
+      window?: {
+        __ELECTROBUN__?: {
+          invoke: typeof mockInvoke;
+          renderMode: "gpu";
+          capabilities: {
+            hasGpuWindow: true;
+            hasWgpuView: true;
+            hasWebGpu: true;
+          };
+        };
+      };
+    }).window!.__ELECTROBUN__ = {
+      invoke: mockInvoke,
+      renderMode: "gpu",
+      capabilities: {
+        hasGpuWindow: true,
+        hasWgpuView: true,
+        hasWebGpu: true,
+      },
+    };
+
+    expect(isElectrobun()).toBe(true);
+    expect(getElectrobunBridge()).not.toBeNull();
+    expect(getElectrobunCapabilities()).toEqual({
+      runtime: "electrobun",
+      renderMode: "gpu",
+      hasGpuWindow: true,
+      hasWgpuView: true,
+      hasWebGpu: true,
+    });
+  });
+
+  test("bridge provider delegates through window bridge", async () => {
+    (globalThis as { window?: { __ELECTROBUN__?: unknown } }).window!.__ELECTROBUN__ = {
+      invoke: mockInvoke,
+      convertFileSrc: (path: string) => `bridge://${path}`,
+    };
+
+    const provider = createElectrobunWindowBridgeProvider();
+    invokeReturns.set("test_cmd", { ok: true });
+
+    await expect(provider.invoke("test_cmd", { n: 1 })).resolves.toEqual({ ok: true });
+    expect(provider.convertFileSrc("/asset.png")).toBe("bridge:///asset.png");
+  });
+
+  test("bootstrapElectrobunFromWindowBridge returns false when no bridge is available", () => {
+    expect(bootstrapElectrobunFromWindowBridge()).toBe(false);
+  });
+
+  test("bootstrapElectrobunFromWindowBridge wires adapters from window bridge", async () => {
+    (globalThis as { window?: { __ELECTROBUN__?: unknown } }).window!.__ELECTROBUN__ = {
+      invoke: mockInvoke,
+      convertFileSrc: (path: string) => `bridge://${path}`,
+      renderMode: "browser",
+    };
+
+    invokeReturns.set("plugin:electrobun|window_title", "Bridge Title");
+    expect(bootstrapElectrobunFromWindowBridge()).toBe(true);
+
+    const { getProvider } = await import("../core");
+    expect(getProvider()?.id).toBe("electrobun");
+    expect(await getCurrentWindow().title()).toBe("Bridge Title");
+  });
+});
 
 describe("createElectrobunWindowAdapter", () => {
   test("isFullscreen invokes correct command", async () => {
