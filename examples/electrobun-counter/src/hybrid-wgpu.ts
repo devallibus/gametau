@@ -3,7 +3,6 @@ type WgpuReadyEvent = CustomEvent<{ id: number }>;
 interface HybridWgpuTagElement extends HTMLElement {
   transparent: boolean;
   passthroughEnabled: boolean;
-  hidden: boolean;
   toggleTransparent(value?: boolean): void;
   togglePassthrough(value?: boolean): void;
   toggleHidden(value?: boolean): void;
@@ -42,19 +41,19 @@ export function setupElectrobunHybridWgpu(): HybridShowcaseHandle | null {
     || !passthroughButton
     || !maskButton
     || !mask
-    || !isHybridTagReady(tag)
   ) {
-    panel?.setAttribute("hidden", "true");
+    if (panel) {
+      panel.hidden = true;
+    }
+    return null;
+  }
+
+  if (!isHybridTagReady(tag)) {
+    panel.hidden = true;
     return null;
   }
 
   const wgpuTag = tag;
-  const runButton = rerunButton;
-  const transparencyButton = transparentButton;
-  const passthroughToggleButton = passthroughButton;
-  const maskToggleButton = maskButton;
-  const maskEl = mask;
-
   panel.hidden = false;
 
   let transparent = false;
@@ -62,13 +61,13 @@ export function setupElectrobunHybridWgpu(): HybridShowcaseHandle | null {
   let maskVisible = true;
 
   function updateButtonLabels() {
-    transparencyButton.textContent = transparent ? "Opaque surface" : "Transparent surface";
-    passthroughToggleButton.textContent = passthrough ? "Capture clicks" : "Passthrough clicks";
-    maskToggleButton.textContent = maskVisible ? "Hide HTML mask" : "Show HTML mask";
+    transparentButton!.textContent = transparent ? "Opaque surface" : "Transparent surface";
+    passthroughButton!.textContent = passthrough ? "Capture clicks" : "Passthrough clicks";
+    maskButton!.textContent = maskVisible ? "Hide HTML mask" : "Show HTML mask";
   }
 
   function syncMaskLayout() {
-    maskEl.hidden = !maskVisible;
+    mask!.hidden = !maskVisible;
     wgpuTag.syncDimensions(true);
   }
 
@@ -111,10 +110,10 @@ export function setupElectrobunHybridWgpu(): HybridShowcaseHandle | null {
       : "HTML mask removed from the native surface";
   };
 
-  runButton.addEventListener("click", handleRerun);
-  transparencyButton.addEventListener("click", handleTransparent);
-  passthroughToggleButton.addEventListener("click", handlePassthrough);
-  maskToggleButton.addEventListener("click", handleMask);
+  rerunButton.addEventListener("click", handleRerun);
+  transparentButton.addEventListener("click", handleTransparent);
+  passthroughButton.addEventListener("click", handlePassthrough);
+  maskButton.addEventListener("click", handleMask);
 
   updateButtonLabels();
   syncMaskLayout();
@@ -124,10 +123,28 @@ export function setupElectrobunHybridWgpu(): HybridShowcaseHandle | null {
     renderMode: "hybrid",
     destroy() {
       wgpuTag.off("ready", onReady);
-      runButton.removeEventListener("click", handleRerun);
-      transparencyButton.removeEventListener("click", handleTransparent);
-      passthroughToggleButton.removeEventListener("click", handlePassthrough);
-      maskToggleButton.removeEventListener("click", handleMask);
+      rerunButton.removeEventListener("click", handleRerun);
+      transparentButton.removeEventListener("click", handleTransparent);
+      passthroughButton.removeEventListener("click", handlePassthrough);
+      maskButton.removeEventListener("click", handleMask);
     },
   };
+}
+
+export async function setupElectrobunHybridWgpuWhenReady(): Promise<HybridShowcaseHandle | null> {
+  const initial = setupElectrobunHybridWgpu();
+  if (initial) {
+    return initial;
+  }
+
+  if (
+    typeof customElements === "undefined"
+    || !document.querySelector("electrobun-wgpu")
+    || typeof customElements.whenDefined !== "function"
+  ) {
+    return null;
+  }
+
+  await customElements.whenDefined("electrobun-wgpu");
+  return setupElectrobunHybridWgpu();
 }

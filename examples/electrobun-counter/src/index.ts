@@ -1,19 +1,19 @@
 import { configure, isTauri } from "webtau";
 import {
-  bootstrapElectrobunFromWindowBridge,
   getElectrobunCapabilities,
+  bootstrapElectrobunFromWindowBridge,
 } from "webtau/adapters/electrobun";
-import { setupElectrobunHybridWgpu } from "./hybrid-wgpu";
+import { setupElectrobunHybridWgpuWhenReady } from "./hybrid-wgpu";
 import { getCounter, increment, decrement, reset } from "./services/backend";
 
 async function main() {
   const modeEl = document.getElementById("mode")!;
   const valueEl = document.getElementById("value")!;
-  let hybridHandle: ReturnType<typeof setupElectrobunHybridWgpu> | null = null;
+  let hybridHandle: Awaited<ReturnType<typeof setupElectrobunHybridWgpuWhenReady>> = null;
 
   if (bootstrapElectrobunFromWindowBridge()) {
     const capabilities = getElectrobunCapabilities();
-    hybridHandle = setupElectrobunHybridWgpu();
+    hybridHandle = await setupElectrobunHybridWgpuWhenReady();
     const renderMode = hybridHandle?.renderMode ?? capabilities?.renderMode ?? "browser";
     modeEl.textContent = `Electrobun bridge (${renderMode})`;
   } else if (!isTauri()) {

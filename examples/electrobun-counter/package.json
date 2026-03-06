@@ -16,7 +16,8 @@
     "build:electrobun:browser": "bun run build:electrobun:hybrid",
     "build:electrobun:gpu": "bun run build:web && cross-env GAMETAU_ELECTROBUN_RENDER_MODE=gpu node ./node_modules/electrobun/bin/electrobun.cjs build",
     "build:desktop": "tauri build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "bun test src/hybrid-wgpu.test.ts"
   },
   "dependencies": {
     "electrobun": "^1.15.1",

@@ -253,6 +253,7 @@ jobs:
       - name: Build Electrobun counter (web target)
         run: |
           cd examples/electrobun-counter
+          bun run test
           bun run build:web
           test -d dist
           test -f dist/index.html
