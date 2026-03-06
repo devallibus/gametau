@@ -30,6 +30,7 @@ The GPUWindow path is intentionally narrower than the browser shell:
 - no Web Audio tone playback in native mode yet
 - mission status is surfaced through the window title and console alerts
 - keyboard + mouse controls are implemented directly through Electrobun window/screen APIs
+- native title-bar chrome may slightly skew top-edge mouse targeting until Electrobun exposes content-area coordinates
 
 That split is deliberate: the mission orchestration is now shared, while rendering/input are runtime-specific adapters.
 

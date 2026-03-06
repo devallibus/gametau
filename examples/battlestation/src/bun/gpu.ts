@@ -4,6 +4,9 @@ import { FALLBACK_MISSION, FALLBACK_THEME } from "../game/config";
 import { createDefenseSceneGpu } from "../game/scene-gpu";
 import { startBattlestationRuntime } from "../game/runtime";
 
+// Mixed JS/native key codes while Electrobun's Bun-side keyboard surface settles:
+// 37/39 = ArrowLeft/ArrowRight, 65/68 = A/D, 123/124 = native left/right on macOS,
+// 13/32 = Enter/Space, 77 = M.
 const LEFT_KEYS = new Set([37, 65, 123]);
 const RIGHT_KEYS = new Set([39, 68, 124]);
 const FIRE_KEYS = new Set([13, 32]);
@@ -84,6 +87,10 @@ async function main() {
         if (leftDown && !mouseLatch) {
           const cursor = Screen.getCursorScreenPoint();
           const frame = window.getFrame();
+          // Electrobun currently exposes the outer window frame here, not an
+          // explicit content-rect API. That means native chrome can slightly
+          // skew top-edge click mapping until a content-area coordinate surface
+          // is available on the Bun side.
           const inside = cursor.x >= frame.x
             && cursor.x <= frame.x + frame.width
             && cursor.y >= frame.y
