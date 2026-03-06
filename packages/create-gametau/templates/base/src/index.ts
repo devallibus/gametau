@@ -1,4 +1,4 @@
-import { configure, isTauri } from "webtau";
+import { configure, getRuntimeInfo, isTauri } from "webtau";
 import { bootstrapElectrobunFromWindowBridge } from "webtau/adapters/electrobun";
 import { bootstrapTauri } from "webtau/adapters/tauri";
 import { startGameLoop } from "./game/loop";
@@ -41,6 +41,12 @@ async function main() {
         return wasm;
       },
     });
+  }
+
+  const runtime = getRuntimeInfo();
+  document.body.dataset.runtime = runtime.id;
+  if (runtime.capabilities.renderMode) {
+    document.body.dataset.renderMode = runtime.capabilities.renderMode;
   }
 
   // Set up the renderer

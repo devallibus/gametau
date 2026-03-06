@@ -1,26 +1,35 @@
 /**
- * webtau — Tauri-to-web invoke router.
+ * webtau - Tauri-to-web invoke router.
  *
- * Detects whether the app is running inside Tauri (desktop) or as a
- * plain web app. In Tauri mode, delegates to `@tauri-apps/api/core`.
- * In web mode, calls the corresponding function from a WASM module
- * that was registered via `configure()`.
- *
- * A runtime provider can be registered via `registerProvider()` to
- * route invoke() and convertFileSrc() through an arbitrary backend
- * (e.g. Electrobun). When no provider is registered and `isTauri()`
- * is true, Tauri auto-registers itself on first invoke().
+ * Detects whether the app is running inside Tauri (desktop) or as a plain web
+ * app. In Tauri mode, delegates to `@tauri-apps/api/core`. In web mode, calls
+ * the corresponding function from a configured WASM module. A runtime provider
+ * can be registered to route invoke and asset conversion through an arbitrary
+ * backend (for example Electrobun).
  */
 
 import { WebtauError } from "./diagnostics.js";
-import type { CoreProvider } from "./provider.js";
+import type {
+  CoreProvider,
+  RuntimeCapabilities,
+  RuntimeInfo,
+  RuntimeInfoResolver,
+} from "./provider.js";
 
-export type { CoreProvider };
+export type { CoreProvider, RuntimeCapabilities, RuntimeInfo, RuntimeInfoResolver };
 export type { DiagnosticCode, DiagnosticEnvelope } from "./diagnostics.js";
 export { WebtauError } from "./diagnostics.js";
 
 // biome-ignore lint/suspicious/noExplicitAny: WASM modules have dynamic signatures that cannot be statically typed
 type WasmModule = Record<string, (...args: any[]) => any>;
+
+type ElectrobunRuntimeBridge = {
+  capabilities?: Partial<Pick<
+    RuntimeCapabilities,
+    "renderMode" | "hasGpuWindow" | "hasWgpuView" | "hasWebGpu"
+  >>;
+  renderMode?: string;
+};
 
 let registeredProvider: CoreProvider | null = null;
 let wasmModule: WasmModule | null = null;
@@ -28,17 +37,7 @@ let wasmLoader: (() => Promise<WasmModule>) | null = null;
 let wasmLoadPromise: Promise<WasmModule> | null = null;
 
 export interface WebtauConfig {
-  /**
-   * A function that returns the WASM module (or a promise for it).
-   * This is typically `() => import("./wasm")` pointing at the
-   * wasm-pack output.
-   */
   loadWasm: () => Promise<WasmModule>;
-
-  /**
-   * Called if the WASM module fails to load.
-   * Defaults to `console.error`.
-   */
   onLoadError?: (error: unknown) => void;
 }
 
@@ -46,18 +45,107 @@ let onLoadError: (error: unknown) => void = (err) => {
   console.error("[webtau] Failed to load WASM module:", err);
 };
 
-/**
- * Configure webtau for web mode. Must be called before the first
- * `invoke()` in a web build. In Tauri mode this is a no-op.
- *
- * ```ts
- * import { configure } from "webtau";
- *
- * configure({
- *   loadWasm: () => import("./wasm"),
- * });
- * ```
- */
+const wasmCapabilities: RuntimeCapabilities = {
+  events: true,
+  fs: true,
+  dialog: true,
+  window: true,
+  task: true,
+  convertFileSrc: true,
+};
+
+const tauriCapabilities: RuntimeCapabilities = {
+  events: true,
+  fs: true,
+  dialog: true,
+  window: true,
+  task: true,
+  convertFileSrc: true,
+};
+
+function cloneRuntimeInfo(info: RuntimeInfo): RuntimeInfo {
+  return {
+    ...info,
+    capabilities: { ...info.capabilities },
+  };
+}
+
+function normalizeElectrobunRenderMode(mode: string | undefined): string {
+  switch (mode) {
+    case "browser":
+    case "hybrid":
+    case "gpu":
+      return mode;
+    default:
+      return "unknown";
+  }
+}
+
+function getElectrobunBridgeCapabilities(): RuntimeCapabilities {
+  const bridge = typeof window !== "undefined"
+    ? (window as typeof window & { __ELECTROBUN__?: ElectrobunRuntimeBridge }).__ELECTROBUN__
+    : undefined;
+  const renderMode = normalizeElectrobunRenderMode(
+    bridge?.renderMode ?? bridge?.capabilities?.renderMode,
+  );
+  const hasGpuWindow = bridge?.capabilities?.hasGpuWindow ?? renderMode === "gpu";
+  const hasWgpuView = bridge?.capabilities?.hasWgpuView
+    ?? (renderMode === "hybrid" || renderMode === "gpu");
+  const hasWebGpu = bridge?.capabilities?.hasWebGpu
+    ?? (hasWgpuView || renderMode === "gpu");
+
+  return {
+    events: true,
+    fs: true,
+    dialog: true,
+    window: true,
+    task: true,
+    convertFileSrc: true,
+    renderMode,
+    hasGpuWindow,
+    hasWgpuView,
+    hasWebGpu,
+  };
+}
+
+function deriveRuntimeInfo(provider: CoreProvider): RuntimeInfo {
+  const resolved = typeof provider.runtimeInfo === "function"
+    ? provider.runtimeInfo()
+    : provider.runtimeInfo;
+  if (resolved) {
+    return cloneRuntimeInfo(resolved);
+  }
+
+  if (provider.id === "tauri") {
+    return {
+      id: "tauri",
+      platform: "desktop",
+      capabilities: { ...tauriCapabilities },
+    };
+  }
+
+  if (provider.id === "electrobun") {
+    return {
+      id: "electrobun",
+      platform: "desktop",
+      capabilities: getElectrobunBridgeCapabilities(),
+    };
+  }
+
+  return {
+    id: provider.id,
+    platform: "desktop",
+    capabilities: {
+      events: false,
+      fs: false,
+      dialog: false,
+      window: false,
+      task: true,
+      convertFileSrc: true,
+    },
+  };
+}
+
 export function configure(config: WebtauConfig): void {
   wasmLoader = config.loadWasm;
   wasmModule = null;
@@ -67,58 +155,44 @@ export function configure(config: WebtauConfig): void {
   }
 }
 
-/**
- * Register a runtime provider that replaces the default Tauri/WASM
- * routing in `invoke()` and `convertFileSrc()`.
- *
- * ```ts
- * import { registerProvider } from "webtau";
- *
- * registerProvider({
- *   id: "electrobun",
- *   invoke: (cmd, args) => electrobun.ipc.invoke(cmd, args),
- *   convertFileSrc: (path) => `electrobun://asset/${path}`,
- * });
- * ```
- */
 export function registerProvider(provider: CoreProvider): void {
   registeredProvider = provider;
 }
 
-/** Returns the currently registered provider, or `null`. */
 export function getProvider(): CoreProvider | null {
   return registeredProvider;
 }
 
-/** Clears the registered provider (useful for testing). */
 export function resetProvider(): void {
   registeredProvider = null;
 }
 
-/**
- * Returns `true` when running inside Tauri.
- * Checks for `window.__TAURI_INTERNALS__` which Tauri injects.
- */
 export function isTauri(): boolean {
-  return (
-    typeof window !== "undefined" &&
-    "__TAURI_INTERNALS__" in window
-  );
+  return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 }
 
-/**
- * Lazily loads and caches the WASM module.
- *
- * Loading is deduplicated: concurrent `invoke()` calls while the module is
- * still loading will share the same promise instead of triggering multiple
- * loads. On failure the promise is cleared so the next `invoke()` retries
- * the load (the user may have called `configure()` with a fixed loader).
- */
-async function getWasmModule(): Promise<WasmModule> {
-  // Fast path: module already loaded and cached.
-  if (wasmModule) return wasmModule;
+export function getRuntimeInfo(): RuntimeInfo {
+  if (registeredProvider) {
+    return deriveRuntimeInfo(registeredProvider);
+  }
 
-  // Deduplicate: if a load is already in flight, piggyback on it.
+  if (isTauri()) {
+    return {
+      id: "tauri",
+      platform: "desktop",
+      capabilities: { ...tauriCapabilities },
+    };
+  }
+
+  return {
+    id: "wasm",
+    platform: "web",
+    capabilities: { ...wasmCapabilities },
+  };
+}
+
+async function getWasmModule(): Promise<WasmModule> {
+  if (wasmModule) return wasmModule;
   if (wasmLoadPromise) return wasmLoadPromise;
 
   if (!wasmLoader) {
@@ -137,8 +211,6 @@ async function getWasmModule(): Promise<WasmModule> {
       return mod;
     },
     (err) => {
-      // Clear promise so subsequent invoke() calls can retry after the
-      // user fixes the issue (e.g. reconfigures with a valid loader).
       wasmLoadPromise = null;
       onLoadError(err);
       throw new WebtauError({
@@ -148,29 +220,16 @@ async function getWasmModule(): Promise<WasmModule> {
         message: `[webtau] Failed to load WASM module: ${err instanceof Error ? err.message : String(err)}`,
         hint: "Check that loadWasm returns a valid WASM module and network is available.",
       });
-    }
+    },
   );
 
   return wasmLoadPromise;
 }
 
-/**
- * Universal invoke — same API as `@tauri-apps/api/core`'s `invoke()`.
- *
- * In Tauri mode: delegates to Tauri IPC.
- * In web mode: calls the matching WASM export, passing the args
- * object as a single parameter.
- *
- * ```ts
- * const view = await invoke<WorldView>("get_world_view");
- * const result = await invoke<TickResult>("tick_world");
- * ```
- */
 export async function invoke<T = unknown>(
   command: string,
-  args?: Record<string, unknown>
+  args?: Record<string, unknown>,
 ): Promise<T> {
-  // 1. Explicit provider — delegate immediately.
   if (registeredProvider) {
     try {
       return await registeredProvider.invoke<T>(command, args);
@@ -186,23 +245,24 @@ export async function invoke<T = unknown>(
     }
   }
 
-  // 2. Auto-detect Tauri — lazily register a Tauri provider, then delegate.
   if (isTauri()) {
-    // Dynamic import — @tauri-apps/api is an optional peer dependency.
-    // Only loaded at runtime inside Tauri, never in web builds.
     const mod = await import("@tauri-apps/api/core" as string);
 
     const tauriProvider: CoreProvider = {
       id: "tauri",
       invoke: (cmd, a) => mod.invoke(cmd, a),
       convertFileSrc: (path, protocol) => mod.convertFileSrc(path, protocol),
+      runtimeInfo: {
+        id: "tauri",
+        platform: "desktop",
+        capabilities: { ...tauriCapabilities },
+      },
     };
     registeredProvider = tauriProvider;
 
     return tauriProvider.invoke<T>(command, args);
   }
 
-  // 3. WASM path — unchanged.
   const wasm = await getWasmModule();
   const fn = wasm[command];
 
@@ -220,7 +280,6 @@ export async function invoke<T = unknown>(
   try {
     const result = args ? fn(args) : fn();
 
-    // wasm_bindgen can return plain values or promises
     if (result instanceof Promise) {
       try {
         return await result;
@@ -249,24 +308,10 @@ export async function invoke<T = unknown>(
   }
 }
 
-/**
- * Converts a file path to a URL that can be used to load assets.
- *
- * In Tauri mode: delegates to `@tauri-apps/api/core`'s `convertFileSrc()`,
- * which returns an `asset://` protocol URL.
- * In web mode: returns the path as-is — no protocol conversion is needed
- * since web apps load assets via standard HTTP URLs.
- *
- * ```ts
- * const url = convertFileSrc("/app/data/sprite.png");
- * // web: "/app/data/sprite.png"
- * // Tauri: "asset://localhost/app/data/sprite.png"
- * ```
- */
 export function convertFileSrc(filePath: string, protocol?: string): string {
   if (registeredProvider) {
     return registeredProvider.convertFileSrc(filePath, protocol);
   }
-  // On web, just return the path as-is — no protocol conversion needed
+
   return filePath;
 }

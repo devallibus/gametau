@@ -26,6 +26,7 @@ import type {
   DialogAdapter,
   EventAdapter,
   FsAdapter,
+  RuntimeCapabilities,
   WindowAdapter,
 } from "../provider.js";
 import { setWindowAdapter } from "../window.js";
@@ -99,6 +100,23 @@ export function getElectrobunCapabilities(): ElectrobunCapabilities | null {
   };
 }
 
+function getElectrobunRuntimeCapabilities(): RuntimeCapabilities {
+  const capabilities = getElectrobunCapabilities();
+
+  return {
+    events: true,
+    fs: true,
+    dialog: true,
+    window: true,
+    task: true,
+    convertFileSrc: true,
+    renderMode: capabilities?.renderMode ?? "unknown",
+    hasGpuWindow: capabilities?.hasGpuWindow ?? false,
+    hasWgpuView: capabilities?.hasWgpuView ?? false,
+    hasWebGpu: capabilities?.hasWebGpu ?? false,
+  };
+}
+
 export function createElectrobunWindowBridgeProvider(
   bridge: ElectrobunBridge = getElectrobunBridge() as ElectrobunBridge,
 ): CoreProvider {
@@ -116,6 +134,11 @@ export function createElectrobunWindowBridgeProvider(
         ? bridge.convertFileSrc(filePath, protocol)
         : `electrobun://asset/${filePath.replace(/^\/+/, "")}`
     ),
+    runtimeInfo: {
+      id: "electrobun",
+      platform: "desktop",
+      capabilities: getElectrobunRuntimeCapabilities(),
+    },
   };
 }
 
@@ -369,6 +392,11 @@ export function createElectrobunCoreProvider(): CoreProvider {
     },
     convertFileSrc: (filePath: string): string => {
       return `electrobun://asset/${filePath.replace(/^\/+/, "")}`;
+    },
+    runtimeInfo: {
+      id: "electrobun",
+      platform: "desktop",
+      capabilities: getElectrobunRuntimeCapabilities(),
     },
   };
 }

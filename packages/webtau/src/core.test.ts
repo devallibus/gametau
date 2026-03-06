@@ -3,6 +3,7 @@ import {
   configure,
   convertFileSrc,
   getProvider,
+  getRuntimeInfo,
   invoke,
   isTauri,
   registerProvider,
@@ -18,6 +19,129 @@ import type { CoreProvider } from "./provider";
 describe("isTauri", () => {
   test("returns false outside Tauri", () => {
     expect(isTauri()).toBe(false);
+  });
+});
+
+describe("getRuntimeInfo", () => {
+  const globalObj = globalThis as Record<string, unknown>;
+  let hadWindow = false;
+  let previousWindow: unknown;
+
+  beforeEach(() => {
+    hadWindow = Object.hasOwn(globalObj, "window");
+    previousWindow = globalObj.window;
+    resetProvider();
+  });
+
+  afterEach(() => {
+    resetProvider();
+    if (hadWindow) {
+      globalObj.window = previousWindow;
+    } else {
+      delete globalObj.window;
+    }
+  });
+
+  test("returns wasm runtime info by default", () => {
+    expect(getRuntimeInfo()).toEqual({
+      id: "wasm",
+      platform: "web",
+      capabilities: {
+        events: true,
+        fs: true,
+        dialog: true,
+        window: true,
+        task: true,
+        convertFileSrc: true,
+      },
+    });
+  });
+
+  test("returns tauri runtime info from environment auto-detection", () => {
+    globalObj.window = { __TAURI_INTERNALS__: {} };
+
+    expect(getRuntimeInfo()).toEqual({
+      id: "tauri",
+      platform: "desktop",
+      capabilities: {
+        events: true,
+        fs: true,
+        dialog: true,
+        window: true,
+        task: true,
+        convertFileSrc: true,
+      },
+    });
+  });
+
+  test("returns explicit provider runtime info when supplied", () => {
+    registerProvider({
+      id: "custom",
+      invoke: async () => null,
+      convertFileSrc: (path) => path,
+      runtimeInfo: {
+        id: "custom",
+        platform: "desktop",
+        capabilities: {
+          events: false,
+          fs: false,
+          dialog: false,
+          window: false,
+          task: true,
+          convertFileSrc: true,
+        },
+      },
+    });
+
+    expect(getRuntimeInfo()).toEqual({
+      id: "custom",
+      platform: "desktop",
+      capabilities: {
+        events: false,
+        fs: false,
+        dialog: false,
+        window: false,
+        task: true,
+        convertFileSrc: true,
+      },
+    });
+  });
+
+  test("derives Electrobun render-mode info from the exposed bridge", () => {
+    globalObj.window = {
+      __ELECTROBUN__: {
+        invoke: async () => null,
+        renderMode: "hybrid",
+        capabilities: {
+          hasGpuWindow: false,
+          hasWgpuView: true,
+          hasWebGpu: true,
+        },
+      },
+    };
+
+    registerProvider({
+      id: "electrobun",
+      invoke: async () => null,
+      convertFileSrc: (path) => path,
+    });
+
+    expect(getRuntimeInfo()).toEqual({
+      id: "electrobun",
+      platform: "desktop",
+      capabilities: {
+        events: true,
+        fs: true,
+        dialog: true,
+        window: true,
+        task: true,
+        convertFileSrc: true,
+        renderMode: "hybrid",
+        hasGpuWindow: false,
+        hasWgpuView: true,
+        hasWebGpu: true,
+      },
+    });
   });
 });
 

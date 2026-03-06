@@ -79,6 +79,7 @@ jobs:
       - run: bunx tsc --noEmit -p packages/webtau/tsconfig.json
       - run: bunx tsc --noEmit -p packages/webtau-vite/tsconfig.json
       - run: bunx tsc --noEmit -p packages/create-gametau/tsconfig.json
+      - run: bunx tsc --noEmit -p examples/electrobun-counter/tsconfig.json
       - run: bunx tsc --noEmit -p examples/battlestation/tsconfig.json
 
   lint:

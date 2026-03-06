@@ -75,6 +75,18 @@ export function createTauriCoreProvider(): CoreProvider {
       const proto = protocol ?? "asset";
       return `${proto}://localhost${filePath.startsWith("/") ? filePath : `/${filePath}`}`;
     },
+    runtimeInfo: {
+      id: "tauri",
+      platform: "desktop",
+      capabilities: {
+        events: true,
+        fs: true,
+        dialog: true,
+        window: true,
+        task: true,
+        convertFileSrc: true,
+      },
+    },
   };
 }
 

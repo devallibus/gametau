@@ -63,6 +63,7 @@ Runtime bootstrap is explicit in scaffolded `src/index.ts`:
 - Electrobun path: `bootstrapElectrobunFromWindowBridge()` from `webtau/adapters/electrobun`
 - Tauri path: `bootstrapTauri()` from `webtau/adapters/tauri`
 - Web path: `configure({ loadWasm })` from `webtau`
+- Runtime/capability seam: `getRuntimeInfo()` from `webtau`
 
 This keeps the generated project lightweight while giving contributors clear extension points for production features.
 
