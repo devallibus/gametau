@@ -1,0 +1,12 @@
+{
+  "name": "gametau-dev",
+  "description": "Skills and agents for building games with gametau — the Rust WASM + Tauri game toolkit",
+  "version": "1.0.0",
+  "author": {
+    "name": "devallibus"
+  },
+  "homepage": "https://github.com/devallibus/gametau",
+  "repository": "https://github.com/devallibus/gametau",
+  "license": "Apache-2.0",
+  "keywords": ["gametau", "webtau", "tauri", "wasm", "game-development", "rust"]
+}
