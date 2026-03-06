@@ -1,4 +1,5 @@
 import { configure, isTauri } from "webtau";
+import { bootstrapElectrobunFromWindowBridge } from "webtau/adapters/electrobun";
 import { bootstrapTauri } from "webtau/adapters/tauri";
 import { startGameLoop } from "./game/loop";
 import { createSnapshotQueue } from "./game/snapshot-queue";
@@ -26,8 +27,10 @@ function updateHud(view: WorldView, settings: RuntimeSettings): void {
 }
 
 async function main() {
-  // Bootstrap runtime: Tauri (desktop) or WASM (web).
-  if (isTauri()) {
+  // Bootstrap runtime in descending order of host specificity.
+  if (bootstrapElectrobunFromWindowBridge()) {
+    // Electrobun bridge is available; provider/adapters are now wired.
+  } else if (isTauri()) {
     await bootstrapTauri();
   } else {
     configure({

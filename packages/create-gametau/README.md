@@ -1,8 +1,10 @@
 # create-gametau
 
-Scaffold a Rust game project for the stable Web (WASM) + Tauri desktop path from one codebase.
+Scaffold a Rust game project for the stable Web (WASM) + Tauri desktop path from one codebase, with optional Electrobun shell support.
 
-Electrobun is available as an experimental opt-in track — see [active milestones](https://github.com/devallibus/gametau/milestones).
+Use `--desktop-shell electrobun` to add Electrobun BrowserWindow/GPUWindow shell files and scripts to the generated project.
+
+Electrobun is available as an explicit shell option — see [active milestones](https://github.com/devallibus/gametau/milestones).
 
 > Repository note: `docs/` is intentionally local-only and not published in remote history.
 
@@ -10,6 +12,7 @@ Electrobun is available as an experimental opt-in track — see [active mileston
 
 ```bash
 bunx create-gametau my-game
+bunx create-gametau my-game --desktop-shell electrobun
 cd my-game
 bun install
 bun run dev
@@ -31,6 +34,8 @@ bunx create-gametau my-game --template vanilla
 ## CLI Options
 
 - `--template`, `-t` - Choose scaffold template (`three`, `pixi`, `vanilla`)
+- `--desktop-shell` - Choose desktop shell (`tauri`, `electrobun`)
+- `--electrobun-mode` - Electrobun shell mode (`hybrid`, `native`, `dual`)
 - `--help`, `-h` - Show help output
 - `--version`, `-v` - Print CLI version
 
@@ -55,6 +60,7 @@ The scaffolded base template now ships a small service architecture instead of a
 
 Runtime bootstrap is explicit in scaffolded `src/index.ts`:
 
+- Electrobun path: `bootstrapElectrobunFromWindowBridge()` from `webtau/adapters/electrobun`
 - Tauri path: `bootstrapTauri()` from `webtau/adapters/tauri`
 - Web path: `configure({ loadWasm })` from `webtau`
 

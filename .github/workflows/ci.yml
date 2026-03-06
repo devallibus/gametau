@@ -231,7 +231,7 @@ jobs:
           test -f dist/index.html
 
   electrobun-smoke:
-    name: Electrobun Counter Smoke
+    name: Electrobun Browser + GPU Smoke
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -256,10 +256,15 @@ jobs:
           bun run build:web
           test -d dist
           test -f dist/index.html
-      - name: Build Electrobun counter (electrobun package target)
+      - name: Build Electrobun counter (BrowserWindow package target)
         run: |
           cd examples/electrobun-counter
-          bun run build:electrobun
+          bun run build:electrobun:browser
+          test -d build
+      - name: Build Electrobun counter (GpuWindow package target)
+        run: |
+          cd examples/electrobun-counter
+          bun run build:electrobun:gpu
           test -d build
       - name: Upload Electrobun smoke artifacts (on failure)
         if: failure()
