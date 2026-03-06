@@ -250,7 +250,7 @@ Your frontend calls `invoke("command_name")` everywhere. At runtime:
 
 - **Inside Tauri** → routes through Tauri IPC at native speed
 - **In a browser** → calls the WASM export directly
-- **With a registered runtime provider** → routes through the provider (for experimental runtimes)
+- **With a registered runtime provider** → routes through the provider (for provider-backed runtimes such as Electrobun)
 
 The switch is automatic. Zero `if` statements in your game code.
 
@@ -459,7 +459,7 @@ Expands to:
 | `createTauriCoreProvider()` | `CoreProvider` wrapper around `@tauri-apps/api/core` |
 | `createTauriEventAdapter()` | `EventAdapter` wrapper around `@tauri-apps/api/event` |
 
-**`webtau/adapters/electrobun`** — Electrobun desktop bootstrap helpers (experimental).
+**`webtau/adapters/electrobun`** — Electrobun desktop bootstrap helpers for explicit BrowserWindow and GPUWindow shell paths.
 
 | API | Purpose |
 |---|---|
@@ -676,7 +676,7 @@ Expected sizes:
 | Desktop (Tauri) | Stable |
 | Desktop (Electrobun) | Supported via explicit shell selection |
 
-Update: Electrobun now ships with scaffold/runtime auto-detection for `window.__ELECTROBUN__`, an explicit `create-gametau --desktop-shell electrobun` path, and BrowserWindow/GPUWindow counter build lanes. The remaining work is around embedded `<electrobun-wgpu>` showcases, broader GPUWindow renderer abstractions, and release-gate hardening.
+As of March 6, 2026, `gametau` ships scaffold/runtime auto-detection for `window.__ELECTROBUN__`, an explicit `create-gametau --desktop-shell electrobun` path, and BrowserWindow/GPUWindow example lanes. The remaining Electrobun work is now follow-through inside `gametau`: embedded `<electrobun-wgpu>` showcases, broader GPUWindow renderer abstractions, and release-gate hardening.
 
 ### Electrobun support
 
@@ -695,10 +695,12 @@ Electrobun is available as an alternative desktop shell. The current supported s
 - Multi-platform CI dogfood workflow (Ubuntu, macOS, Windows)
 - Public exports from `webtau/adapters/electrobun`
 
-**What's not yet done:**
+**Remaining follow-up work:**
 - BrowserWindow + embedded `<electrobun-wgpu>` showcase
 - Broader GPUWindow example coverage and renderer abstractions beyond the counter proof lane
 - Release-gate promotion and packaging hardening beyond smoke coverage
+
+Earlier upstream-blocked issues [#98](https://github.com/devallibus/gametau/issues/98), [#100](https://github.com/devallibus/gametau/issues/100), [#104](https://github.com/devallibus/gametau/issues/104), and [#106](https://github.com/devallibus/gametau/issues/106) now describe historical baseline work. Remaining milestone tracking is centered on [#159](https://github.com/devallibus/gametau/issues/159) and [#162](https://github.com/devallibus/gametau/issues/162).
 
 See [ELECTROBUN-SHOWCASE.md](./ELECTROBUN-SHOWCASE.md) for the integration walkthrough and [`RUNTIME-PORTABILITY-READINESS.md`](./RUNTIME-PORTABILITY-READINESS.md) for the full capability matrix and known gaps.
 
@@ -706,7 +708,7 @@ See [ELECTROBUN-SHOWCASE.md](./ELECTROBUN-SHOWCASE.md) for the integration walkt
 
 ## Roadmap
 
-**Electrobun (shipped → next steps):**
+**Electrobun (shipped → release follow-up):**
 - ✅ Full adapter surface: window, event, filesystem, dialog
 - ✅ `bootstrapElectrobun()` and provider registry pattern
 - ✅ Auto-detect Electrobun runtime in templates and browser entrypoints
