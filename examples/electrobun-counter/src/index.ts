@@ -1,17 +1,20 @@
 import { configure, isTauri } from "webtau";
 import {
-  bootstrapElectrobunFromWindowBridge,
   getElectrobunCapabilities,
+  bootstrapElectrobunFromWindowBridge,
 } from "webtau/adapters/electrobun";
+import { setupElectrobunHybridWgpuWhenReady } from "./hybrid-wgpu";
 import { getCounter, increment, decrement, reset } from "./services/backend";
 
 async function main() {
   const modeEl = document.getElementById("mode")!;
   const valueEl = document.getElementById("value")!;
+  let hybridHandle: Awaited<ReturnType<typeof setupElectrobunHybridWgpuWhenReady>> = null;
 
   if (bootstrapElectrobunFromWindowBridge()) {
     const capabilities = getElectrobunCapabilities();
-    const renderMode = capabilities?.renderMode ?? "browser";
+    hybridHandle = await setupElectrobunHybridWgpuWhenReady();
+    const renderMode = hybridHandle?.renderMode ?? capabilities?.renderMode ?? "browser";
     modeEl.textContent = `Electrobun bridge (${renderMode})`;
   } else if (!isTauri()) {
     modeEl.textContent = "WASM (web)";
@@ -43,6 +46,10 @@ async function main() {
   document.getElementById("reset")!.addEventListener("click", async () => {
     const result = await reset();
     valueEl.textContent = String(result.value);
+  });
+
+  window.addEventListener("beforeunload", () => {
+    hybridHandle?.destroy();
   });
 }
 

@@ -32,13 +32,13 @@ bunx create-gametau my-game --desktop-shell electrobun --electrobun-mode dual
 
 Current supported shapes:
 
-- `BrowserWindow` shell for the existing web-first app structure
+- `BrowserWindow` shell with embedded `<electrobun-wgpu>` for hybrid UI/native-render composition
 - `GpuWindow` shell for native WGPU windows that still reuse the shared WASM backend loop
 
 Reference example:
 
 ```bash
-bun run --cwd examples/electrobun-counter dev:electrobun:browser
+bun run --cwd examples/electrobun-counter dev:electrobun:hybrid
 bun run --cwd examples/electrobun-counter dev:electrobun:gpu
 ```
 
@@ -59,7 +59,6 @@ bun run --cwd examples/electrobun-counter dev:electrobun:gpu
 ## Known gaps
 
 - `resolveResource()` in `webtau/path` is not yet implemented for web mode.
-- BrowserWindow + embedded `<electrobun-wgpu>` is not yet covered by a gametau showcase.
 - The current GPUWindow proof path validates shared backend reuse, not a full renderer abstraction.
 
 ## Validating integration readiness

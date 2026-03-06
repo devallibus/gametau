@@ -5,16 +5,19 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:electrobun": "bun run dev:electrobun:browser",
-    "dev:electrobun:browser": "concurrently -k -n WEB,APP \"vite\" \"node ./node_modules/electrobun/bin/electrobun.cjs dev\"",
+    "dev:electrobun": "bun run dev:electrobun:hybrid",
+    "dev:electrobun:hybrid": "concurrently -k -n WEB,APP \"vite\" \"node ./node_modules/electrobun/bin/electrobun.cjs dev\"",
+    "dev:electrobun:browser": "bun run dev:electrobun:hybrid",
     "dev:electrobun:gpu": "concurrently -k -n WEB,APP \"vite\" \"cross-env GAMETAU_ELECTROBUN_RENDER_MODE=gpu node ./node_modules/electrobun/bin/electrobun.cjs dev\"",
     "dev:tauri": "tauri dev",
     "build:web": "vite build",
-    "build:electrobun": "bun run build:electrobun:browser",
-    "build:electrobun:browser": "bun run build:web && node ./node_modules/electrobun/bin/electrobun.cjs build",
+    "build:electrobun": "bun run build:electrobun:hybrid",
+    "build:electrobun:hybrid": "bun run build:web && node ./node_modules/electrobun/bin/electrobun.cjs build",
+    "build:electrobun:browser": "bun run build:electrobun:hybrid",
     "build:electrobun:gpu": "bun run build:web && cross-env GAMETAU_ELECTROBUN_RENDER_MODE=gpu node ./node_modules/electrobun/bin/electrobun.cjs build",
     "build:desktop": "tauri build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "bun test src/hybrid-wgpu.test.ts"
   },
   "dependencies": {
     "electrobun": "^1.15.1",
