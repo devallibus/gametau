@@ -7,15 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-03-06
+
 ### Added
 - `webtau/adapters/electrobun`: `bootstrapElectrobunFromWindowBridge()`, `createElectrobunWindowBridgeProvider()`, `isElectrobun()`, and `getElectrobunCapabilities()` for first-class Electrobun runtime detection and bridge bootstrap.
 - `webtau`: `getRuntimeInfo()` for runtime id and capability introspection across WASM, Tauri, and provider-backed runtimes.
 - `create-gametau`: `--desktop-shell electrobun` and `--electrobun-mode hybrid|native|dual`.
-- Electrobun counter example BrowserWindow and GPUWindow build lanes.
+- Electrobun counter example BrowserWindow and GPUWindow build lanes, including the hybrid embedded WGPU showcase path.
+- Battlestation example BrowserWindow and GPUWindow runtime lanes with a native Three WebGPU proof path.
 
 ### Changed
 - Scaffolded entrypoints now auto-check for `window.__ELECTROBUN__` before falling back to Tauri or plain WASM.
 - Electrobun counter example and generated Electrobun shell files now target the WGPU-capable `electrobun@^1.15.1` line.
+- CI and release-gate docs now treat `Electrobun Hybrid + GPU Smoke` as a required release lane.
 
 ## [0.6.0] - 2026-03-04
 
